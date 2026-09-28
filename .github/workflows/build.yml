@@ -11,6 +11,28 @@ jobs:
       - uses: actions/checkout@v4
       - run: west init -l config && west update --narrow && west zephyr-export
       - run: west zmk-build -d ./build -q
-      - run: mkdir -p firmware && find build -name zmk.uf2 -print0 | xargs -0 -I{} cp --parents {} firmware
+      - name: Collect flat firmware files
+        shell: bash
+        run: |
+          mkdir -p firmware
+          while IFS= read -r -d '' image; do
+            name=$(basename "$(dirname "$(dirname "$image")")")
+            cp "$image" "firmware/${name}.uf2"
+          done < <(find build -type f -path '*/zephyr/zmk.uf2' -print0)
+
+          expected=(
+            velvet_prospector_dongle_walle.uf2
+            velvet_left_dongle.uf2
+            velvet_right_dongle.uf2
+            settings_reset_xiao.uf2
+            velvet_left.uf2
+            velvet_right.uf2
+            settings_reset.uf2
+          )
+          for name in "${expected[@]}"; do
+            test -s "firmware/$name" || { echo "Missing firmware: $name" >&2; exit 1; }
+          done
       - uses: actions/upload-artifact@v4
-        with: {name: firmware, path: firmware}
+        with:
+          name: firmware
+          path: firmware/*.uf2

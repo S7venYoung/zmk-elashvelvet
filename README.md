@@ -17,21 +17,21 @@
 
 ## 下载固件
 
-推送代码后，或在仓库的 **Actions → Build ZMK firmware → Run workflow** 手动启动构建。构建完成后，在对应运行记录的 **Artifacts** 下载 `firmware`，解压后按目标固件刷写：
+推送代码后，或在仓库的 **Actions → Build ZMK firmware → Run workflow** 手动启动构建。构建完成后，在对应运行记录的 **Artifacts** 下载 `firmware`。压缩包根目录直接放置以构建目标命名的 `.uf2` 文件，无需进入子文件夹：
 
-- `velvet_left`：左侧键盘
-- `velvet_right`：右侧键盘
-- `settings_reset`：清除 ZMK 保存的设置；仅在需要重置配对或存储设置时使用
+- `velvet_left.uf2`：左侧键盘
+- `velvet_right.uf2`：右侧键盘
+- `settings_reset.uf2`：清除 ZMK 保存的设置；仅在需要重置配对或存储设置时使用
 
 每侧键盘应刷写对应的 UF2 文件。左右固件均使用 nice!nano 目标板。
 
 Prospector dongle 模式需要刷写同一次 Actions 构建的以下三个固件：
 
-- `velvet_prospector_dongle_walle`：XIAO Prospector 接收器，也是电脑的 USB 键盘设备。
-- `velvet_left_dongle`：左手 peripheral。
-- `velvet_right_dongle`：右手 peripheral。
-- `settings_reset_xiao`：清除 Prospector 接收器保存的 BLE 配对。
-- `settings_reset`：清除 nice!nano 键盘保存的 BLE 配对。
+- `velvet_prospector_dongle_walle.uf2`：XIAO Prospector 接收器，也是电脑的 USB 键盘设备。
+- `velvet_left_dongle.uf2`：左手 peripheral。
+- `velvet_right_dongle.uf2`：右手 peripheral。
+- `settings_reset_xiao.uf2`：清除 Prospector 接收器保存的 BLE 配对。
+- `settings_reset.uf2`：清除 nice!nano 键盘保存的 BLE 配对。
 
 初次切换模式时，接收器和左右手应使用同一构建批次固件；分别刷写 `settings_reset_xiao` 与 `settings_reset` 清除新旧 central/peripheral 保存的配对，再将两手与 Prospector 重新配对。恢复普通键盘模式时，刷写原 `velvet_left` 与 `velvet_right` 固件。显示主题采用 Prospector 的 `prospector_theme_walle`，主题代码由 `zmk-prospector` 的 `prospector-themes` 模块提供。Dongle 模式不启用 DYA Studio 扩展、编码器、轨迹球或 scanner BLE observer。
 
