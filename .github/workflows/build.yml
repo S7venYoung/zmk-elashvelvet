@@ -15,13 +15,24 @@ jobs:
         if: failure()
         shell: bash
         run: |
-          find build -name 'zephyr_pre0.map' -o -name 'zephyr_pre0.elf'
-          for elf in build/*/zephyr/zephyr_pre0.elf; do
-            test -f "$elf" || continue
-            echo "=== $elf ==="
-            arm-zephyr-eabi-size -A "$elf" || true
-            arm-zephyr-eabi-nm -S --size-sort --radix=d "$elf" | tail -n 50 || true
-          done
+          python3 - <<'PY'
+          import glob, re
+          for path in glob.glob("build/*/zephyr/zephyr_pre0.map"):
+              print(f"=== {path} ===")
+              lines = open(path, errors="replace").read().splitlines()
+              for line in lines:
+                  if "Memory Configuration" in line or re.search(r"\bRAM\b", line):
+                      print(line)
+              entries = []
+              for line in lines:
+                  match = re.match(r"\s*(0x[0-9a-fA-F]+)\s+(0x[0-9a-fA-F]+)\s+(.+)", line)
+                  if match:
+                      size = int(match.group(2), 16)
+                      if size >= 256:
+                          entries.append((size, line.strip()))
+              for _, line in sorted(entries, reverse=True)[:40]:
+                  print(line)
+          PY
       - name: Collect flat firmware files
         shell: bash
         run: |
