@@ -72,11 +72,11 @@
 
         BASE {
             bindings = <
-&kp ESC             &kp N1        &kp N2            &kp N3        &kp N4  &kp N5                &kp NUMBER_6  &kp N7  &kp N8      &kp N9     &kp N0     &kp RIGHT_BRACKET
-&kp LCMD            &kp Q         &kp W             &kp E         &kp R   &kp T      &mkp RCLK  &kp Y         &kp U   &kp I       &kp O      &kp P      &kp BACKSPACE
-&kp LS(LEFT_SHIFT)  &kp A         &kp S             &kp D         &kp F   &kp G      &mkp MCLK  &kp H         &kp J   &kp K       &kp L      &kp SEMI   &kp ENTER
-&kp LSHFT           &kp Z         &kp X             &kp C         &kp V   &kp B      &mkp LCLK  &kp B         &kp N   &kp M       &kp COMMA  &kp DOT    &kp RIGHT_SHIFT
-                    &kp CAPSLOCK  &kp LEFT_CONTROL  &kp LEFT_ALT  &mo 2   &kp SPACE             &kp SPACE     &mo 1   &kp DELETE  &kp MINUS  &kp EQUAL
+&kp ESC    &kp N1        &kp N2            &kp N3        &kp N4  &kp N5                &kp NUMBER_6  &kp N7  &kp N8      &kp N9     &kp N0     &kp RIGHT_BRACKET
+&kp TAB    &kp Q         &kp W             &kp E         &kp R   &kp T      &mkp RCLK  &kp Y         &kp U   &kp I       &kp O      &kp P      &kp BACKSPACE
+&kp LCMD   &kp A         &kp S             &kp D         &kp F   &kp G      &mkp MCLK  &kp H         &kp J   &kp K       &kp L      &kp SEMI   &kp ENTER
+&kp LSHFT  &kp Z         &kp X             &kp C         &kp V   &kp B      &mkp LCLK  &kp N         &kp M   &kp COMMA   &kp DOT    &kp SLASH  &kp RIGHT_SHIFT
+           &kp CAPSLOCK  &kp LEFT_CONTROL  &kp LEFT_ALT  &mo 2   &kp SPACE             &kp SPACE     &mo 1   &kp DELETE  &kp MINUS  &kp EQUAL
             >;
 
             label = "BASE";
@@ -85,11 +85,11 @@
 
         NVA {
             bindings = <
-&kp GRAVE  &kp F1  &kp F2                &kp F3               &kp F4           &kp F5          &kp F6  &kp F7            &kp F8             &kp F9          &kp F10          &kp F11
-&kp F11    &trans  &kp C_PLAY_PAUSE      &kp C_VOL_DN         &kp C_VOLUME_UP  &trans  &trans  &trans  &kp LEFT_BRACKET  &kp RIGHT_BRACKET  &kp LEFT_BRACE  &kp RIGHT_BRACE  &kp PIPE
-&kp F12    &trans  &kp C_AL_MY_COMPUTER  &kp C_AL_CALCULATOR  &trans           &trans  &trans  &trans  &kp PAGE_UP       &kp PAGE_DOWN      &kp HOME        &kp END          &kp INSERT
-&trans     &trans  &trans                &trans               &trans           &trans  &trans  &trans  &trans            &trans             &trans          &trans           &trans
-           &trans  &trans                &trans               &trans           &trans          &trans  &trans            &trans             &trans          &trans
+&kp GRAVE  &kp F1  &kp F2  &kp F3        &kp F4           &kp F5          &kp F6             &kp F7            &kp F8             &kp F9          &kp F10          &kp F11
+&kp F11    &trans  &trans  &kp C_VOL_DN  &kp C_VOLUME_UP  &trans  &trans  &kp C_VOLUME_UP    &kp LEFT_BRACKET  &kp RIGHT_BRACKET  &kp LEFT_BRACE  &kp RIGHT_BRACE  &kp PIPE
+&kp F12    &kp N1  &kp N2  &kp N3        &kp N4           &kp N5  &trans  &kp C_VOLUME_DOWN  &kp PAGE_UP       &kp PAGE_DOWN      &kp HOME        &kp END          &kp INSERT
+&trans     &trans  &trans  &trans        &trans           &trans  &trans  &kp C_MUTE         &trans            &trans             &trans          &trans           &trans
+           &trans  &trans  &trans        &trans           &trans          &trans             &trans            &trans             &trans          &trans
             >;
 
             sensor-bindings = <&rsr_vol &rsr_trans>;
