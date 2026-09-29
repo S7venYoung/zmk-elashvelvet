@@ -13,7 +13,7 @@ layers:
   - {t: '9', s: (}
   - {t: '0', s: )}
   - {t: ']', s: '}'}
-  - $$mdi:apple-keyboard-command$$
+  - $$mdi:keyboard-tab$$
   - Q
   - W
   - E
@@ -26,7 +26,7 @@ layers:
   - O
   - P
   - {t: '$$mdi:backspace-outline$$', type: backspace}
-  - Sft+$$mdi:apple-keyboard-shift$$
+  - $$mdi:apple-keyboard-command$$
   - A
   - S
   - D
@@ -46,11 +46,11 @@ layers:
   - V
   - B
   - '&mkp LCLK'
-  - B
   - N
   - M
   - {t: ',', s: <}
   - {t: ., s: '>'}
+  - {t: /, s: '?'}
   - $$mdi:apple-keyboard-shift$$
   - $$mdi:apple-keyboard-caps$$
   - $$mdi:apple-keyboard-control$$
@@ -77,25 +77,25 @@ layers:
   - F11
   - F11
   - {t: ▽, type: trans}
-  - $$mdi:play-pause$$
+  - {t: ▽, type: trans}
   - $$mdi:volume-minus$$
   - $$mdi:volume-plus$$
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
+  - $$mdi:volume-plus$$
   - {t: '[', s: '{'}
   - {t: ']', s: '}'}
   - '{'
   - '}'
   - '|'
   - F12
+  - {t: '1', s: '!'}
+  - {t: '2', s: '@'}
+  - {t: '3', s: '#'}
+  - {t: '4', s: $}
+  - {t: '5', s: '%'}
   - {t: ▽, type: trans}
-  - AL MY COMPUTER
-  - AL CALCULATOR
-  - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
+  - $$mdi:volume-minus$$
   - PgUp
   - PgDn
   - Home
@@ -108,7 +108,7 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
+  - $$mdi:volume-mute$$
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
