@@ -1,21 +1,17 @@
 manifest:
+  version: 1.2
+  defaults:
+    remote: cormoran
+    revision: main
   remotes:
     - name: cormoran
       url-base: https://github.com/cormoran
     - name: zmkfirmware
       url-base: https://github.com/zmkfirmware
-    - name: badjeff
-      url-base: https://github.com/badjeff
-    - name: mctechnology17
-      url-base: https://github.com/mctechnology17
-    - name: eyelash
-      url-base: https://github.com/a741725193
-    - name: infused-kim
-      url-base: https://github.com/infused-kim
-    - name: a741725193
-      url-base: https://github.com/a741725193
     - name: gpeye
       url-base: https://github.com/GPeye
+    - name: a741725193
+      url-base: https://github.com/a741725193
     - name: s7venyoung
       url-base: https://github.com/S7venYoung
   projects:
@@ -27,15 +23,57 @@ manifest:
       remote: cormoran
       revision: main+dya
       import: app/west.yml
+      clone-depth: 1
+    - name: zephyr
+      remote: cormoran
+      revision: v4.1.0+zmk-fixes+nrf-half-duplex-uart
+      clone-depth: 1
+      import:
+        name-blocklist:
+          - ci-tools
+          - hal_altera
+          - hal_cypress
+          - hal_infineon
+          - hal_microchip
+          - hal_nxp
+          - hal_openisa
+          - hal_xtensa
+          - hal_st
+          - hal_ti
+          - loramac-node
+          - mcuboot
+          - mcumgr
+          - net-tools
+          - openthread
+          - edtt
+          - trusted-firmware-m
+          - chre
     - name: zmk-module-ble-management
-      remote: cormoran
-      revision: main
+      import: true
+    - name: zmk-module-battery-history
     - name: zmk-module-settings-rpc
-      remote: cormoran
-      revision: main
-    - name: mario-peripheral-animation
-      remote: gpeye
-      revision: main
+      import: true
+    - name: zmk-feature-custom-settings
+      import: true
+    - name: zmk-feature-fast-keymap
+      import: true
+    - name: zmk-feature-device-info
+      import: true
+    - name: zmk-feature-watchdog
+    - name: zmk-feature-input-stream
+      import: true
+    - name: zmk-feature-module-physical-layout
+      import: true
+    - name: zmk-feature-default-layer
+      import: true
+      revision: codex/custom-rpc-rewrite
+    - name: zmk-feature-os-detection
+      import: true
+    - name: zmk-feature-runtime-macro
+      import: true
+    - name: zmk-feature-runtime-combo
+      import: true
+    - name: zmk-feature-kscan-diagnostics
     - name: zmk-tog-io
       remote: a741725193
       revision: main
@@ -47,5 +85,8 @@ manifest:
       repo-path: zmk-prospector
       revision: prospector-themes
       path: modules/zmk-prospector-themes
+    - name: mario-peripheral-animation
+      remote: gpeye
+      revision: main
   self:
     path: config

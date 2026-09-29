@@ -2,7 +2,7 @@
 ---
 include:
   - board: xiao_ble//zmk
-    shield: velvet_prospector_dongle prospector_adapter prospector_theme_walle
+    shield: velvet_prospector_dongle prospector_adapter prospector_theme_walle velvet_dya_central
     cmake-args: -DCONFIG_LV_Z_MEM_POOL_SIZE=20480
     artifact: velvet_prospector_dongle_walle
   - board: nice_nano//zmk
@@ -21,7 +21,7 @@ include:
     cmake-args: -DCONFIG_ZMK_DISPLAY_STATUS_SCREEN_BUILT_IN=y
     artifact: velvet_left
   - board: nice_nano//zmk
-    shield: velvet_right nice_view
+    shield: velvet_right nice_view velvet_dya_central
     snippet: studio-rpc-usb-uart
     cmake-args: -DCONFIG_ZMK_STUDIO=y -DCONFIG_ZMK_STUDIO_LOCKING=n -DCONFIG_ZMK_DISPLAY_STATUS_SCREEN_BUILT_IN=y
     artifact: velvet_right
