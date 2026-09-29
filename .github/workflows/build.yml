@@ -15,6 +15,10 @@ jobs:
         if: failure()
         shell: bash
         run: |
+          for cfg in build/*/zephyr/.config; do
+            echo "=== $cfg ==="
+            grep -E '^CONFIG_(BT_BUF_(ACL_TX_COUNT|EVT_RX_COUNT)|BT_L2CAP_TX_BUF_COUNT|BT_MAX_CONN|ZMK_BEHAVIORS_QUEUE_SIZE|LV_Z_MEM_POOL_SIZE|MAIN_STACK_SIZE|ZMK_DISPLAY_DEDICATED_THREAD_STACK_SIZE|ZMK_STUDIO_RPC_(RX_BUF_SIZE|TX_BUF_SIZE|THREAD_STACK_SIZE))=' "$cfg" || true
+          done
           python3 - <<'PY'
           import glob, re
           for path in glob.glob("build/*/zephyr/zephyr_pre0.map"):
