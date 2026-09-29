@@ -3,7 +3,7 @@
 include:
   - board: xiao_ble//zmk
     shield: velvet_prospector_dongle prospector_adapter prospector_theme_walle velvet_dya_central
-    cmake-args: -DCONFIG_LV_Z_MEM_POOL_SIZE=20480
+    cmake-args: -DCONFIG_LV_Z_MEM_POOL_SIZE=16384
     artifact: velvet_prospector_dongle_walle
   - board: nice_nano//zmk
     shield: velvet_left nice_view_custom velvet_prospector_peripheral
