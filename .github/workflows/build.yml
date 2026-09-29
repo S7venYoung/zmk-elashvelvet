@@ -11,13 +11,13 @@ jobs:
       - uses: actions/checkout@v4
       - run: west init -l config && west update --narrow && west zephyr-export
       - run: west zmk-build -d ./build -q
-      - name: Report RAM map for failed link
-        if: failure()
+      - name: Report effective configuration and RAM allocations
+        if: always()
         shell: bash
         run: |
           for cfg in build/*/zephyr/.config; do
             echo "=== $cfg ==="
-            grep -E '^CONFIG_(BT_BUF_(ACL_TX_COUNT|EVT_RX_COUNT)|BT_L2CAP_TX_BUF_COUNT|BT_MAX_CONN|ZMK_BEHAVIORS_QUEUE_SIZE|LV_Z_MEM_POOL_SIZE|MAIN_STACK_SIZE|ZMK_DISPLAY_DEDICATED_THREAD_STACK_SIZE|ZMK_STUDIO_RPC_(RX_BUF_SIZE|TX_BUF_SIZE|THREAD_STACK_SIZE))=' "$cfg" || true
+            grep -E '^CONFIG_(BT_BUF_(ACL_TX_COUNT|EVT_RX_COUNT)|BT_L2CAP_TX_BUF_COUNT|BT_MAX_CONN|ZMK_BEHAVIORS_QUEUE_SIZE|LV_Z_MEM_POOL_SIZE|LV_Z_VDB_SIZE|LV_Z_BITS_PER_PIXEL|LV_COLOR_DEPTH|ZMK_DISPLAY_STATUS_SCREEN_CUSTOM|MAIN_STACK_SIZE|ZMK_DISPLAY_DEDICATED_THREAD_STACK_SIZE|ZMK_STUDIO_RPC_(RX_BUF_SIZE|TX_BUF_SIZE|THREAD_STACK_SIZE))=' "$cfg" || true
           done
           python3 - <<'PY'
           import glob, re
@@ -29,10 +29,10 @@ jobs:
                       print(line)
               entries = []
               for line in lines:
-                  match = re.match(r"\s*(0x[0-9a-fA-F]+)\s+(0x[0-9a-fA-F]+)\s+(.+)", line)
+                  match = re.search(r"(0x[0-9a-fA-F]+)\s+(0x[0-9a-fA-F]+)\s+(.+)", line)
                   if match:
                       size = int(match.group(2), 16)
-                      if size >= 256:
+                      if int(match.group(1), 16) >= 0x20000000 and size >= 256:
                           entries.append((size, line.strip()))
               for _, line in sorted(entries, reverse=True)[:40]:
                   print(line)
