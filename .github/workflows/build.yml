@@ -11,6 +11,17 @@ jobs:
       - uses: actions/checkout@v4
       - run: west init -l config && west update --narrow && west zephyr-export
       - run: west zmk-build -d ./build -q
+      - name: Report RAM map for failed link
+        if: failure()
+        shell: bash
+        run: |
+          find build -name 'zephyr_pre0.map' -o -name 'zephyr_pre0.elf'
+          for elf in build/*/zephyr/zephyr_pre0.elf; do
+            test -f "$elf" || continue
+            echo "=== $elf ==="
+            arm-zephyr-eabi-size -A "$elf" || true
+            arm-zephyr-eabi-nm -S --size-sort --radix=d "$elf" | tail -n 50 || true
+          done
       - name: Collect flat firmware files
         shell: bash
         run: |
