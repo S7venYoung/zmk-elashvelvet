@@ -1,22 +1,17 @@
 # Velvet46 ZMK 配置
 
-这是 Velvet46 分体键盘的 ZMK 0.4 固件配置，保留现有键位、组合键、背光、Nice!View 屏幕和 DYA Studio 支持。本分支新增 nice!nano K（nRF52833）作为 USB dongle 接收器：接收器担任 split central，通过 BLE 连接左右键盘；左右键盘担任 peripheral，并继续使用各自的 Nice!View 屏幕。
+这是 Velvet46 的 ZMK 0.4 / Zephyr 4.1 配置。左右键盘各自使用 Nice!View。`velvet_nano_dongle` 让无屏的 nice!nano K（nRF52833）担任 USB split central，通过 BLE 连接左右键盘 peripheral；接收器提供 DYA Studio 和 USB 键盘连接。
 
-本分支的 dongle 使用无屏幕的 nice!nano K。接收器固件提供 USB 键盘连接与 ZMK Studio；Prospector 屏幕、触控和主题不属于此 dongle 配置。编码器和轨迹球相关功能已从键盘配置移除。
+DYA Studio 模块包括 BLE 管理、Custom Settings、Fast Keymap、Device Info、Watchdog、Runtime Macro 和 Runtime Combo。左右手 peripheral 转发设置。配置不包含编码器、轨迹球或鼠标控制功能。
 
-## GitHub Actions 固件
+## Actions 固件
 
-在 **Actions → Build ZMK firmware → Run workflow** 手动启动构建，或推送提交触发构建。完成后，在运行记录的 **Artifacts** 下载 `firmware`。压缩包根目录直接放置以固件名称命名的 UF2 文件，无需进入子文件夹：
+Actions artifact `firmware` 中的 UF2 文件直接平铺在压缩包根目录：
 
-- `velvet_nano_dongle.uf2`：nice!nano K（nRF52833）USB 接收器 / split central，默认使用板卡 2.0.0 修订版。
-- `velvet_left_dongle.uf2`：dongle 模式下的左手 peripheral。
-- `velvet_right_dongle.uf2`：dongle 模式下的右手 peripheral。
-- `settings_reset_nano.uf2`：清除接收器保存的设置和 BLE 配对。
-- `velvet_left.uf2`、`velvet_right.uf2`：标准左右手固件。
-- `settings_reset.uf2`：清除 nice!nano 左右手保存的设置和 BLE 配对。
+- `velvet_nano_dongle.uf2`：Nano K USB 接收器 / split central
+- `velvet_left_dongle.uf2`、`velvet_right_dongle.uf2`：dongle 模式左右手 peripheral
+- `settings_reset_nano.uf2`：清除接收器设置和配对
+- `velvet_left.uf2`、`velvet_right.uf2`：普通 split 左右手固件
+- `settings_reset.uf2`：清除 nice!nano 左右手保存的设置和配对
 
-首次切换到 dongle 模式时，接收器和左右手应刷写同一次 Actions 构建生成的固件。按需先刷写 `settings_reset_nano.uf2` 和左右手的 `settings_reset.uf2` 清除旧配对，再将左右手与接收器配对。恢复标准 split 模式时，刷写 `velvet_left.uf2` 与 `velvet_right.uf2`。
-
-## 本地构建
-
-构建目标定义在 [`build.yaml`](build.yaml)，West 依赖清单位于 [`config/west-dependency.yml`](config/west-dependency.yml)。本分支在 `boards/nicekeyboards/nice_nano_k` 提供 nice!nano K 板卡定义，供 dongle 接收器和接收器配对重置固件使用。
+Dongle 模式的接收器和左右手应刷写同一次 Actions 生成的固件。清除旧配对时，接收器使用 `settings_reset_nano.uf2`，键盘使用 `settings_reset.uf2`。DYA Studio 通过 USB 连接接收器，在 Chromium 打开 <https://studio.dya.cormoran.works/>。

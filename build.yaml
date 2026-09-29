@@ -2,7 +2,7 @@
 ---
 include:
   - board: nice_nano_k/nrf52833
-    shield: velvet_nano_dongle
+    shield: velvet_nano_dongle velvet_dya_central
     cmake-args: -DCONFIG_ZMK_SPLIT_RELAY_EVENT_DATA_LEN=256 -DCONFIG_ZMK_DISPLAY=n
     artifact: velvet_nano_dongle
   - board: nice_nano//zmk
@@ -18,12 +18,12 @@ include:
     artifact: settings_reset_nano
   - board: nice_nano//zmk
     shield: velvet_left nice_view_custom
-    cmake-args: -DCONFIG_ZMK_DISPLAY_STATUS_SCREEN_BUILT_IN=y
+    cmake-args: -DCONFIG_ZMK_DISPLAY_STATUS_SCREEN_BUILT_IN=y -DCONFIG_ZMK_SPLIT_RELAY_EVENT_DATA_LEN=240
     artifact: velvet_left
   - board: nice_nano//zmk
-    shield: velvet_right nice_view
+    shield: velvet_right nice_view velvet_dya_central
     snippet: studio-rpc-usb-uart
-    cmake-args: -DCONFIG_ZMK_STUDIO=y -DCONFIG_ZMK_STUDIO_LOCKING=n -DCONFIG_ZMK_DISPLAY_STATUS_SCREEN_BUILT_IN=y
+    cmake-args: -DCONFIG_ZMK_STUDIO=y -DCONFIG_ZMK_STUDIO_LOCKING=n -DCONFIG_ZMK_DISPLAY_STATUS_SCREEN_BUILT_IN=y -DCONFIG_ZMK_SPLIT_RELAY_EVENT_DATA_LEN=240
     artifact: velvet_right
   - board: nice_nano//zmk
     shield: settings_reset

@@ -7,21 +7,14 @@ config SHIELD_VELVET_LEFT
 config SHIELD_VELVET_RIGHT
     def_bool $(shields_list_contains,velvet_right)
 
-config SHIELD_VELVET_PROSPECTOR_DONGLE
-    def_bool $(shields_list_contains,velvet_prospector_dongle)
-
 config SHIELD_VELVET_NANO_DONGLE
     def_bool $(shields_list_contains,velvet_nano_dongle)
-
-config SHIELD_VELVET_PROSPECTOR_PERIPHERAL
-    def_bool $(shields_list_contains,velvet_prospector_peripheral)
 
 config SHIELD_VELVET_SPLIT_PERIPHERAL
     def_bool $(shields_list_contains,velvet_split_peripheral)
 
 config ZMK_SPLIT_ROLE_CENTRAL
-    default y if SHIELD_VELVET_PROSPECTOR_DONGLE || SHIELD_VELVET_NANO_DONGLE
+    default y if SHIELD_VELVET_NANO_DONGLE
 
-# Keyboard halves use PWM backlight; the Prospector dongle does not.
 config ZMK_BACKLIGHT
-    default y if SHIELD_VELVET_LEFT || (SHIELD_VELVET_RIGHT && !SHIELD_VELVET_PROSPECTOR_PERIPHERAL)
+    default y if SHIELD_VELVET_LEFT || (SHIELD_VELVET_RIGHT && !SHIELD_VELVET_SPLIT_PERIPHERAL)
