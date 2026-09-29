@@ -21,10 +21,10 @@ jobs:
           done < <(find build -type f -path '*/zephyr/zmk.uf2' -print0)
 
           expected=(
-            velvet_prospector_dongle_walle.uf2
+            velvet_nano_dongle.uf2
             velvet_left_dongle.uf2
             velvet_right_dongle.uf2
-            settings_reset_xiao.uf2
+            settings_reset_nano.uf2
             velvet_left.uf2
             velvet_right.uf2
             settings_reset.uf2

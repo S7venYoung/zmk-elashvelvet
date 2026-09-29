@@ -1,49 +1,22 @@
 # Velvet46 ZMK 配置
 
-这是 Velvet46 分体键盘的 ZMK 固件配置，基于 ZMK 0.4，并在此基础上保留现有键位、组合键、背光和 Nice!View 屏幕配置。
+这是 Velvet46 分体键盘的 ZMK 0.4 固件配置，保留现有键位、组合键、背光、Nice!View 屏幕和 DYA Studio 支持。本分支新增 nice!nano K（nRF52833）作为 USB dongle 接收器：接收器担任 split central，通过 BLE 连接左右键盘；左右键盘担任 peripheral，并继续使用各自的 Nice!View 屏幕。
 
-## 固件功能
+本分支的 dongle 使用无屏幕的 nice!nano K。接收器固件提供 USB 键盘连接与 ZMK Studio；Prospector 屏幕、触控和主题不属于此 dongle 配置。编码器和轨迹球相关功能已从键盘配置移除。
 
-- 左右两侧使用 nice!nano 控制器，通过 BLE split 连接。
-- 左侧构建包含 `nice_view_custom` 屏幕；右侧构建包含 Nice!View 和 ZMK Studio 支持。
-- 右侧固件启用 ZMK Studio、USB UART Studio RPC，以及 BLE 管理和设置 RPC；左右侧启用 split relay/settings RPC。
-- Prospector dongle 模式使用 XIAO BLE / nRF52840 作为 USB split central，通过 BLE 连接左右键盘 peripheral，并显示 WALL-E / Codex 主题。
-- GitHub Actions 同时构建原始左右侧固件，以及 dongle 模式的接收器、左右 peripheral 和 settings reset 固件，并将 UF2 文件作为 `firmware` artifact 上传。
-- 按键布局和图示见 [键位图](keymap-drawer/velvet.svg)。
+## GitHub Actions 固件
 
-## 已移除的硬件功能
+在 **Actions → Build ZMK firmware → Run workflow** 手动启动构建，或推送提交触发构建。完成后，在运行记录的 **Artifacts** 下载 `firmware`。压缩包根目录直接放置以固件名称命名的 UF2 文件，无需进入子文件夹：
 
-本配置不包含编码器、轨迹球或鼠标控制层。相关传感器、输入处理器及鼠标行为已从键盘设备树、键位图和配置中移除。
+- `velvet_nano_dongle.uf2`：nice!nano K（nRF52833）USB 接收器 / split central，默认使用板卡 2.0.0 修订版。
+- `velvet_left_dongle.uf2`：dongle 模式下的左手 peripheral。
+- `velvet_right_dongle.uf2`：dongle 模式下的右手 peripheral。
+- `settings_reset_nano.uf2`：清除接收器保存的设置和 BLE 配对。
+- `velvet_left.uf2`、`velvet_right.uf2`：标准左右手固件。
+- `settings_reset.uf2`：清除 nice!nano 左右手保存的设置和 BLE 配对。
 
-## 下载固件
-
-推送代码后，或在仓库的 **Actions → Build ZMK firmware → Run workflow** 手动启动构建。构建完成后，在对应运行记录的 **Artifacts** 下载 `firmware`。压缩包根目录直接放置以构建目标命名的 `.uf2` 文件，无需进入子文件夹：
-
-- `velvet_left.uf2`：左侧键盘
-- `velvet_right.uf2`：右侧键盘
-- `settings_reset.uf2`：清除 ZMK 保存的设置；仅在需要重置配对或存储设置时使用
-
-每侧键盘应刷写对应的 UF2 文件。左右固件均使用 nice!nano 目标板。
-
-Prospector dongle 模式需要刷写同一次 Actions 构建的以下三个固件：
-
-- `velvet_prospector_dongle_walle.uf2`：XIAO Prospector 接收器，也是电脑的 USB 键盘设备。
-- `velvet_left_dongle.uf2`：左手 peripheral。
-- `velvet_right_dongle.uf2`：右手 peripheral。
-- `settings_reset_xiao.uf2`：清除 Prospector 接收器保存的 BLE 配对。
-- `settings_reset.uf2`：清除 nice!nano 键盘保存的 BLE 配对。
-
-初次切换模式时，接收器和左右手应使用同一构建批次固件；分别刷写 `settings_reset_xiao` 与 `settings_reset` 清除新旧 central/peripheral 保存的配对，再将两手与 Prospector 重新配对。恢复普通键盘模式时，刷写原 `velvet_left` 与 `velvet_right` 固件。显示主题采用 Prospector 的 `prospector_theme_walle`，主题代码由 `zmk-prospector` 的 `prospector-themes` 模块提供。Dongle 模式不启用 DYA Studio 扩展、编码器、轨迹球或 scanner BLE observer。
+首次切换到 dongle 模式时，接收器和左右手应刷写同一次 Actions 构建生成的固件。按需先刷写 `settings_reset_nano.uf2` 和左右手的 `settings_reset.uf2` 清除旧配对，再将左右手与接收器配对。恢复标准 split 模式时，刷写 `velvet_left.uf2` 与 `velvet_right.uf2`。
 
 ## 本地构建
 
-在安装 ZMK 所需的 west、Python 和 Zephyr 工具链后，从仓库根目录执行：
-
-```sh
-west init -l config
-west update --narrow
-west zephyr-export
-west zmk-build -d ./build -q
-```
-
-构建目标定义在 [`build.yaml`](build.yaml)，West 依赖清单位于 [`config/west-dependency.yml`](config/west-dependency.yml)。
+构建目标定义在 [`build.yaml`](build.yaml)，West 依赖清单位于 [`config/west-dependency.yml`](config/west-dependency.yml)。本分支在 `boards/nicekeyboards/nice_nano_k` 提供 nice!nano K 板卡定义，供 dongle 接收器和接收器配对重置固件使用。

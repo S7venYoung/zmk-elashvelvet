@@ -11,3 +11,4 @@ features:
 siblings:
   - velvet_left
   - velvet_right
+  - velvet_nano_dongle
