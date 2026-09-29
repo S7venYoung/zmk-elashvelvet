@@ -5,7 +5,7 @@ include:
     shield: velvet_left nice_view_custom
     artifact-name: velvet_left 
   - board: nice_nano//zmk
-    shield: velvet_right nice_view
+    shield: velvet_right nice_view velvet_dya_central
     snippet: studio-rpc-usb-uart
     cmake-args: -DCONFIG_ZMK_STUDIO=y -DCONFIG_ZMK_STUDIO_LOCKING=n
     artifact-name: velvet_right

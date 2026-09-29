@@ -1,38 +1,17 @@
 # Velvet46 ZMK 配置
 
-这是 Velvet46 分体键盘的 ZMK 固件配置，基于 ZMK 0.4，并在此基础上保留现有键位、组合键、背光和 Nice!View 屏幕配置。
+这是 Velvet46 分体键盘的 ZMK 0.4 / Zephyr 4.1 固件配置。左右键盘通过 BLE split 连接，并各自使用 Nice!View 屏幕。普通模式下右手为 split central，左手为 peripheral。
 
-## 固件功能
-
-- 左右两侧使用 nice!nano 控制器，通过 BLE split 连接。
-- 左侧构建包含 `nice_view_custom` 屏幕；右侧构建包含 Nice!View 和 ZMK Studio 支持。
-- 右侧固件启用 ZMK Studio、USB UART Studio RPC，以及 BLE 管理和设置 RPC；左右侧启用 split relay/settings RPC。
-- GitHub Actions 同时构建左右侧固件和 `settings_reset` 固件，并将 UF2 文件作为 `firmware` artifact 上传。
-- 按键布局和图示见 [键位图](keymap-drawer/velvet.svg)。
-
-## 已移除的硬件功能
-
-本配置不包含编码器、轨迹球或鼠标控制层。相关传感器、输入处理器及鼠标行为已从键盘设备树、键位图和配置中移除。
+右手 central 启用 DYA Studio 扩展：BLE 管理、持久化自定义设置、运行时宏与组合键、Fast Keymap、设备信息和 watchdog 诊断。左手 peripheral 提供设置存储和 split relay，使 central 上的 Studio 能访问左右两侧。固件不包含编码器、轨迹球或鼠标控制功能。
 
 ## 下载固件
 
-推送代码后，或在仓库的 **Actions → Build ZMK firmware → Run workflow** 手动启动构建。构建完成后，在对应运行记录的 **Artifacts** 下载 `firmware`，解压后按目标固件刷写：
+在 **Actions → Build ZMK firmware → Run workflow** 启动构建。完成后在运行记录的 **Artifacts** 下载 `firmware`；压缩包内是根目录平铺的 `.uf2` 文件：
 
-- `velvet_left`：左侧键盘
-- `velvet_right`：右侧键盘
-- `settings_reset`：清除 ZMK 保存的设置；仅在需要重置配对或存储设置时使用
+- `velvet_left.uf2`：左手键盘 peripheral
+- `velvet_right.uf2`：右手键盘 central，启用 USB Studio RPC 和 DYA Studio 功能
+- `settings_reset.uf2`：清除键盘保存的设置和 BLE 配对
 
-每侧键盘应刷写对应的 UF2 文件。左右固件均使用 nice!nano 目标板。
+刷写固件后，将键盘通过 USB 连接电脑，并使用 Chromium 浏览器打开 <https://studio.dya.cormoran.works/> 连接 DYA Studio。
 
-## 本地构建
-
-在安装 ZMK 所需的 west、Python 和 Zephyr 工具链后，从仓库根目录执行：
-
-```sh
-west init -l config
-west update --narrow
-west zephyr-export
-west zmk-build -d ./build -q
-```
-
-构建目标定义在 [`build.yaml`](build.yaml)，West 依赖清单位于 [`config/west-dependency.yml`](config/west-dependency.yml)。
+构建目标定义在 [`build.yaml`](build.yaml)，依赖及 ZMK/Zephyr 版本定义在 [`config/west-dependency.yml`](config/west-dependency.yml)。
