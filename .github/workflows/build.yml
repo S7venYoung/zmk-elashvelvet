@@ -15,7 +15,7 @@ jobs:
         shell: bash
         run: |
           grep -qx 'CONFIG_VELVET_NANO_REPLUG_BOOTLOADER=y' build/velvet_nano_dongle/zephyr/.config
-          grep -q 'nano_replug_bootloader.c.obj' build/velvet_nano_dongle/zephyr/zephyr.map
+          find build/velvet_nano_dongle -type f -name 'nano_replug_bootloader.c.obj' -print -quit | grep -q .
       - name: Report RAM map for failed link
         if: failure()
         shell: bash
