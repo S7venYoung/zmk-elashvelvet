@@ -47,8 +47,6 @@ jobs:
             velvet_left_dongle.uf2
             velvet_right_dongle.uf2
             settings_reset_nano.uf2
-            velvet_left.uf2
-            velvet_right.uf2
             settings_reset.uf2
           )
           for name in "${expected[@]}"; do
