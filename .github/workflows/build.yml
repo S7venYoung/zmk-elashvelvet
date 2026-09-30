@@ -11,6 +11,11 @@ jobs:
       - uses: actions/checkout@v4
       - run: west init -l config && west update --narrow && west zephyr-export
       - run: west zmk-build -d ./build -q
+      - name: Verify Nano replug bootloader is linked
+        shell: bash
+        run: |
+          grep -qx 'CONFIG_VELVET_NANO_REPLUG_BOOTLOADER=y' build/velvet_nano_dongle/zephyr/.config
+          grep -q 'nano_replug_bootloader.c.obj' build/velvet_nano_dongle/zephyr/zephyr.map
       - name: Report RAM map for failed link
         if: failure()
         shell: bash
