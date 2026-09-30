@@ -18,14 +18,5 @@ include:
     shield: settings_reset
     artifact: settings_reset_xiao
   - board: nice_nano//zmk
-    shield: velvet_left nice_view_custom
-    cmake-args: -DCONFIG_ZMK_DISPLAY_STATUS_SCREEN_BUILT_IN=y
-    artifact: velvet_left
-  - board: nice_nano//zmk
-    shield: velvet_right nice_view velvet_dya_central
-    snippet: studio-rpc-usb-uart
-    cmake-args: -DCONFIG_ZMK_STUDIO=y -DCONFIG_ZMK_STUDIO_LOCKING=n -DCONFIG_ZMK_DISPLAY_STATUS_SCREEN_BUILT_IN=y
-    artifact: velvet_right
-  - board: nice_nano//zmk
     shield: settings_reset
     artifact: settings_reset

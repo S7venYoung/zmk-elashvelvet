@@ -6,12 +6,11 @@ DYA Studio 模块包括 BLE 管理、Custom Settings、Fast Keymap、Device Info
 
 ## Actions 固件
 
-Actions artifact `firmware` 内直接平铺命名 UF2 文件：
+Actions artifact `firmware` 只包含 Dongle 模式固件和设置重置固件，直接平铺命名 UF2 文件：
 
 - `velvet_prospector_dongle_walle.uf2`：Prospector USB 接收器 / split central
 - `velvet_left_dongle.uf2`、`velvet_right_dongle.uf2`：dongle 模式左右手 peripheral
 - `settings_reset_xiao.uf2`：清除接收器设置和配对
-- `velvet_left.uf2`、`velvet_right.uf2`：普通 split 左右手固件
 - `settings_reset.uf2`：清除 nice!nano 键盘设置和配对
 
 Dongle 模式三块设备应刷写同一次 Actions 生成的固件。清除旧配对时，接收器使用 `settings_reset_xiao.uf2`，左右手使用 `settings_reset.uf2`。DYA Studio 通过 USB 连接 central，在 Chromium 浏览器打开 <https://studio.dya.cormoran.works/>。
