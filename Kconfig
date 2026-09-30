@@ -1,0 +1,4 @@
+config VELVET_NANO_REPLUG_BOOTLOADER
+    bool "Enter Nano dongle bootloader after two short USB unplug/replug cycles"
+    depends on SHIELD_VELVET_NANO_DONGLE && SETTINGS && ZMK_USB && RETENTION_BOOT_MODE
+    default y
