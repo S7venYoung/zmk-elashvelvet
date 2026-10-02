@@ -57,6 +57,8 @@ manifest:
       import: true
     - name: zmk-feature-device-info
       import: true
+    - name: zmk-module-devtool
+      import: true
     - name: zmk-feature-watchdog
     - name: zmk-feature-input-stream
       import: true
