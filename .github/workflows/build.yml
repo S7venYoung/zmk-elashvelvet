@@ -10,10 +10,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: west init -l config && west update --narrow && west zephyr-export
+      - name: Install Nano Studio action hook
+        run: python3 scripts/patch_studio_binding_actions.py dependencies/zmk/app/src/keymap.c
       - run: west zmk-build -d ./build -q
       - name: Verify Nano replug bootloader is linked
         shell: bash
         run: |
+          grep -qx 'CONFIG_CLOCK_CONTROL_NRF_K32SRC_RC=y' build/velvet_nano_dongle/zephyr/.config
+          grep -qx '# CONFIG_CLOCK_CONTROL_NRF_K32SRC_XTAL is not set' build/velvet_nano_dongle/zephyr/.config
+          grep -qx 'CONFIG_VELVET_STUDIO_BINDING_ACTIONS=y' build/velvet_nano_dongle/zephyr/.config
+          find build/velvet_nano_dongle -type f -name 'studio_binding_actions.c.obj' -print -quit | grep -q .
           grep -qx 'CONFIG_VELVET_NANO_REPLUG_BOOTLOADER=y' build/velvet_nano_dongle/zephyr/.config
           find build/velvet_nano_dongle -type f -name 'nano_replug_bootloader.c.obj' -print -quit | grep -q .
       - name: Report RAM map for failed link
