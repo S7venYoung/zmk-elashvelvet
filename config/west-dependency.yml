@@ -13,6 +13,10 @@ manifest:
     - name: a741725193
       url-base: https://github.com/a741725193
   projects:
+    - name: zmk-dongle-fighter-theme
+      url: https://github.com/hitsmaxft/zmk-dongle-fighter-theme
+      revision: 7f59dc76d56a054e81b6dd905d69fd5f0d360265
+      path: zmk-dongle-fighter-theme
     - name: zmk-west-commands
       remote: cormoran
       revision: v1.0.0

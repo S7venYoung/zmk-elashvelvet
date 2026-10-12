@@ -1,4 +1,4 @@
-/* Keyless central: the Nano K hosts the keyboard split without a display. */
+/* Keyless nice!nano nRF52840 central with SH1106 OLED. */
 #include <dt-bindings/zmk/matrix_transform.h>
 #include "velvet-layouts.dtsi"
 
@@ -6,6 +6,7 @@
     chosen {
         zmk,kscan = &prospector_mock_kscan;
         zmk,physical-layout = &velvet_layout;
+        zephyr,display = &oled;
     };
 
     prospector_mock_kscan: kscan_1 {

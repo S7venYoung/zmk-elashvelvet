@@ -16,12 +16,12 @@ jobs:
       - name: Verify Nano replug bootloader is linked
         shell: bash
         run: |
-          grep -qx 'CONFIG_CLOCK_CONTROL_NRF_K32SRC_RC=y' build/velvet_nano_dongle/zephyr/.config
-          grep -qx '# CONFIG_CLOCK_CONTROL_NRF_K32SRC_XTAL is not set' build/velvet_nano_dongle/zephyr/.config
-          grep -qx 'CONFIG_VELVET_STUDIO_BINDING_ACTIONS=y' build/velvet_nano_dongle/zephyr/.config
-          find build/velvet_nano_dongle -type f -name 'studio_binding_actions.c.obj' -print -quit | grep -q .
-          grep -qx 'CONFIG_VELVET_NANO_REPLUG_BOOTLOADER=y' build/velvet_nano_dongle/zephyr/.config
-          find build/velvet_nano_dongle -type f -name 'nano_replug_bootloader.c.obj' -print -quit | grep -q .
+          grep -qx 'CONFIG_SOC_NRF52840=y' build/velvet_nano_dongle_fight/zephyr/.config
+          grep -qx 'CONFIG_ZMK_DISPLAY_STATUS_SCREEN_CUSTOM=y' build/velvet_nano_dongle_fight/zephyr/.config
+          grep -qx 'CONFIG_VELVET_STUDIO_BINDING_ACTIONS=y' build/velvet_nano_dongle_fight/zephyr/.config
+          find build/velvet_nano_dongle_fight -type f -name 'studio_binding_actions.c.obj' -print -quit | grep -q .
+          grep -qx 'CONFIG_VELVET_NANO_REPLUG_BOOTLOADER=y' build/velvet_nano_dongle_fight/zephyr/.config
+          find build/velvet_nano_dongle_fight -type f -name 'nano_replug_bootloader.c.obj' -print -quit | grep -q .
       - name: Report RAM map for failed link
         if: failure()
         shell: bash
@@ -54,10 +54,9 @@ jobs:
           done < <(find build -type f -path '*/zephyr/zmk.uf2' -print0)
 
           expected=(
-            velvet_nano_dongle.uf2
+            velvet_nano_dongle_fight.uf2
             velvet_left_dongle.uf2
             velvet_right_dongle.uf2
-            settings_reset_nano.uf2
             settings_reset.uf2
           )
           for name in "${expected[@]}"; do
