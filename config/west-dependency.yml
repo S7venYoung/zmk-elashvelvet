@@ -21,7 +21,7 @@ manifest:
       import: true
     - name: zmk
       remote: cormoran
-      revision: main+dya
+      revision: e5c9b6915b56801193e359dd9bad4a167ce0d1b8
       import: app/west.yml
       clone-depth: 1
     - name: zephyr

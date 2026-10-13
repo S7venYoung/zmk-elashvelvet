@@ -1,4 +1,4 @@
-name: Build ZMK firmware
+name: Build Cube keyboard peripherals
 on:
   workflow_dispatch:
   push:
@@ -47,10 +47,8 @@ jobs:
           done < <(find build -type f -path '*/zephyr/zmk.uf2' -print0)
 
           expected=(
-            velvet_prospector_dongle_walle.uf2
-            velvet_left_dongle.uf2
-            velvet_right_dongle.uf2
-            settings_reset_xiao.uf2
+            velvet_left_cube.uf2
+            velvet_right_cube.uf2
             settings_reset.uf2
           )
           for name in "${expected[@]}"; do
@@ -58,5 +56,5 @@ jobs:
           done
       - uses: actions/upload-artifact@v4
         with:
-          name: firmware
+          name: cube-peripherals-experimental
           path: firmware/*.uf2

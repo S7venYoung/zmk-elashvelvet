@@ -1,0 +1,2 @@
+/* Cube peripheral selection; GPIO wiring stays in velvet_left/right.overlay. */
+/ { };

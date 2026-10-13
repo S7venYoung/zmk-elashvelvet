@@ -19,3 +19,6 @@ config ZMK_SPLIT_ROLE_CENTRAL
 # Keyboard halves use PWM backlight; the Prospector dongle does not.
 config ZMK_BACKLIGHT
     default y if SHIELD_VELVET_LEFT || (SHIELD_VELVET_RIGHT && !SHIELD_VELVET_PROSPECTOR_PERIPHERAL)
+
+config SHIELD_VELVET_CUBE_PERIPHERAL
+    def_bool $(shields_list_contains,velvet_cube_peripheral)
