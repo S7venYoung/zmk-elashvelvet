@@ -1,0 +1,3 @@
+2026-10-15 Cube DYA peripheral integration batch
+Source: 3e1fafde88e277898db7b842293de71a9e0ca718
+Build both native split halves and settings-reset recovery.
