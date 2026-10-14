@@ -2,7 +2,8 @@ name: Build Cube keyboard peripherals
 on:
   workflow_dispatch:
   push:
-    paths-ignore: ["keymap-drawer/**"]
+    branches: [zmk-esp32-cube]
+    paths: [.github/cube-final-build-request]
 jobs:
   build:
     runs-on: ubuntu-latest

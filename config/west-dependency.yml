@@ -52,6 +52,7 @@ manifest:
       import: true
     - name: zmk-module-battery-history
     - name: zmk-module-settings-rpc
+      revision: 78f86df9e6c5edaf57bef3ccbd7f360cfdf49291
       import: true
     - name: zmk-feature-custom-settings
       import: true
@@ -60,6 +61,7 @@ manifest:
     - name: zmk-feature-device-info
       import: true
     - name: zmk-feature-watchdog
+      revision: 84ad14c6c3645dc40b23f45d08ab45418655f912
     - name: zmk-feature-input-stream
       import: true
     - name: zmk-feature-module-physical-layout
@@ -74,6 +76,7 @@ manifest:
     - name: zmk-feature-runtime-combo
       import: true
     - name: zmk-feature-kscan-diagnostics
+      revision: 1432f7fe0cfe903cd7d3c9931ae6bd6f2e1f328e
     - name: zmk-tog-io
       remote: a741725193
       revision: main
