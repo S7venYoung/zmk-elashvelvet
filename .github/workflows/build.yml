@@ -11,6 +11,14 @@ jobs:
       - uses: actions/checkout@v4
       - run: west init -l config && west update --narrow && west zephyr-export
       - run: west zmk-build -d ./build -q
+      - name: Verify Cube discovery module is linked into both halves
+        shell: bash
+        run: |
+          for half in velvet_left_cube velvet_right_cube; do
+            test -s "build/$half/zephyr/zephyr.elf"
+            grep -q 'cube_identity.c' "build/$half/build.ninja"
+            grep -q 'cube_identity' "build/$half/zephyr/zephyr.map"
+          done
       - name: Report effective configuration and RAM allocations
         if: always()
         shell: bash
