@@ -15,9 +15,9 @@ jobs:
         shell: bash
         run: |
           for half in velvet_left_cube velvet_right_cube; do
-            test -s "build/$half/zephyr/zephyr.elf"
+            test -s "build/$half/zephyr/zmk.elf"
             grep -q 'cube_identity.c' "build/$half/build.ninja"
-            grep -q 'cube_identity' "build/$half/zephyr/zephyr.map"
+            grep -q 'cube_identity' "build/$half/zephyr/zephyr_pre0.map"
           done
       - name: Report effective configuration and RAM allocations
         if: always()
