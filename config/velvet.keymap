@@ -37,6 +37,7 @@
             bindings = <&bootloader>;
             key-positions = <0 11>;
         };
+    macros {
         pwd_enter: pwd_enter {
             compatible = "zmk,behavior-macro";
             label = "PWD_ENTER";
