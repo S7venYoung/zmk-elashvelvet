@@ -17,7 +17,17 @@
             tapping-term-ms = <200>;
             quick-tap-ms = <180>;
         };
+        td_m_pwd: td_m_pwd {
+            compatible = "zmk,behavior-tap-dance";
+            label = "TD_M_PWD";
+            #binding-cells = <0>;
 
+            // 1 tap: m
+            // 2 taps: password + Enter
+            bindings = <&kp M>, <&pwd_enter>;
+
+            tapping-term-ms = <200>;
+        };
     };
 
     combos {
@@ -26,6 +36,18 @@
         flash {
             bindings = <&bootloader>;
             key-positions = <0 11>;
+        };
+        pwd_enter: pwd_enter {
+            compatible = "zmk,behavior-macro";
+            label = "PWD_ENTER";
+            #binding-cells = <0>;
+
+            // outputs: x y 1 9 0 0 9 1 8 8 + Enter
+            bindings =
+                <&kp X>, <&kp Y>,
+                <&kp N1>, <&kp N9>, <&kp N0>, <&kp N0>,
+                <&kp N9>, <&kp N1>, <&kp N8>, <&kp N8>,
+                <&kp ENTER>;
         };
     };
 
