@@ -79,7 +79,7 @@ manifest:
       revision: main
     - name: prospector-zmk-module
       remote: s7venyoung
-      revision: 819bcd40cfa13a76f09413ce7662f04bee902b13
+      revision: 1ced70544118ca7dcdac5ef996d4f6b4068a74b2
     - name: mario-peripheral-animation
       remote: gpeye
       revision: main
