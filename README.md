@@ -40,3 +40,11 @@ Nano K 接收器没有按键，可用 USB 短插拔序列进入 UF2 Bootloader�
 仅在 Nano 接收器上，Studio 的改键界面选择 **Bootloader** 会在约 500 ms 后重启进入 BL；选择 **Bluetooth → Clear all bonds（BT_CLR_ALL）** 会清除接收器的主机配对、左右手 peer 地址并重启。普通改键照常生效；这两个管理操作不会替换或保存原按键绑定。清除后，左右手若仍保留旧配对，也需各自重置配对。此钩子作用于标准 Studio 改键请求，不承诺所有 Fast Keymap 批量操作都会经过同一入口。DYA 的 Debug Tool → Bootloader 入口仍可使用。
 
 钩子由 Actions 在 west 拉取 ZMK 后安装；若上游 setter 结构改变，脚本会终止构建，避免静默丢失管理入口。构建成功不等于已通过实机 USB、进入 BL 和配对清除测试。
+
+## 独立扫描仪发现与状态广播
+
+接收器提供与 `codex/zmk04-dya-Prospector` 一致的 Prospector 状态广播，以及 Fight 左右手遥测。独立扫描仪无需与接收器配对即可发现 `Velvet46`，接收层、输出状态、修饰键、WPM 和左右手电量。频道为 0（通用广播），空闲状态每秒更新。
+
+Dongle 按 AUX central 配置：左手来自 peripheral 0，右手来自 peripheral 1；接收器自身不冒充右手电池。Fight 遥测分别统计 Velvet 61 键的左右手 WPM，零电量有效、尚未收到的电量保持无效。两侧未全部连接时，Prospector 状态广播使用短广播/静默窗口，为键盘重连让出无线时间；此期间发现可能较慢。
+
+只更新接收器即可获得广播功能，原有左右手固件不变。扫描仪若限定了频道或选中了其他键盘，需要切回频道 0/选择 Velvet46。DYA、进入 BL、清除配对及本分支原有显示配置保留。扫描仪发现与数值显示仍需实机验证。

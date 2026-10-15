@@ -22,6 +22,17 @@ jobs:
           find build/velvet_nano_dongle -type f -name 'studio_binding_actions.c.obj' -print -quit | grep -q .
           grep -qx 'CONFIG_VELVET_NANO_REPLUG_BOOTLOADER=y' build/velvet_nano_dongle/zephyr/.config
           find build/velvet_nano_dongle -type f -name 'nano_replug_bootloader.c.obj' -print -quit | grep -q .
+      - name: Verify scanner telemetry
+        shell: bash
+        run: |
+          config=$(find build -path '*velvet_nano_dongle*/zephyr/.config' -print -quit)
+          test -n "$config"
+          grep -qx 'CONFIG_ZMK_STATUS_ADVERTISEMENT=y' "$config"
+          grep -qx 'CONFIG_ZMK_STATUS_ADV_CENTRAL_SIDE="AUX"' "$config"
+          grep -qx 'CONFIG_PROSPECTOR_EXPECTED_PERIPHERAL_COUNT=2' "$config"
+          for source in status_advertisement.c velvet_stats.c fight_telemetry.c; do
+            find "$(dirname "$(dirname "$config")")" -name "$source.obj" -print -quit | grep -q .
+          done
       - name: Report RAM map for failed link
         if: failure()
         shell: bash
