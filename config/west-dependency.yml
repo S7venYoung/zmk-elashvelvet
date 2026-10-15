@@ -13,6 +13,9 @@ manifest:
     - name: a741725193
       url-base: https://github.com/a741725193
   projects:
+    - name: prospector-zmk-module
+      url: https://github.com/S7venYoung/prospector-zmk-module
+      revision: 1ced70544118ca7dcdac5ef996d4f6b4068a74b2
     - name: zmk-dongle-fighter-theme
       url: https://github.com/hitsmaxft/zmk-dongle-fighter-theme
       revision: 7f59dc76d56a054e81b6dd905d69fd5f0d360265
