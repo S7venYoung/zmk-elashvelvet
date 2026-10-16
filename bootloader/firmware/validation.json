@@ -1,0 +1,22 @@
+{
+  "file": "nano33_replug_FULL_RECOVERY.hex",
+  "sha256": "b766e68a42c30517b6f767162c40b975c190a696411103b9fc596f8ef50a6f42",
+  "bootloader_source": "d7c55d99c97633a770c5536dc113e3849f3bc91e",
+  "build_run": 38846881336,
+  "original_template_sha256": "20282bd61320493189a694f6c0401501d6124607a741c5208ee95148e0b3f2af",
+  "flash_bytes": 524288,
+  "uicr_bootloader": "0x74000",
+  "uicr_mbr_params": "0x7e000",
+  "journal": "0x65000-0x65fff initialized FF",
+  "hardware_tested": true,
+  "preserved": "Original MBR, SoftDevice, UICR; old BL replaced; no ZMK application",
+  "hardware_validation": {
+    "source": "user report in this chat",
+    "date": "2026-10-16",
+    "passed": [
+      "UF2 bootloader disk and application programming",
+      "normal application start",
+      "two short power cycles, DFU on third power-on"
+    ]
+  }
+}

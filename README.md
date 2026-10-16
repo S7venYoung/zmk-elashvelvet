@@ -1,10 +1,16 @@
-> **nRF52833 实机回归记录（2026-10-16）**：扫描仪广播版 `a2ba0f2`（Actions 38746000853）刷入后 USB 不枚举，DYA 和插拔入口不可用，已撤回该版广播改动。不要刷该次构建的固件。此前实机可用版本为 `54f1444`（Actions 38214599144）；无法进入启动器时需要 SWD/J-Link 恢复原始 HEX。根因尚未确认，扫描仪发现功能暂不提供。
+> **nRF52833 实机回归记录（2026-10-16）**：扫描仪广播版 `a2ba0f2`（Actions 38746000853）刷入后 USB 不枚举，DYA 和插拔入口不可用，已撤回该版广播改动。不要刷该次构建的固件。此前实机可用版本为 `54f1444`（Actions 38214599144）；无法进入启动器时需要 SWD/J-Link 恢复原始 HEX。根因尚未确认；当前分支提供单广播修复候选，尚未确认扫描仪广播实机稳定性。独立 Bootloader 已另行通过实机验证，见下文。
 
 # Velvet46 ZMK 配置
 
 这是 Velvet46 的 ZMK 0.4 / Zephyr 4.1 配置。左右键盘各自使用 Nice!View。`velvet_nano_dongle` 让无屏的 nice!nano K（nRF52833）担任 USB split central，通过 BLE 连接左右键盘 peripheral；接收器提供 DYA Studio 和 USB 键盘连接。
 
 DYA Studio 模块包括 BLE 管理、Custom Settings、Fast Keymap、Device Info、Watchdog、Runtime Macro 和 Runtime Combo。左右手 peripheral 转发设置。配置不包含编码器、轨迹球或鼠标控制功能。
+
+## 独立短插拔 Bootloader（已实机验证）
+
+已合入 BL 内的短插拔恢复功能：前两次冷上电在约 2 秒内拔下，第三次进入 NANO33TEST；正常上电约 2 秒后启动应用。此入口不依赖 ZMK 应用运行。
+
+[下载已验证全量恢复 HEX](bootloader/firmware/nano33_replug_FULL_RECOVERY.hex) · [安装、分区、SHA256 和测试记录](bootloader/README.md)。首次通过 J-Link 安装；全量恢复会清除应用和配对，之后再刷应用 UF2。后续日常更新应用不必重刷 BL。
 
 ## Actions 固件
 
@@ -21,9 +27,9 @@ Dongle 模式的接收器和左右手应刷写同一次 Actions 生成的固件�
 
 Nano 接收器使用 `studio-rpc-usb-uart` 启用 USB CDC Studio 通道。RPC 收发及自定义请求缓冲为 256 字节，RPC 线程栈为 6000 字节；构建参数固定蓝牙 ACL/事件/L2CAP 发送缓冲数量为 3/6/4，避免通用键盘配置覆盖接收器的内存预算。接收器无屏幕，左右键盘保留各自屏幕。
 
-### 无按键接收器进入 Bootloader
+### 应用内旧插拔入口（区别于独立 BL）
 
-Nano K 接收器没有按键，可用 USB 短插拔序列进入 UF2 Bootloader：先插入 USB，等待约 2 秒后在 10 秒内拔下；再插入、等待约 2 秒并在 10 秒内拔下；第三次插入后会自动进入 Bootloader。每次插入后保持连接超过 10 秒，会清除已记录的序列。刷写完固件后重新插入即可正常使用。
+以下是旧 BL 下由 ZMK 应用执行的备用机制；已安装独立 BL 时，优先使用上文约 2 秒内拔下的方式。应用内机制如下：先插入 USB，等待约 2 秒后在 10 秒内拔下；再插入、等待约 2 秒并在 10 秒内拔下；第三次插入后会自动进入 Bootloader。每次插入后保持连接超过 10 秒，会清除已记录的序列。刷写完固件后重新插入即可正常使用。
 
 接收器拔下 USB 后没有持续供电，因此固件无法测量两次插入之间的断电时长。请连续完成上述动作；长时间断电后再次插入并保持连接超过 10 秒，也会清除可能残留的序列。此功能只编入 Nano 接收器固件，不影响左右手固件。只有实际提供 RST/DFU 入口的板子才能用硬件复位进入启动器；这只接收器的 GND/SWD/SWC/VCC 焊盘是 SWD 调试接口。此插拔功能依赖固件启动及 USB 枚举成功，不能恢复启动失败的固件。
 
