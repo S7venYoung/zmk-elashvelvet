@@ -46,3 +46,7 @@ Dongle 按 AUX central 配置：左手来自 peripheral 0，右手来自 periphe
 ## 清除设置后自动返回启动器
 
 `settings_reset_nano.uf2`（nRF52833 接收器）和 `settings_reset.uf2`（nice!nano nRF52840 左右键盘/接收器）是临时清除固件。新版完成清除后等待约 1 秒，自动重启进入 UF2 启动器；磁盘重新出现后，直接拖入对应设备的正常固件。reset 固件本身不提供 DYA，不需要通过 DYA 再次进入 BL。左右键盘需要分别清除、分别重刷，清除配对后应让各设备重新配对。若擦除或 BL 请求失败，不自动重启。此改动不更新或覆盖 BL，本机刷机兼容性仍以实测为准。
+
+## Dongle 模式右手 nice!view
+
+右手 `velvet_right_dongle.uf2` 使用官方 nice!view 专用 peripheral 状态界面，显示电池、与接收器连接状态和内置图案。停止强制通用 BUILT_IN 界面；左手和接收器的显示配置不变。Actions 检查最终屏幕驱动、单色配置和 peripheral 界面对象，并保存右手 ELF/DTS/config/map。此调整针对右手空白屏幕排查，编译通过后仍需实机验证；只重刷右手正常固件即可，不必清配对。
