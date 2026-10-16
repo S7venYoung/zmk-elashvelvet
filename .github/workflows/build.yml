@@ -34,10 +34,11 @@ jobs:
         shell: bash
         run: |
           mkdir -p diagnostics
-          for name in .config zephyr.dts zephyr.map zephyr.elf; do
+          for name in .config zephyr.dts zmk.map zmk.elf; do
             test ! -f "build/velvet_nano_dongle/zephyr/$name" || cp "build/velvet_nano_dongle/zephyr/$name" diagnostics/
           done
-          west list -f '{name} {revision} {sha}' > diagnostics/dependencies.txt
+          west list -f '{name} {revision} {path}' > diagnostics/dependencies.txt
+          west forall -c 'git rev-parse HEAD' >> diagnostics/dependencies.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
