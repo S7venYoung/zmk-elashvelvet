@@ -61,9 +61,9 @@ Nano 接收器使用 `studio-rpc-usb-uart` 启用 USB CDC Studio 通道。RPC �
 
 `settings_reset_nano.uf2`（nRF52833 接收器）和 `settings_reset.uf2`（nice!nano nRF52840 左右键盘/接收器）是临时清除固件。新版完成清除后等待约 1 秒，自动重启进入 UF2 启动器；磁盘重新出现后，直接拖入对应设备的正常固件。reset 固件本身不提供 DYA，不需要通过 DYA 再次进入 BL。左右键盘需要分别清除、分别重刷，清除配对后应让各设备重新配对。若擦除或 BL 请求失败，不自动重启。此改动不更新或覆盖 BL，本机刷机兼容性仍以实测为准。
 
-## Dongle 模式右手 nice!view
+## Dongle 模式左右手显示
 
-右手 `velvet_right_dongle.uf2` 使用官方 nice!view 专用 peripheral 状态界面，显示电池、与接收器连接状态和内置图案。停止强制通用 BUILT_IN 界面；左手和接收器的显示配置不变。Actions 检查最终屏幕驱动、单色配置和 peripheral 界面对象，并保存右手 ELF/DTS/config/map。此调整针对右手空白屏幕排查，编译通过后仍需实机验证；只重刷右手正常固件即可，不必清配对。
+左右手均使用 `nice_view_custom` shield 与 `ZMK_DISPLAY_STATUS_SCREEN_BUILT_IN=y`，右手复用左手现有显示方案，仍为 split peripheral。移除右手官方 nice!view 自定义 peripheral 界面和临时供电补丁。供电、SPI 引脚与左右手遥测保持原配置。Actions 手动构建时检查两侧均使用相同显示方案；此修改尚未编译及实机验证，需要用户确认后才启动构建。
 
 ## Dongle 扫描仪左右遥测
 
