@@ -5,6 +5,7 @@
 #include <zmk/events/position_state_changed.h>
 #include <zmk/events/battery_state_changed.h>
 #include "velvet_wpm.h"
+#include "half_telemetry.h"
 
 static struct k_spinlock lock;
 static struct velvet_history history[2];
@@ -40,12 +41,14 @@ ZMK_LISTENER(velvet_fight_battery,battery);
 ZMK_SUBSCRIPTION(velvet_fight_battery,zmk_peripheral_battery_state_changed);
 
 void fight_telemetry_read(uint8_t wpm[2], uint8_t battery[2], uint8_t *valid) {
+    uint8_t remote_wpm[2], remote_battery[2], remote_valid, seen;
+    velvet_half_read(remote_wpm, remote_battery, &remote_valid, &seen);
     uint32_t now=k_uptime_get_32();
     k_spinlock_key_t key=k_spin_lock(&lock);
     for(int side=0;side<2;side++) {
-        wpm[side]=velvet_wpm(&history[side],now);
-        battery[side]=batteries[side];
+        wpm[side]=(seen & BIT(side)) ? remote_wpm[side] : velvet_wpm(&history[side],now);
+        battery[side]=(remote_valid & BIT(side + 1)) ? remote_battery[side] : batteries[side];
     }
-    *valid=1|battery_valid;
+    *valid=1|battery_valid|remote_valid;
     k_spin_unlock(&lock,key);
 }
