@@ -51,7 +51,7 @@ jobs:
           left=build/velvet_left_dongle/zephyr/.config
           right=build/velvet_right_dongle/zephyr/.config
           grep -qx 'CONFIG_ZMK_DISPLAY_STATUS_SCREEN_BUILT_IN=y' "$left"
-          grep -qx '# CONFIG_VELVET_CAT_DISPLAY is not set' "$left"
+          ! grep -qx 'CONFIG_VELVET_CAT_DISPLAY=y' "$left"
           for option in ZMK_DISPLAY ZMK_DISPLAY_STATUS_SCREEN_CUSTOM VELVET_CAT_DISPLAY LV_USE_IMAGE LS0XX LV_COLOR_DEPTH_1; do
             grep -qx "CONFIG_${option}=y" "$right"
           done
