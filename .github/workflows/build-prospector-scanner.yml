@@ -1,13 +1,6 @@
 name: Build Prospector scanner
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - 'scanner/**'
-      - '.github/workflows/build-prospector-scanner.yml'
-      - 'config/west-dependency.yml'
-      - 'boards/shields/velvet/velvet_right.conf'
-
 jobs:
   build-scanner:
     runs-on: ubuntu-latest
