@@ -1,12 +1,8 @@
 name: Build ZMK firmware
 on:
   workflow_dispatch:
-  push:
-    branches: ["codex/nano-dongle"]
-    paths: [".github/workflows/build.yml"]
 jobs:
   build:
-    if: github.event_name == 'workflow_dispatch' || github.event.head_commit.message == 'ci: run user-confirmed cat theme build 884d1b9'
     runs-on: ubuntu-latest
     container: zmkfirmware/zmk-build-arm:stable
     steps:
