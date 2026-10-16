@@ -40,11 +40,11 @@ int main(void) {
         assert(p[10]==17 && p[11]==24 && p[12]==0 && p[13]==75 && p[14]==8);
         assert(((unsigned)p[15] | (unsigned)p[16]<<8)==(uint16_t)count);
         ++count;
-        unsigned gap=(tick-last)*200; // worst configured idle interval
+        unsigned gap=(tick-last)*500; // worst configured idle interval
         if(gap>max_gap)max_gap=gap;
         last=tick;
     }
-    assert(count==70000 && max_gap==400 && max_gap<3000);
+    assert(count==70000 && max_gap==1000 && max_gap<3000);
     return 0;
 }
 """)
@@ -55,6 +55,6 @@ int main(void) {
     subprocess.run([str(out/"test")], check=True)
 conf=(root/"boards/shields/velvet/velvet_nano_dongle.conf").read_text()
 assert "CONFIG_ZMK_STATUS_ADV_ACTIVE_INTERVAL_MS=100\n" in conf
-assert "CONFIG_ZMK_STATUS_ADV_IDLE_INTERVAL_MS=200\n" in conf
+assert "CONFIG_ZMK_STATUS_ADV_IDLE_INTERVAL_MS=500\n" in conf
 assert "CONFIG_BT_EXT_ADV=n\n" in conf
-print("Cube cadence: 400ms worst idle gap; packet values and sequence wrap passed")
+print("Cube cadence: 1000ms worst idle gap; packet values and sequence wrap passed")

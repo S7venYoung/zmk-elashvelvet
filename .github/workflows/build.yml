@@ -8,6 +8,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: west init -l config && west update --narrow && west zephyr-export
+      - name: Restore right display power after saved settings
+        run: python3 scripts/patch_right_display_startup.py dependencies/zmk/app/src/display/main.c
       - name: Install Nano Studio action hook
         run: python3 scripts/patch_studio_binding_actions.py dependencies/zmk/app/src/keymap.c
       - name: Install single-advertiser Nano scanner patch
