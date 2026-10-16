@@ -12,7 +12,39 @@ jobs:
       - run: west init -l config && west update --narrow && west zephyr-export
       - name: Install Nano Studio action hook
         run: python3 scripts/patch_studio_binding_actions.py dependencies/zmk/app/src/keymap.c
+      - name: Install single-advertiser Nano scanner patch
+        run: python3 scripts/patch_nano_scanner_advertising.py dependencies/prospector-zmk-module/src/status_advertisement.c
       - run: west zmk-build -d ./build -q
+      - name: Verify scanner and recovery configuration
+        shell: bash
+        run: |
+          config=build/velvet_nano_dongle/zephyr/.config
+          grep -qx '# CONFIG_BT_EXT_ADV is not set' "$config"
+          grep -qx 'CONFIG_ZMK_STATUS_ADVERTISEMENT=y' "$config"
+          grep -qx 'CONFIG_PROSPECTOR_EXPECTED_PERIPHERAL_COUNT=2' "$config"
+          grep -qx 'CONFIG_SYSTEM_WORKQUEUE_STACK_SIZE=4096' "$config"
+          for source in status_advertisement.c velvet_stats.c scanner_payload.c; do
+            find build/velvet_nano_dongle -name "$source.obj" -print -quit | grep -q .
+          done
+          test -z "$(find build/velvet_nano_dongle -name fight_telemetry.c.obj -print -quit)"
+      - name: Report Nano memory
+        run: west build -d build/velvet_nano_dongle -t ram_report
+      - name: Save Nano diagnostics
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p diagnostics
+          for name in .config zephyr.dts zephyr.map zephyr.elf; do
+            test ! -f "build/velvet_nano_dongle/zephyr/$name" || cp "build/velvet_nano_dongle/zephyr/$name" diagnostics/
+          done
+          west list -f '{name} {revision} {sha}' > diagnostics/dependencies.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nano-diagnostics
+          path: diagnostics/
+          include-hidden-files: true
+          if-no-files-found: warn
       - name: Verify Nano replug bootloader is linked
         shell: bash
         run: |

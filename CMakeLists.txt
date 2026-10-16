@@ -5,3 +5,8 @@ endif()
 if(CONFIG_VELVET_STUDIO_BINDING_ACTIONS)
   target_sources(app PRIVATE src/studio_binding_actions.c)
 endif()
+
+if(CONFIG_SHIELD_VELVET_NANO_DONGLE)
+  zephyr_include_directories(${CMAKE_CURRENT_LIST_DIR}/src)
+  target_sources(app PRIVATE src/velvet_stats.c src/scanner_payload.c)
+endif()
