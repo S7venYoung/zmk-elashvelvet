@@ -1,4 +1,4 @@
-name: Test nRF52833 Bootloader
+name: Build nRF52833 Bootloader
 on:
   push:
     branches: [codex/nano-dongle, codex/nano-bootloader-test]
@@ -47,15 +47,15 @@ jobs:
         working-directory: bootloader
         shell: bash
         run: |
-          version="0.9.2-10-gd7c55d9-usbfix-${{ matrix.mode }}"
+          version="0.9.2-10-gd7c55d9-nano-dongle-${{ matrix.mode }}"
           make -j2 BOARD=feather_nrf52833_express GIT_VERSION="$version" "_build/build-feather_nrf52833_express/feather_nrf52833_express_bootloader-${version}.hex"
-      - name: Check address layout and export test image
+      - name: Check address layout and export bootloader
         shell: bash
         run: |
           python3 config/bootloader-test/verify.py bootloader ${{ matrix.mode }}
       - uses: actions/upload-artifact@v4
         with:
-          name: nano33-bootloader-${{ matrix.mode }}-TEST-ONLY
+          name: nano-dongle-bootloader-${{ matrix.mode }}-BL-ONLY
           path: artifacts/
           if-no-files-found: error
 

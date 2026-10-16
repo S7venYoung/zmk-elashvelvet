@@ -18,7 +18,7 @@ if mode=="replug":
     import re
     s=re.sub(r"^#define LEDS_NUMBER.*$", "#define LEDS_NUMBER 0", s, flags=re.M)
     s=re.sub(r"^#define (?:LED_PRIMARY_PIN|LED_SECONDARY_PIN|LED_NEOPIXEL|NEOPIXELS_NUMBER|BOARD_RGB_BRIGHTNESS).*\n", "", s, flags=re.M)
-    s=s.replace('"PIVOT_BL"','"Nano33 Test Boot"').replace('"FTHV29BOOT"','"NANO33TEST"')
+    s=s.replace('"PIVOT_BL"','"Nano Dongle"').replace('"FTHV29BOOT"','"NANO DONGLE"')
     s += "\n#define ENABLE_DCDC_0 0\n#define ENABLE_DCDC_1 0\n"
     board.write_text(s)
     replace(root/"src/boards/boards.c", "void led_tick(void) {", "void led_tick(void) {\n  return; /* No LED hardware on the test receiver. */")

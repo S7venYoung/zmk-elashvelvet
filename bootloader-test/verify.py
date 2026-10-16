@@ -13,12 +13,13 @@ out=Path("artifacts");out.mkdir(exist_ok=True)
 bl=IntelHex()
 for a in h.addresses():
     if 0x74000<=a<0x7e000:bl[a]=h[a]
-bl.write_hex_file(str(out/f"nano33_{mode}_bootloader_ONLY_TEST.hex"))
+name = "nano_dongle_BL_ONLY.hex" if mode == "replug" else "nano33_baseline_BL_ONLY.hex"
+bl.write_hex_file(str(out/name))
 report={"source_commit":"d7c55d99c97633a770c5536dc113e3849f3bc91e",
         "mode":mode,"segments":bl.segments(),"bootloader_start":"0x74000",
         "mbr_params":"0x7e000","application_start_without_softdevice":"0x1000",
         "journal_page_replug_only":"0x65000-0x65fff","hardware_tested":False,
-        "warning":"BL-only TEST image. No full-chip erase. Preserve MBR/UICR/app/settings. No SoftDevice included."}
+        "warning":"BL-only image; hardware validation required. No full-chip erase. Preserve MBR/UICR/app/settings. No SoftDevice included."}
 (out/"validation.json").write_text(json.dumps(report,indent=2))
 for f in (root/"_build/build-feather_nrf52833_express").glob("*.out*"):
     shutil.copy(f,out/f.name)
