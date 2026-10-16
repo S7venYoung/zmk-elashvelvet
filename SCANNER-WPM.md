@@ -9,3 +9,13 @@
 配套 Cube 固件必须选 `codex/nologo-xingzhi-cube-154` 的扫描仪版，并匹配 Velvet46。本次键盘代码变化仅链接到中央端，需要更新新构建的右手固件；不要求清除配对或刷 settings_reset。Cube dongle 版本及其左右手固件不在此链路使用。
 
 代码提交不自动构建，改为手动工作流，避免反复消耗 Actions。网页/编译与真实无线接收验证要分别确认。
+# Input sampling latency
+
+Fight telemetry now schedules an update after keycode events and polls HID state
+every 40ms during a bounded 800ms activity burst, reverting to the original 200ms
+idle cadence. The packet format and advertising interval are unchanged. This is
+a right/central-only change; no left firmware or settings reset is required.
+Cube must also use the unified modifier-timeline fix to avoid stale values from
+the other protocol overwriting a press/release. BLE is still lossy; sample timing
+does not guarantee delivery of every brief press. SDK and physical tests pending.
+

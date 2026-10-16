@@ -4,6 +4,9 @@
 #include <zephyr/init.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/sys/atomic.h>
+#include <zmk/event_manager.h>
+#include <zmk/events/keycode_state_changed.h>
 #include <zmk/hid.h>
 #include "fight_status.h"
 
@@ -13,6 +16,20 @@ static struct k_work_delayable work;
 static uint8_t frame[17] = {0xff, 0xff, 0xab, 0xce, 1};
 static uint16_t sequence;
 static bool started;
+static atomic_t input_burst_until;
+static atomic_t work_ready;
+
+// HID processing completes before this deferred work reads the report.
+static int input_changed(const zmk_event_t* event) {
+    ARG_UNUSED(event);
+    if (atomic_get(&work_ready)) {
+        atomic_set(&input_burst_until, (atomic_val_t)(k_uptime_get_32() + 800));
+        k_work_reschedule(&work, K_MSEC(1));
+    }
+    return ZMK_EV_EVENT_BUBBLE;
+}
+ZMK_LISTENER(fight_input_changed, input_changed);
+ZMK_SUBSCRIPTION(fight_input_changed, zmk_keycode_state_changed);
 
 static void broadcast(struct k_work* unused) {
     ARG_UNUSED(unused);
@@ -66,11 +83,15 @@ static void broadcast(struct k_work* unused) {
 retry:
     if (err)
         LOG_WRN("Fight broadcast retry: %d", err);
-    k_work_reschedule(&work, K_MSEC(err ? 1000 : 200));
+    // Keep the normal idle cadence; faster sampling is bounded to input bursts.
+    const bool input_burst =
+        (int32_t)((uint32_t)atomic_get(&input_burst_until) - k_uptime_get_32()) > 0;
+    k_work_reschedule(&work, K_MSEC(err ? 1000 : input_burst ? 40 : 200));
 }
 
 static int init(void) {
     k_work_init_delayable(&work, broadcast);
+    atomic_set(&work_ready, 1);
     // Bluetooth initializes asynchronously in ZMK; errors retry safely.
     k_work_schedule(&work, K_SECONDS(3));
     return 0;
