@@ -31,7 +31,7 @@ static bool nano_journal_append(uint8_t stage) {
   const uint32_t record = NANO_RECORD_MAGIC | stage;
   const uint32_t addr = NANO_JOURNAL_ADDR + slot * 4;
   nrfx_nvmc_words_write(addr, &record, 1);
-  return *(const volatile uint32_t *)addr == record;
+  return *(const volatile uint32_t *)(uintptr_t)addr == record;
 }
 static bool nano_replug_boot(uint32_t reset_reason) {
   /* Software, watchdog and reset-pin resets must not count as unplugging. */
