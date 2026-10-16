@@ -1,10 +1,6 @@
 name: Build ZMK firmware
 on:
   workflow_dispatch:
-  push:
-    paths-ignore:
-      - "keymap-drawer/**"
-
 jobs:
   build:
     uses: cormoran/zmk/.github/workflows/build-user-config.yml@main+dya
