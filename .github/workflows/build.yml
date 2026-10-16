@@ -20,6 +20,8 @@ jobs:
         run: |
           cc -Wall -Wextra -Werror -Isrc scripts/test_half_telemetry.c -o /tmp/test-half
           /tmp/test-half
+          cc -Wall -Wextra -Werror scripts/test_adv_layout.c -o /tmp/test-layout
+          /tmp/test-layout
       - name: Install physical-half scanner status fields
         run: python3 scripts/patch_dongle_status_fields.py dependencies/prospector-zmk-module/src/status_advertisement.c
       - run: west zmk-build -d ./build -q
@@ -35,6 +37,8 @@ jobs:
           done
           find build -path '*velvet_nano_dongle*' -name half_telemetry.c.obj -print -quit | grep -q .
           grep -q VELVET_DONGLE_STATUS_FIELDS dependencies/prospector-zmk-module/src/status_advertisement.c
+          grep -q VELVET_ZEPHYR41_ENUM_OPTION dependencies/prospector-zmk-module/src/status_advertisement.c
+          ! grep -Eq '^#if defined\\(BT_LE_ADV_OPT_(FORCE_NAME_IN_AD|SCANNABLE)\\)' dependencies/prospector-zmk-module/src/status_advertisement.c
       - name: Verify right nice-view peripheral display
         shell: bash
         run: |
