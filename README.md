@@ -1,52 +1,11 @@
-> **nRF52833 实机回归记录（2026-10-16）**：扫描仪广播版 `a2ba0f2`（Actions 38746000853）刷入后 USB 不枚举，DYA 和插拔入口不可用，已撤回该版广播改动。不要刷该次构建的固件。此前实机可用版本为 `54f1444`（Actions 38214599144）；无法进入启动器时需要 SWD/J-Link 恢复原始 HEX。根因尚未确认，扫描仪发现功能暂不提供。
+# nRF52833 Bootloader 测试
 
-# Velvet46 ZMK 配置
+这是隔离的 Bootloader 测试分支，不改动 Nano/Fight 应用分支。来源锁定 kbladewht/Adafruit_nRF52_Bootloader 的 d7c55d99c97633a770c5536dc113e3849f3bc91e，与原 HEX 内嵌提交一致；原 HEX 标注 dirty，作者未提交的修改不能由公开源码完整还原。
 
-这是 Velvet46 的 ZMK 0.4 / Zephyr 4.1 配置。左右键盘各自使用 Nice!View。`velvet_nano_dongle` 让无屏的 nice!nano K（nRF52833）担任 USB split central，通过 BLE 连接左右键盘 peripheral；接收器提供 DYA Studio 和 USB 键盘连接。
+Actions 构建 baseline（原源码）和 replug（无按键接收器短插拔候选），并测试状态判定与 HEX 地址。产物仅含 0x74000 起始的 BL 区，不含 MBR、SoftDevice、应用、UICR 或配对设置。禁止作为普通应用 UF2 刷入。
 
-DYA Studio 模块包括 BLE 管理、Custom Settings、Fast Keymap、Device Info、Watchdog、Runtime Macro 和 Runtime Combo。左右手 peripheral 转发设置。配置不包含编码器、轨迹球或鼠标控制功能。
+replug 在每次冷上电时，在独立 Flash 页 0x65000-0x65fff 记录阶段；该页位于当前 Velvet 应用结束 0x64000 与设置开始 0x66000 之间的空隙，必须保持专用且初次为空白。无按键硬件不使用 Feather 的 LED/NeoPixel/按钮 GPIO。
 
-## Actions 固件
+操作：前两次上电后在约 2 秒内拔下，第三次进入 UF2（NANO33TEST）。普通上电等待约 2 秒后清零计数再启动应用；逻辑在 BL 中执行，即使应用卡死也不依赖应用清零。软件/看门狗/复位引脚重启不计为插拔；断电期间没有计时能力。追加式日志减少擦除次数，页满才擦除；遇到外来/损坏日志只进入 DFU，不自动擦除陌生数据。
 
-Actions artifact `firmware` 只包含 Dongle 模式固件和设置重置固件，UF2 文件直接平铺在压缩包根目录：
-
-- `velvet_nano_dongle.uf2`：Nano K USB 接收器 / split central
-- `velvet_left_dongle.uf2`、`velvet_right_dongle.uf2`：dongle 模式左右手 peripheral
-- `settings_reset_nano.uf2`：清除接收器设置和配对
-- `settings_reset.uf2`：清除 nice!nano 左右手保存的设置和配对
-
-Dongle 模式的接收器和左右手应刷写同一次 Actions 生成的固件。清除旧配对时，接收器使用 `settings_reset_nano.uf2`，键盘使用 `settings_reset.uf2`。DYA Studio 通过 USB 连接接收器，在 Chromium 打开 <https://studio.dya.cormoran.works/>。
-
-### Nano 接收器 DYA USB 连接
-
-Nano 接收器使用 `studio-rpc-usb-uart` 启用 USB CDC Studio 通道。RPC 收发及自定义请求缓冲为 256 字节，RPC 线程栈为 6000 字节；构建参数固定蓝牙 ACL/事件/L2CAP 发送缓冲数量为 3/6/4，避免通用键盘配置覆盖接收器的内存预算。接收器无屏幕，左右键盘保留各自屏幕。
-
-### 无按键接收器进入 Bootloader
-
-Nano K 接收器没有按键，可用 USB 短插拔序列进入 UF2 Bootloader：先插入 USB，等待约 2 秒后在 10 秒内拔下；再插入、等待约 2 秒并在 10 秒内拔下；第三次插入后会自动进入 Bootloader。每次插入后保持连接超过 10 秒，会清除已记录的序列。刷写完固件后重新插入即可正常使用。
-
-接收器拔下 USB 后没有持续供电，因此固件无法测量两次插入之间的断电时长。请连续完成上述动作；长时间断电后再次插入并保持连接超过 10 秒，也会清除可能残留的序列。此功能只编入 Nano 接收器固件，不影响左右手固件。只有实际提供 RST/DFU 入口的板子才能用硬件复位进入启动器；这只接收器的 GND/SWD/SWC/VCC 焊盘是 SWD 调试接口。此插拔功能依赖固件启动及 USB 枚举成功，不能恢复启动失败的固件。
-
-### 通过 DYA Studio 进入 Bootloader
-
-刷入此 ZMK 固件后，用 Chromium 打开 DYA Studio，通过 USB 连接 Nano 接收器，点击 **Debug Tool → Bootloader** 即可让接收器重启进入 UF2 Bootloader。此功能使用 `zmk-module-devtool` 的 Studio RPC；仅为接收器启用，额外的按键注入、事件抓取和日志捕获均未启用。短插拔序列仍保留为 DYA 无法连接时的备用方式。
-
-当前若接收器仍运行截图所示的 QMK/Vial 2.4G Receiver R1.3 固件，DYA 无法连接它，也无法用于首次进入 Bootloader。首次刷入需要先通过原固件或硬件支持的启动器入口进入刷机模式；确认启动器接受此板的 UF2 后再刷 `velvet_nano_dongle.uf2`。
-
-### Nano K 启动时钟修复
-
-接收器使用内部 RC 32 kHz 时钟和自动校准，覆盖共享键盘配置中的外部晶振选择，并使用 500 ppm 精度设置。没有 32 kHz 晶振的接收器若被配置成 XTAL，可能在启动等待低频时钟时卡住，导致 USB 不枚举。Actions 检查最终 `.config`，阻止晶振配置再次覆盖接收器。原始 HEX 的启动器入口为 `0x74000`，应用入口为 `0x1000`，与本分支分区一致；此前关于必须改为 `0x18000` 的猜测不成立。
-
-### Studio 选择行为直接执行管理操作
-
-仅在 Nano 接收器上，Studio 的改键界面选择 **Bootloader** 会在约 500 ms 后重启进入 BL；选择 **Bluetooth → Clear all bonds（BT_CLR_ALL）** 会清除接收器的主机配对、左右手 peer 地址并重启。普通改键照常生效；这两个管理操作不会替换或保存原按键绑定。清除后，左右手若仍保留旧配对，也需各自重置配对。此钩子作用于标准 Studio 改键请求，不承诺所有 Fast Keymap 批量操作都会经过同一入口。DYA 的 Debug Tool → Bootloader 入口仍可使用。
-
-钩子由 Actions 在 west 拉取 ZMK 后安装；若上游 setter 结构改变，脚本会终止构建，避免静默丢失管理入口。构建成功不等于已通过实机 USB、进入 BL 和配对清除测试。
-
-## nRF52833 扫描仪广播修复候选
-
-此前双广播版 a2ba0f2 在 nRF52833 上出现 USB 不枚举，尚无运行时故障日志确认根因。本次保留全部扫描字段，但取消 BT_EXT_ADV 和独立 Fight 广播实例，改为在同一个传统广播中以 4:1 交替发送标准状态/左右手遥测，共用同一个硬件 ID。频道为 0，central 为 AUX，左右手电量来自 peripheral 0/1。空闲广播不会再每帧都被名称包替换。
-
-广播工作在 USB HID 就绪且开机满 15 秒后才运行；系统工作队列栈增至 4096，主线程栈为 2048，并开启断言和栈哨兵。短插拔恢复在广播启动前有机会完成；这不能保证恢复发生在 USB 初始化之前的故障。Actions 额外保存最终 .config、DTS、ELF、map 和依赖 SHA，便于 SWD 定位。nRF52840 Fight 分支保持原可用实现。
-
-本候选构建通过不等于实机修复成功。若 USB 在约 15 秒后消失，说明故障与广播启动有关；可重新上电，通过两次短插拔在广播启动前进入 BL，刷回已验证的 54f1444。若上电即无法枚举，需 J-Link 读取故障状态后恢复。原已确认可用版本仍为 54f1444。
+静态测试不能确认真实电路和启动器行为。上机前用 J-Link 保存全 Flash/UICR 和原始 HEX；核对 UICR BL=0x74000、MBR参数=0x7e000、日志页空白。只对 BL 所在扇区写入和校验，不全片擦除，不修改 UICR。首次写入需要 SWD/J-Link。测试产物尚未通过实机 USB、冷上电和掉电中断测试，不应当作稳定版。

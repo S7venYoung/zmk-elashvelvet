@@ -1,6 +1,0 @@
-name: velvet-nano-replug-bootloader
-build:
-  cmake: .
-  kconfig: Kconfig
-  settings:
-    board_root: .

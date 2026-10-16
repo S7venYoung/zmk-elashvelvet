@@ -1,0 +1,50 @@
+name: Test nRF52833 Bootloader
+on:
+  push:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [baseline, replug]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: config
+      - uses: actions/checkout@v4
+        with:
+          repository: kbladewht/Adafruit_nRF52_Bootloader
+          ref: d7c55d99c97633a770c5536dc113e3849f3bc91e
+          fetch-depth: 0
+          submodules: recursive
+          path: bootloader
+      - uses: carlosperate/arm-none-eabi-gcc-action@v1
+        with:
+          release: '12.3.Rel1'
+      - name: Install HEX tools
+        run: pip install intelhex
+      - name: Test reset policy
+        run: |
+          cc -Wall -Wextra -Werror config/bootloader-test/test_policy.c -o /tmp/test-policy
+          /tmp/test-policy
+      - name: Prepare pinned source
+        run: python3 config/bootloader-test/prepare.py bootloader ${{ matrix.mode }}
+      - name: Build bootloader only
+        working-directory: bootloader
+        shell: bash
+        run: |
+          version=$(git describe --dirty --always --tags)
+          make -j2 BOARD=feather_nrf52833_express "_build/build-feather_nrf52833_express/feather_nrf52833_express_bootloader-${version}.hex"
+      - name: Check address layout and export test image
+        shell: bash
+        run: |
+          python3 config/bootloader-test/verify.py bootloader ${{ matrix.mode }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nano33-bootloader-${{ matrix.mode }}-TEST-ONLY
+          path: artifacts/
+          if-no-files-found: error
