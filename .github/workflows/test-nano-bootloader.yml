@@ -40,11 +40,14 @@ jobs:
           /tmp/test-journal
       - name: Prepare pinned source
         run: python3 config/bootloader-test/prepare.py bootloader ${{ matrix.mode }}
+      - name: Test actual USB timeout callback
+        if: matrix.mode == 'replug'
+        run: python3 config/bootloader-test/test_usb_timeout.py bootloader/lib/sdk11/components/libraries/bootloader_dfu/bootloader.c
       - name: Build bootloader only
         working-directory: bootloader
         shell: bash
         run: |
-          version="0.9.2-10-gd7c55d9-test-${{ matrix.mode }}"
+          version="0.9.2-10-gd7c55d9-usbfix-${{ matrix.mode }}"
           make -j2 BOARD=feather_nrf52833_express GIT_VERSION="$version" "_build/build-feather_nrf52833_express/feather_nrf52833_express_bootloader-${version}.hex"
       - name: Check address layout and export test image
         shell: bash

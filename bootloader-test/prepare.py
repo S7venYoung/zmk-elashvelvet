@@ -34,6 +34,8 @@ if mode=="replug":
             "  /* No hardware OTA buttons on this receiver. */")
     replace(main, "  bool const valid_app = bootloader_app_is_valid();",
             "  bool const valid_app = bootloader_app_is_valid();\n  if (valid_app && !dfu_start && nano_replug_boot(nano_reset_reason)) dfu_start = true;")
+    from patch_usb_timeout import patch as patch_usb_timeout
+    patch_usb_timeout(root/"lib/sdk11/components/libraries/bootloader_dfu/bootloader.c")
     for name in ["replug_policy.h","nano_replug.h"]:
         (root/"src"/name).write_text((here/name).read_text())
 elif mode!="baseline":
