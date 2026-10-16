@@ -1,6 +1,5 @@
 name: Test nRF52833 Bootloader
 on:
-  push:
   workflow_dispatch:
 permissions:
   contents: read
