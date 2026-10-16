@@ -1,8 +1,5 @@
 name: Publish Nano Dongle release
 on:
-  push:
-    branches: ["codex/nano-dongle"]
-    paths: [".github/workflows/publish-nano-dongle.yml", "releases/nano-dongle-v0.2.md"]
   workflow_dispatch:
 permissions:
   contents: write

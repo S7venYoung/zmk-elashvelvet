@@ -1,11 +1,5 @@
 name: Build nRF52833 Bootloader
 on:
-  push:
-    branches: [codex/nano-dongle, codex/nano-bootloader-test]
-    paths:
-      - 'bootloader-test/**'
-      - 'bootloader/**'
-      - '.github/workflows/test-nano-bootloader.yml'
   workflow_dispatch:
 permissions:
   contents: read
