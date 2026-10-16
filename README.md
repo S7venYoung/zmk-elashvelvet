@@ -63,7 +63,11 @@ Nano 接收器使用 `studio-rpc-usb-uart` 启用 USB CDC Studio 通道。RPC �
 
 ## Dongle 模式左右手显示
 
-左右手均使用 `nice_view_custom` shield 与 `ZMK_DISPLAY_STATUS_SCREEN_BUILT_IN=y`，右手复用左手现有显示方案，仍为 split peripheral。移除右手官方 nice!view 自定义 peripheral 界面和临时供电补丁。供电、SPI 引脚与左右手遥测保持原配置。Actions 手动构建时检查两侧均使用相同显示方案；此修改尚未编译及实机验证，需要用户确认后才启动构建。
+左手保留 `nice_view_custom` 与内置显示界面。右手启用 `VELVET_CAT_DISPLAY`，以 160×68 单色像素呈现猫咪、实时自身电量、与接收器的 BLE 连接状态以及当前层号。完整位图缓冲为 1368 字节（含调色板），不用大尺寸画布，也不额外建立广播实例。
+
+右手三颗指示点共同表示与接收器的连接状态：连接时实心、断开时空心；它们不表示电脑蓝牙 profile。电量未知时显示 `--`，真实 0% 正常显示。层号由接收器通过现有 split relay 回传，内部层 0 显示 **LAYER 1**，之后依次加 1；未收到、断开或超过 5 秒未更新时显示 `--`。收包和电量事件只保存状态，LVGL 在显示队列中按需刷新。
+
+首次启用需更新接收器和右手，左手不必更新，也不需要清除设置或更新 BL。本次未编译及实机验证；Actions 仅手动触发，必须在用户确认后构建。界面预览见 [像素猫主题](docs/right-cat-theme.svg)；86% 为预览示例，固件不固定该数值。
 
 ## Dongle 扫描仪左右遥测
 

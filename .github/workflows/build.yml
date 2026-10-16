@@ -22,6 +22,10 @@ jobs:
           /tmp/test-half
           cc -Wall -Wextra -Werror scripts/test_adv_layout.c -o /tmp/test-layout
           /tmp/test-layout
+      - name: Test cat renderer and layer relay state
+        run: |
+          cc -std=c11 -Wall -Wextra -Werror -Isrc scripts/test_cat_display.c -o /tmp/test-cat
+          /tmp/test-cat
       - name: Test Cube packet cadence
         run: python3 scripts/test_scanner_payload.py
       - name: Install physical-half scanner status fields
@@ -41,17 +45,21 @@ jobs:
           grep -q VELVET_DONGLE_STATUS_FIELDS dependencies/prospector-zmk-module/src/status_advertisement.c
           grep -q VELVET_ZEPHYR41_ENUM_OPTION dependencies/prospector-zmk-module/src/status_advertisement.c
           ! grep -Eq '^#if defined\\(BT_LE_ADV_OPT_(FORCE_NAME_IN_AD|SCANNABLE)\\)' dependencies/prospector-zmk-module/src/status_advertisement.c
-      - name: Verify matching left and right displays
+      - name: Verify right cat display and left unchanged
         shell: bash
         run: |
-          for side in left right; do
-            cfg="build/velvet_${side}_dongle/zephyr/.config"
-            for option in ZMK_DISPLAY ZMK_DISPLAY_STATUS_SCREEN_BUILT_IN LS0XX LV_COLOR_DEPTH_1; do
-              grep -qx "CONFIG_${option}=y" "$cfg"
-            done
-            grep -qx '# CONFIG_ZMK_DISPLAY_STATUS_SCREEN_CUSTOM is not set' "$cfg"
-            grep -qx '# CONFIG_ZMK_SPLIT_ROLE_CENTRAL is not set' "$cfg"
+          left=build/velvet_left_dongle/zephyr/.config
+          right=build/velvet_right_dongle/zephyr/.config
+          grep -qx 'CONFIG_ZMK_DISPLAY_STATUS_SCREEN_BUILT_IN=y' "$left"
+          grep -qx '# CONFIG_VELVET_CAT_DISPLAY is not set' "$left"
+          for option in ZMK_DISPLAY ZMK_DISPLAY_STATUS_SCREEN_CUSTOM VELVET_CAT_DISPLAY LV_USE_IMAGE LS0XX LV_COLOR_DEPTH_1; do
+            grep -qx "CONFIG_${option}=y" "$right"
           done
+          grep -qx '# CONFIG_ZMK_DISPLAY_STATUS_SCREEN_BUILT_IN is not set' "$right"
+          grep -qx '# CONFIG_NICE_VIEW_WIDGET_STATUS is not set' "$right"
+          grep -qx '# CONFIG_ZMK_SPLIT_ROLE_CENTRAL is not set' "$right"
+          find build/velvet_right_dongle -name cat_display.c.obj -print -quit | grep -q .
+          find build/velvet_nano_dongle -name cat_layer_relay.c.obj -print -quit | grep -q .
       - name: Save right display diagnostics
         if: always()
         shell: bash

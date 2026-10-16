@@ -7,3 +7,9 @@ config VELVET_STUDIO_BINDING_ACTIONS
     bool "Run Nano administrative actions selected in Studio"
     depends on SHIELD_VELVET_NANO_DONGLE && ZMK_STUDIO && ZMK_BLE && SETTINGS && RETENTION_BOOT_MODE
     default y
+
+config VELVET_CAT_DISPLAY
+    bool "Pixel kitten status screen on the right dongle peripheral"
+    depends on SHIELD_VELVET_RIGHT && SHIELD_VELVET_SPLIT_PERIPHERAL && ZMK_DISPLAY && ZMK_SPLIT_RELAY_EVENT
+    select LV_USE_IMAGE
+    default n
