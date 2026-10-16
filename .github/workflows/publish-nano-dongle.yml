@@ -1,0 +1,46 @@
+name: Publish Nano Dongle release
+on:
+  push:
+    branches: ["codex/nano-dongle"]
+    paths: [".github/workflows/publish-nano-dongle.yml", "releases/nano-dongle-v0.2.md"]
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify validated build and download firmware
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api repos/$GH_REPO/actions/runs/38867621289 > run.json
+          python3 - <<'PY'
+          import json
+          r=json.load(open('run.json'))
+          assert r['conclusion']=='success'
+          assert r['head_sha']=='82376a87a4a49adacb29b11760605d37123c7bca'
+          PY
+          gh run download 38867621289 -n firmware -D downloaded
+          mkdir release-assets
+          for name in velvet_nano_dongle velvet_left_dongle velvet_right_dongle settings_reset_nano settings_reset; do
+            mapfile -t matches < <(find downloaded -type f -name "$name.uf2")
+            test "${#matches[@]}" -eq 1
+            cp "${matches[0]}" "release-assets/$name.uf2"
+          done
+          echo '2b276a2a87e943d5bf4a902616e727b4c86afb37376b914d1f9f00d3b7b511b7  release-assets/velvet_nano_dongle.uf2' | sha256sum -c -
+          (cd release-assets && sha256sum *.uf2 > SHA256SUMS.txt)
+      - name: Publish validated Nano Dongle v0.2
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view nano-dongle-v0.2 >/dev/null 2>&1; then
+            echo 'Release already exists; refusing to overwrite.'
+            exit 1
+          fi
+          gh release create nano-dongle-v0.2 release-assets/* --target 82376a87a4a49adacb29b11760605d37123c7bca --title 'Nano Dongle + DYA / Scanner / Cube v0.2' --notes-file releases/nano-dongle-v0.2.md --latest
