@@ -26,7 +26,7 @@ jobs:
           done
           grep -qx '# CONFIG_ZMK_DISPLAY_STATUS_SCREEN_BUILT_IN is not set' "$cfg"
           grep -qx '# CONFIG_ZMK_SPLIT_ROLE_CENTRAL is not set' "$cfg"
-          find build/velvet_right_dongle -path '*/nice_view/widgets/peripheral_status.c.obj' -print -quit | grep -q .
+          find build/velvet_right_dongle -path '*nice_view*' -name 'peripheral_status.c.obj' -print -quit | grep -q .
       - name: Save right display diagnostics
         if: always()
         shell: bash
