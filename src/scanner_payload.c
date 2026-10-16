@@ -11,8 +11,8 @@ static unsigned int cycle;
 
 const uint8_t *velvet_scanner_payload(const uint8_t *status, size_t status_size,
                                      const uint8_t keyboard_id[4], size_t *size) {
-    /* Four status updates followed by one per-half telemetry update. */
-    if (++cycle % 5 != 0) {
+    /* Alternate status and per-half telemetry so Cube input does not expire. */
+    if (++cycle % 2 != 0) {
         *size = status_size;
         return status;
     }

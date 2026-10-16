@@ -24,6 +24,8 @@ jobs:
           /tmp/test-half
           cc -Wall -Wextra -Werror scripts/test_adv_layout.c -o /tmp/test-layout
           /tmp/test-layout
+      - name: Test Cube packet cadence
+        run: python3 scripts/test_scanner_payload.py
       - name: Install physical-half scanner status fields
         run: python3 scripts/patch_dongle_status_fields.py dependencies/prospector-zmk-module/src/status_advertisement.c
       - run: west zmk-build -d ./build -q
