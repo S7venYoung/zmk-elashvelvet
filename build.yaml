@@ -12,7 +12,7 @@ include:
     artifact: velvet_left_dongle
   - board: nice_nano//zmk
     shield: velvet_right nice_view velvet_split_peripheral
-    cmake-args: -DCONFIG_ZMK_DISPLAY_STATUS_SCREEN_BUILT_IN=y -DCONFIG_ZMK_SPLIT_RELAY_EVENT_DATA_LEN=256
+    cmake-args: -DCONFIG_ZMK_DISPLAY_STATUS_SCREEN_BUILT_IN=n -DCONFIG_ZMK_DISPLAY_STATUS_SCREEN_CUSTOM=y -DCONFIG_ZMK_SPLIT_RELAY_EVENT_DATA_LEN=256
     artifact: velvet_right_dongle
   - board: nice_nano_k/nrf52833
     shield: settings_reset
