@@ -10,3 +10,8 @@ endif()
 if(CONFIG_SHIELD_VELVET_NANO_DONGLE)
   target_sources(app PRIVATE src/velvet_stats.c src/fight_telemetry.c)
 endif()
+
+if(CONFIG_SHIELD_VELVET_NANO_DONGLE OR CONFIG_SHIELD_VELVET_SPLIT_PERIPHERAL)
+  zephyr_include_directories(${CMAKE_CURRENT_LIST_DIR}/src)
+  target_sources(app PRIVATE src/half_telemetry.c)
+endif()
