@@ -4,6 +4,11 @@ from pathlib import Path
 import sys
 
 def patch(source):
+    # Both are enum members in our pinned Zephyr 4.1, never preprocessor macros.
+    # Wrong fallback combines a 26-byte payload with the forced name in one AD.
+    for option in ("BT_LE_ADV_OPT_FORCE_NAME_IN_AD", "BT_LE_ADV_OPT_SCANNABLE"):
+        source = source.replace("#if defined(" + option + ")",
+                                "#if 1 /* VELVET_ZEPHYR41_ENUM_OPTION: " + option + " */")
     if "VELVET_DONGLE_STATUS_FIELDS" in source:
         return source
     include = '#include <zmk/activity.h>'
