@@ -73,21 +73,6 @@ jobs:
           value=re.search(r"serial-vcom-interval\s*=\s*<\s*(0x[0-9a-f]+|[0-9]+)\s*>",dts)
           assert value and int(value[1],0)==33
           PY
-      - name: Save right display diagnostics
-        if: always()
-        shell: bash
-        run: |
-          mkdir -p right-display-diagnostics
-          for name in .config zephyr.dts zmk.map zmk.elf; do
-            test ! -f "build/velvet_right_dongle/zephyr/$name" || cp "build/velvet_right_dongle/zephyr/$name" right-display-diagnostics/
-          done
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: right-display-diagnostics
-          path: right-display-diagnostics/
-          include-hidden-files: true
-          if-no-files-found: warn
       - name: Verify settings reset returns to bootloader
         shell: bash
         run: |
@@ -120,23 +105,6 @@ jobs:
           test -z "$(find build/velvet_nano_dongle -name fight_telemetry.c.obj -print -quit)"
       - name: Report Nano memory
         run: west build -d build/velvet_nano_dongle -t ram_report
-      - name: Save Nano diagnostics
-        if: always()
-        shell: bash
-        run: |
-          mkdir -p diagnostics
-          for name in .config zephyr.dts zmk.map zmk.elf; do
-            test ! -f "build/velvet_nano_dongle/zephyr/$name" || cp "build/velvet_nano_dongle/zephyr/$name" diagnostics/
-          done
-          west list -f '{name} {revision} {path}' > diagnostics/dependencies.txt
-          west forall -c 'git rev-parse HEAD' >> diagnostics/dependencies.txt
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: nano-diagnostics
-          path: diagnostics/
-          include-hidden-files: true
-          if-no-files-found: warn
       - name: Verify Nano replug bootloader is linked
         shell: bash
         run: |
