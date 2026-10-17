@@ -61,6 +61,12 @@ jobs:
           done
           grep -qx '# CONFIG_ZMK_DISPLAY_STATUS_SCREEN_BUILT_IN is not set' "$right"
           grep -qx '# CONFIG_NICE_VIEW_WIDGET_STATUS is not set' "$right"
+          # Retain Velvet's board-specific peripheral control from main.
+          for option in ZMK_BACKLIGHT PWM LED_PWM ZMK_BACKLIGHT_ON_START; do
+            grep -qx "CONFIG_${option}=y" "$right"
+          done
+          grep -qx 'CONFIG_ZMK_BACKLIGHT_BRT_START=100' "$right"
+          grep -qx '# CONFIG_ZMK_BACKLIGHT_AUTO_OFF_IDLE is not set' "$right"
           grep -qx 'CONFIG_LV_CACHE_DEF_SIZE=0' "$right"
           grep -qx 'CONFIG_LV_DRAW_SW_SUPPORT_L8=y' "$right"
           grep -qx '# CONFIG_ZMK_SPLIT_ROLE_CENTRAL is not set' "$right"
