@@ -22,6 +22,8 @@ jobs:
           /tmp/test-half
           cc -Wall -Wextra -Werror scripts/test_adv_layout.c -o /tmp/test-layout
           /tmp/test-layout
+      - name: Test memory LCD VCOM command encoding
+        run: python3 scripts/test_nice_view_vcom.py dependencies/zephyr/drivers/display/ls0xx.c
       - name: Test cat renderer and layer relay state
         run: |
           cc -std=c11 -Wall -Wextra -Werror -Isrc scripts/test_cat_display.c -o /tmp/test-cat
@@ -60,6 +62,15 @@ jobs:
           grep -qx '# CONFIG_ZMK_SPLIT_ROLE_CENTRAL is not set' "$right"
           find build/velvet_right_dongle -name cat_display.c.obj -print -quit | grep -q .
           find build/velvet_nano_dongle -name cat_layer_relay.c.obj -print -quit | grep -q .
+          grep -q vcom_toggle_thread build/velvet_right_dongle/zephyr/zmk.map
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          dts=Path("build/velvet_right_dongle/zephyr/zephyr.dts").read_text()
+          assert "serial-vcom-inversion;" in dts
+          value=re.search(r"serial-vcom-interval\s*=\s*<\s*(0x[0-9a-f]+|[0-9]+)\s*>",dts)
+          assert value and int(value[1],0)==33
+          PY
       - name: Save right display diagnostics
         if: always()
         shell: bash

@@ -28,3 +28,12 @@
         ;
 };
 
+
+/* nice_view_custom predates the Zephyr 4.1 VCOM binding. Keep the memory
+ * LCD polarity changing even when the cat/status pixels do not change.
+ * Same serial VCOM cadence as the official nice_view shield.
+ */
+&nice_view {
+    serial-vcom-inversion;
+    serial-vcom-interval = <33>;
+};
