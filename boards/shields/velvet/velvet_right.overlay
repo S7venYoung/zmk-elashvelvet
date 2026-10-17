@@ -33,7 +33,10 @@
  * LCD polarity changing even when the cat/status pixels do not change.
  * Same serial VCOM cadence as the official nice_view shield.
  */
-&nice_view {
-    serial-vcom-inversion;
-    serial-vcom-interval = <33>;
+&nice_view_spi {
+    /* Merge by child path before nice_view_custom assigns the nice_view label. */
+    ls0xx@0 {
+        serial-vcom-inversion;
+        serial-vcom-interval = <33>;
+    };
 };

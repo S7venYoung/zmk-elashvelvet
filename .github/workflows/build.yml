@@ -22,6 +22,8 @@ jobs:
           /tmp/test-half
           cc -Wall -Wextra -Werror scripts/test_adv_layout.c -o /tmp/test-layout
           /tmp/test-layout
+      - name: Test right display overlay loading order
+        run: python3 scripts/test_right_display_overlay.py dependencies/zephyr dependencies/mario-peripheral-animation
       - name: Test memory LCD VCOM command encoding
         run: python3 scripts/test_nice_view_vcom.py dependencies/zephyr/drivers/display/ls0xx.c
       - name: Test cat renderer and layer relay state
