@@ -4,6 +4,7 @@
 #include <string.h>
 #include "cat_frame.h"
 #include "cat_layer.h"
+#include "cat_l8.h"
 
 int main(int argc,char **argv) {
     struct { uint8_t before[16],frame[CAT_FRAME_BYTES],after[16]; } b;
@@ -32,6 +33,18 @@ int main(int argc,char **argv) {
     assert(layer.layer==31 && cat_layer_live(&layer,0x10));
     assert(cat_layer_live(&layer,(uint32_t)(0xfffffff0u+4999)));
     assert(!cat_layer_live(&layer,(uint32_t)(0xfffffff0u+5000)));
+    struct {uint8_t before[8],pixels[CAT_L8_BYTES],after[8];} expanded;
+    memset(&expanded,0xa5,sizeof(expanded));
+    for(unsigned tick=0;tick<2000;++tick) {
+        s=(struct cat_status){.connected=tick%2,.battery_valid=true,
+                              .battery=tick%101,.layer_valid=true,.layer=tick%32};
+        cat_render(b.frame,s);
+        cat_expand_l8(b.frame,expanded.pixels);
+        for(unsigned i=0;i<CAT_L8_BYTES;++i)
+            assert(expanded.pixels[i]==((b.frame[i/8]&(128u>>(i%8)))?0:255));
+        for(unsigned i=0;i<8;++i)
+            assert(expanded.before[i]==0xa5 && expanded.after[i]==0xa5);
+    }
     if(argc>1) {
         s=(struct cat_status){.connected=true,.battery_valid=true,.battery=86,
                               .layer_valid=true,.layer=0};

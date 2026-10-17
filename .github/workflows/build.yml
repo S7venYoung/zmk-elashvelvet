@@ -61,6 +61,8 @@ jobs:
           done
           grep -qx '# CONFIG_ZMK_DISPLAY_STATUS_SCREEN_BUILT_IN is not set' "$right"
           grep -qx '# CONFIG_NICE_VIEW_WIDGET_STATUS is not set' "$right"
+          grep -qx 'CONFIG_LV_CACHE_DEF_SIZE=0' "$right"
+          grep -qx 'CONFIG_LV_DRAW_SW_SUPPORT_L8=y' "$right"
           grep -qx '# CONFIG_ZMK_SPLIT_ROLE_CENTRAL is not set' "$right"
           find build/velvet_right_dongle -name cat_display.c.obj -print -quit | grep -q .
           find build/velvet_nano_dongle -name cat_layer_relay.c.obj -print -quit | grep -q .

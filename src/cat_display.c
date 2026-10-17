@@ -8,15 +8,16 @@
 #include <zmk/split/bluetooth/peripheral.h>
 #include "cat_frame.h"
 #include "cat_layer.h"
+#include "cat_l8.h"
 
-/* LVGL indexed images begin with two 32-bit ARGB palette entries. */
-static uint8_t image_bytes[8+CAT_FRAME_BYTES] __aligned(4) = {
-    255,255,255,255, 0,0,0,255,
-};
+/* Keep both buffers static. L8 is consumed directly by LVGL's software
+ * renderer, without an indexed palette or an indexed decoder line buffer. */
+static uint8_t frame_bits[CAT_FRAME_BYTES];
+static uint8_t image_bytes[CAT_L8_BYTES] __aligned(4);
 static const lv_image_dsc_t image_source = {
-    .header={.magic=LV_IMAGE_HEADER_MAGIC,.cf=LV_COLOR_FORMAT_I1,
+    .header={.magic=LV_IMAGE_HEADER_MAGIC,.cf=LV_COLOR_FORMAT_L8,
              .flags=LV_IMAGE_FLAGS_MODIFIABLE,.w=CAT_WIDTH,.h=CAT_HEIGHT,
-             .stride=CAT_WIDTH/8},
+             .stride=CAT_WIDTH},
     .data_size=sizeof(image_bytes),.data=image_bytes,
 };
 static lv_obj_t *image;
@@ -62,10 +63,10 @@ static void refresh(lv_timer_t *timer) {
     if (drawn && current.connected==previous.connected &&
         current.battery_valid==previous.battery_valid && current.battery==previous.battery &&
         current.layer_valid==previous.layer_valid && current.layer==previous.layer) return;
-    cat_render(image_bytes+8,current);
+    cat_render(frame_bits,current);
+    cat_expand_l8(frame_bits,image_bytes);
     previous=current;
     drawn=true;
-    lv_image_cache_drop(&image_source);
     lv_obj_invalidate(image);
 }
 
