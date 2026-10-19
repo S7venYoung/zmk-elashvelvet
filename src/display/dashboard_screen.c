@@ -8,8 +8,8 @@
 #include "themes/cat/cat_frame.h"
 #include "themes/cat/cat_l8.h"
 #include "themes/cat/cat_layer.h"
-#include "themes/codex/render.h"
-#include "themes/system/render.h"
+#include "themes/codex-system/left/render.h"
+#include "themes/codex-system/right/render.h"
 
 static uint8_t packed[PANEL_BYTES],gray[CAT_L8_BYTES] __aligned(4);
 static const lv_image_dsc_t source={.header={.magic=LV_IMAGE_HEADER_MAGIC,
@@ -18,7 +18,7 @@ static const lv_image_dsc_t source={.header={.magic=LV_IMAGE_HEADER_MAGIC,
 static lv_obj_t *image;
 static atomic_t battery=ATOMIC_INIT(101);
 static struct k_spinlock lock;
-static uint8_t host[DASH_DATA_SIZE],theme=IS_ENABLED(CONFIG_SHIELD_VELVET_LEFT)?1:2;
+static uint8_t host[DASH_DATA_SIZE],theme=0;
 static bool received;
 static uint32_t received_at;
 static struct cat_layer_sample layer;
@@ -36,8 +36,8 @@ static int on_event(const zmk_event_t *eh){
   handled=cat_layer_accept(&layer,e->event_data,e->event_data_size,k_uptime_get_32());
  else if(!strcmp(e->event_name,DASH_EVENT)&&e->event_data_size==DASH_PACKET_SIZE){
   const uint8_t *p=e->event_data;
-  if(p[0]==1&&p[1]<=2&&p[2]<=2&&dash_valid(p+3,DASH_DATA_SIZE)){
-   theme=p[IS_ENABLED(CONFIG_SHIELD_VELVET_LEFT)?1:2];memcpy(host,p+3,sizeof(host));
+  if(dash_theme_packet_valid(p,e->event_data_size)){
+   theme=p[1];memcpy(host,p+3,sizeof(host));
    received=true;received_at=k_uptime_get_32();handled=true;
   }
  }
@@ -65,7 +65,7 @@ static void refresh(lv_timer_t *timer){
 
  if(selected==0){struct cat_status c={.connected=view.keyboard.connected,
  .battery_valid=view.keyboard.battery_valid,.battery=b,.layer_valid=view.keyboard.layer_valid,.layer=view.keyboard.layer};cat_render(packed,c);}
- else if(selected==1)codex_render(packed,&view);else system_render(packed,&view);
+ else if(IS_ENABLED(CONFIG_SHIELD_VELVET_LEFT))codex_render(packed,&view);else system_render(packed,&view);
  cat_expand_l8(packed,gray);lv_obj_invalidate(image);
 }
 lv_obj_t *zmk_display_status_screen(void){

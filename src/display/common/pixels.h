@@ -51,3 +51,19 @@ static inline void bar(uint8_t*p,int x,int y,int w,int h,unsigned percent,bool v
  unsigned fill=(percent>100?100:percent)*(unsigned)(w-4)/100;
  for(unsigned i=0;i<fill;i++)if(i%4!=3)box(p,x+2+(int)i,y+2,1,h-4,false);
 }
+/* Narrow 3x5 footer lettering and tall display lettering. */
+static inline uint16_t tiny_glyph(char c){
+ switch(c){
+ case 'L':return 0x4927;case 'A':return 0x2bed;case 'Y':return 0x5a92;case 'E':return 0x79a7;case 'R':return 0x6bad;
+ case '0':return 0x7b6f;case '1':return 0x2c97;case '2':return 0x73e7;case '3':return 0x73cf;case '4':return 0x5bc9;
+ case '5':return 0x79cf;case '6':return 0x79ef;case '7':return 0x7249;case '8':return 0x7bef;case '9':return 0x7bcf;
+ case '-':return 0x01c0;default:return 0;}
+}
+static inline void tiny_text(uint8_t*p,int x,int y,const char*s){
+ for(;*s;s++,x+=4){uint16_t g=tiny_glyph(*s);for(int row=0;row<5;row++)for(int col=0;col<3;col++)
+ if(g&(1u<<(14-row*3-col)))px(p,x+col,y+row,false);}
+}
+static inline void tall_text(uint8_t*p,int x,int y,const char*s){
+ for(;*s;s++,x+=12){uint64_t g=glyph(*s);for(int col=0;col<5;col++)for(int row=0;row<7;row++)
+ if(g&(UINT64_C(1)<<(col*8+row)))box(p,x+col*2,y+row*3,2,3,false);}
+}

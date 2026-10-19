@@ -15,7 +15,7 @@ config VELVET_CAT_DISPLAY
     default n
 
 config VELVET_DASHBOARD_DISPLAY
-    bool "Selectable cat, Codex quota and system monitor screens"
+    bool "Paired cat and Codex/system screen theme sets"
     depends on SHIELD_VELVET_SPLIT_PERIPHERAL && ZMK_DISPLAY && ZMK_SPLIT_RELAY_EVENT
     select LV_USE_IMAGE
     default n

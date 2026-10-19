@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 #include <assert.h>
 #include <stdio.h>
-#include "../themes/codex/render.h"
-#include "../themes/system/render.h"
+#include "../themes/codex-system/left/render.h"
+#include "../themes/codex-system/right/render.h"
 static void save(const char*name,const uint8_t*p){FILE*f=fopen(name,"wb");assert(f);fprintf(f,"P4\n160 68\n");assert(fwrite(p,1,PANEL_BYTES,f)==PANEL_BYTES);fclose(f);}
 int main(int argc,char**argv){
  struct {uint8_t before[16],p[PANEL_BYTES],after[16];}b;memset(&b,0xa5,sizeof(b));
@@ -16,6 +16,12 @@ int main(int argc,char**argv){
   codex_render(b.p,&s);system_render(b.p,&s);
   for(unsigned i=0;i<16;i++)assert(b.before[i]==0xa5&&b.after[i]==0xa5);
  }
+ uint8_t theme_packet[DASH_PACKET_SIZE]={1,0,0};memcpy(theme_packet+3,sample,sizeof(sample));
+ assert(dash_theme_packet_valid(theme_packet,sizeof(theme_packet)));
+ theme_packet[1]=theme_packet[2]=1;assert(dash_theme_packet_valid(theme_packet,sizeof(theme_packet)));
+ theme_packet[2]=0;assert(!dash_theme_packet_valid(theme_packet,sizeof(theme_packet)));
+ theme_packet[1]=theme_packet[2]=2;assert(!dash_theme_packet_valid(theme_packet,sizeof(theme_packet)));
+ assert(!dash_theme_packet_valid(NULL,DASH_PACKET_SIZE));assert(!dash_theme_packet_valid(theme_packet,3));
  uint8_t aged[DASH_DATA_SIZE];
  dash_age_data(aged,sample,true,89999);assert(aged[1]==63&&dash_u32(aged+14)==9211);
  dash_age_data(aged,sample,true,90000);assert(aged[1]==0);

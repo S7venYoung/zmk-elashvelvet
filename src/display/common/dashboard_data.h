@@ -37,3 +37,8 @@ static inline void dash_age_data(uint8_t*out,const uint8_t*in,bool live,uint32_t
  else if(out[1]&DASH_RESET){uint32_t sec=dash_u32(in+14),elapsed=age/1000;
  dash_put32(out+14,sec>elapsed?sec-elapsed:0);}
 }
+
+/* One theme set controls both physical halves; mixed independent pages are invalid. */
+static inline bool dash_theme_packet_valid(const uint8_t*p,unsigned size){
+ return p&&size==DASH_PACKET_SIZE&&p[0]==1&&p[1]<=1&&p[2]==p[1]&&dash_valid(p+3,DASH_DATA_SIZE);
+}

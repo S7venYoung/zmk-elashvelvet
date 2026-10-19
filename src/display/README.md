@@ -1,18 +1,22 @@
 # 左 Codex / 右系统信息
 
-本地主题分别位于 `themes/cat/`、`themes/codex/`、`themes/system/`。小猫咪像素素材和渲染器原样保留。新界面使用同一对压缩/L8 缓冲（1360+10880 字节），每次只绘制一个主题，切换不累计创建 LVGL 对象。
+主题按左右配套成一套，而不是每个屏幕单独一个主题：
 
-默认左手 Codex、右手系统信息。在 DYA Custom Settings 中选接收器本地 `velvet_display`：
+- `themes/cat/`：左右手都是原小猫咪，默认主题。
+- `themes/codex-system/`：同一套主题，`left/` 显示 Codex，`right/` 显示系统信息及 CPU 温度。
+
+同一时间仅绘制所选主题，共用 1360+10880 字节压缩/L8 缓冲。DYA Custom Settings 在接收器本地 `velvet_display` 只有一个主题偏好：
 
 | key | 值 | 保存方式 |
 |---|---|---|
-| `left_theme` | 0 小猫咪 / 1 Codex / 2 系统 | Persist 后重启保持 |
-| `right_theme` | 同上 | Persist 后重启保持 |
+| `theme_set` | 0 猫咪（左右都是猫咪）/ 1 Codex＋系统（左 Codex、右系统） | Persist 后重启保持 |
 | `host_metrics` | 18 字节电脑遥测 | 仅 MEMORY，不能将实时数据 Persist |
+
+原 `left_theme`、`right_theme` 已取消，旧的独立主题值不参与选择；升级后默认回到猫咪，可在 DYA 重新选择整套主题。不清除配对或其他设置。
 
 电脑端使用 [prospector-codex-macos](https://github.com/S7venYoung/prospector-codex-macos) 原有 Studio CDC 通道，发现 `velvet_display` 命名空间后经 `cormoran_custom_settings` 写入数据。不另开串口协议。修改主题时退出电脑同步应用，DYA 保存后退出 DYA，再启用应用；同一 CDC 端口不能被两个应用同时独占。
 
-接收器每秒在已有 split relay 通道发布主题和状态，双方各自读取电量、连接和层号。电脑更新沿用原应用 15–60 秒节奏；90 秒无新遥测后显示未知。键盘 3 秒未收到接收器快照或 split 断开也显示未知。Codex 仍遵守电脑应用 15 分钟额度有效期；重置倒计时在接收器本地递减。CPU 图只在电脑更新序号变化时加入采样点，不重复填充旧值。
+接收器每秒在已有 split relay 通道发布主题和状态，双方各自读取电量、连接和层号。主题快照的两个原页面选择字节必须相等且为 0/1，接收器始终同时发送同一套主题。电脑更新沿用原应用 15–60 秒节奏；90 秒无新遥测后显示未知。键盘 3 秒未收到接收器快照或 split 断开也显示未知。Codex 仍遵守电脑应用 15 分钟额度有效期；重置倒计时在接收器本地递减。CPU 图只在电脑更新序号变化时加入采样点，不重复填充旧值。
 
 ## 数据包 v1
 

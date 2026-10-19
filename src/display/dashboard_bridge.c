@@ -19,9 +19,8 @@ ZMK_RPC_CUSTOM_SUBSYSTEM(velvet_display,&meta,no_direct_request);
  ZMK_CUSTOM_SETTING_DEFINE(name,"velvet_display",key,ZMK_CUSTOM_SETTING_VALUE_TYPE_INT32, \
  ZMK_CUSTOM_SETTING_VALUE_INT32(value),ZMK_CUSTOM_SETTING_CONFIDENTIALITY_RPC_PUBLIC, \
  ZMK_CUSTOM_SETTING_PERMISSION_UNSECURE,ZMK_CUSTOM_SETTING_PERMISSION_UNSECURE, \
- ZMK_CUSTOM_SETTING_RANGE_INT32(0,2))
-THEME_SETTING(left_theme,"left_theme",1);
-THEME_SETTING(right_theme,"right_theme",2);
+ ZMK_CUSTOM_SETTING_RANGE_INT32(0,1))
+THEME_SETTING(theme_set,"theme_set",0);
 ZMK_CUSTOM_SETTING_DEFINE(host_metrics,"velvet_display","host_metrics",ZMK_CUSTOM_SETTING_VALUE_TYPE_BYTES,
  ZMK_CUSTOM_SETTING_VALUE_BYTES(1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0),
  ZMK_CUSTOM_SETTING_CONFIDENTIALITY_RPC_PERSONAL,ZMK_CUSTOM_SETTING_PERMISSION_UNSECURE,
@@ -49,10 +48,10 @@ static void send_snapshot(struct k_work *work){
  }
  struct zmk_split_relay_event_payload payload={.header.event_data_size=DASH_PACKET_SIZE};
  strcpy(payload.event_type,DASH_EVENT);uint8_t*p=payload.event_data;p[0]=1;
- int32_t l=1,r=2;
- zmk_custom_setting_get_int32(zmk_custom_setting_find("velvet_display","left_theme"),&l);
- zmk_custom_setting_get_int32(zmk_custom_setting_find("velvet_display","right_theme"),&r);
- p[1]=(l>=0&&l<=2)?(uint8_t)l:1;p[2]=(r>=0&&r<=2)?(uint8_t)r:2;
+ int32_t selected=0;
+ zmk_custom_setting_get_int32(zmk_custom_setting_find("velvet_display","theme_set"),&selected);
+ p[1]=p[2]=selected==1?1:0;
+
  dash_age_data(p+3,last,live,now-updated);
  zmk_split_central_send_relay_event(&payload);
  k_work_reschedule(&publish_work,K_SECONDS(1));

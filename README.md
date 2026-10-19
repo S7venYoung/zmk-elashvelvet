@@ -1,4 +1,4 @@
-> 当前显示配置：左手 Codex、右手系统信息，可在 DYA 切回小猫咪；详见 [显示模块](src/display/README.md)。以下较早修复记录为历史说明。
+> 当前主题按左右配套：默认左右均为小猫咪，DYA 的 theme_set=1 选择左 Codex＋右系统信息；详见 [显示模块](src/display/README.md)。以下较早修复记录为历史说明。
 
 > **nRF52833 实机回归记录（2026-10-16）**：扫描仪广播版 `a2ba0f2`（Actions 38746000853）刷入后 USB 不枚举，DYA 和插拔入口不可用，已撤回该版广播改动。不要刷该次构建的固件。此前实机可用版本为 `54f1444`（Actions 38214599144）；无法进入启动器时需要 SWD/J-Link 恢复原始 HEX。根因尚未确认；当前分支提供单广播修复候选，尚未确认扫描仪广播实机稳定性。独立 Bootloader 已另行通过实机验证，见下文。
 
@@ -120,3 +120,9 @@ Nano 接收器使用 `studio-rpc-usb-uart` 启用 USB CDC Studio 通道。RPC �
 新默认界面为左手 Codex、右手系统信息（CPU、RAM、CPU 温度、趋势），小猫咪作为可选主题完整保留。三套主题各有独立目录，通过接收器 DYA Custom Settings 的 `velvet_display/left_theme`、`right_theme` 选择：0=小猫咪、1=Codex、2=系统。只有偏好设置使用 Persist，实时数据只写 RAM。
 
 电脑端复用 `S7venYoung/prospector-codex-macos` 现有 Studio USB 通道。未知/过期数据不显示样例值，CPU 温度读取依赖 Mac 的 AppleSMC CPU 传感器支持，读不到显示 `--°C`。详细协议、预览、内存复用、同步周期和验证限制见 [显示模块](src/display/README.md)。两个仓库 Actions 均仅手动触发，此次未构建，需配套固件/应用构建及实机验证。
+
+## 整套主题修正与新版像素排版
+
+主题选择改为一个 `velvet_display/theme_set`：0=左右都是原小猫咪，1=左 Codex＋右系统信息（同一套主题）。取消之前的左右独立选择；默认整套小猫咪，旧的 left_theme/right_theme 不再生效。每套主题独立目录，信息套装的左右页合并在 `src/display/themes/codex-system/`。
+
+新版信息套装改用图标状态栏、较高的 CODEX/百分比数字、较大的 CPU/RAM 标题、分区进度条和完整 LAYER 标签，按实际 160×68 重排。预览由同一 C 绘图代码生成，仍是待实机验证的候选，未触发构建。上文提及“三套主题、左右独立选择”的旧记录已由本节替代。
