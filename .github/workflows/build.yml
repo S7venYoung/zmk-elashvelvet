@@ -35,6 +35,11 @@ jobs:
       - name: Install physical-half scanner status fields
         run: python3 scripts/patch_dongle_status_fields.py dependencies/prospector-zmk-module/src/status_advertisement.c
       - run: west zmk-build -d ./build -q
+      - name: Test Codex and system dashboard renderers
+        shell: bash
+        run: |
+          cc -std=c11 -Wall -Wextra -Werror src/display/tests/test_dashboard.c -o /tmp/test-dashboard
+          /tmp/test-dashboard
       - name: Verify physical-half telemetry relay
         shell: bash
         run: |
@@ -49,14 +54,15 @@ jobs:
           grep -q VELVET_DONGLE_STATUS_FIELDS dependencies/prospector-zmk-module/src/status_advertisement.c
           grep -q VELVET_ZEPHYR41_ENUM_OPTION dependencies/prospector-zmk-module/src/status_advertisement.c
           ! grep -Eq '^#if defined\\(BT_LE_ADV_OPT_(FORCE_NAME_IN_AD|SCANNABLE)\\)' dependencies/prospector-zmk-module/src/status_advertisement.c
-      - name: Verify right cat display and left unchanged
+      - name: Verify selectable keyboard dashboards
         shell: bash
         run: |
           left=build/velvet_left_dongle/zephyr/.config
           right=build/velvet_right_dongle/zephyr/.config
-          grep -qx 'CONFIG_ZMK_DISPLAY_STATUS_SCREEN_BUILT_IN=y' "$left"
+          grep -qx 'CONFIG_VELVET_DASHBOARD_DISPLAY=y' "$left"
+          grep -qx '# CONFIG_ZMK_DISPLAY_STATUS_SCREEN_BUILT_IN is not set' "$left"
           ! grep -qx 'CONFIG_VELVET_CAT_DISPLAY=y' "$left"
-          for option in ZMK_DISPLAY ZMK_DISPLAY_STATUS_SCREEN_CUSTOM VELVET_CAT_DISPLAY LV_USE_IMAGE LS0XX LV_COLOR_DEPTH_1; do
+          for option in ZMK_DISPLAY ZMK_DISPLAY_STATUS_SCREEN_CUSTOM VELVET_DASHBOARD_DISPLAY LV_USE_IMAGE LS0XX LV_COLOR_DEPTH_1; do
             grep -qx "CONFIG_${option}=y" "$right"
           done
           grep -qx '# CONFIG_ZMK_DISPLAY_STATUS_SCREEN_BUILT_IN is not set' "$right"
@@ -72,7 +78,15 @@ jobs:
           grep -qx 'CONFIG_LV_CACHE_DEF_SIZE=0' "$right"
           grep -qx 'CONFIG_LV_DRAW_SW_SUPPORT_L8=y' "$right"
           grep -qx '# CONFIG_ZMK_SPLIT_ROLE_CENTRAL is not set' "$right"
-          find build/velvet_right_dongle -name cat_display.c.obj -print -quit | grep -q .
+          for side in left right; do
+            cfg="build/velvet_${side}_dongle/zephyr/.config"
+            grep -qx 'CONFIG_VELVET_DASHBOARD_DISPLAY=y' "$cfg"
+            grep -qx 'CONFIG_LV_DRAW_SW_SUPPORT_L8=y' "$cfg"
+            grep -qx 'CONFIG_LV_CACHE_DEF_SIZE=0' "$cfg"
+            grep -qx '# CONFIG_NICE_VIEW_WIDGET_STATUS is not set' "$cfg"
+            find "build/velvet_${side}_dongle" -name dashboard_screen.c.obj -print -quit | grep -q .
+          done
+          find build/velvet_nano_dongle -name dashboard_bridge.c.obj -print -quit | grep -q .
           find build/velvet_nano_dongle -name cat_layer_relay.c.obj -print -quit | grep -q .
           grep -q vcom_toggle_thread build/velvet_right_dongle/zephyr/zmk.map
           python3 - <<'PY'

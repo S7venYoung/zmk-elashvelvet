@@ -18,3 +18,10 @@ endif()
 
 # Each screen theme owns its source files and build rules.
 add_subdirectory(src/display/themes/cat)
+
+if(CONFIG_VELVET_DASHBOARD_DISPLAY)
+  target_sources(app PRIVATE src/display/dashboard_screen.c)
+endif()
+if(CONFIG_SHIELD_VELVET_NANO_DONGLE)
+  target_sources(app PRIVATE src/display/dashboard_bridge.c)
+endif()

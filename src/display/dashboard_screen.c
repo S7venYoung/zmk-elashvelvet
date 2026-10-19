@@ -1,0 +1,77 @@
+/* SPDX-License-Identifier: MIT */
+#include <lvgl.h>
+#include <zephyr/kernel.h>
+#include <zephyr/sys/atomic.h>
+#include <zmk/event_manager.h>
+#include <zmk/events/battery_state_changed.h>
+#include <zmk/split/bluetooth/peripheral.h>
+#include "themes/cat/cat_frame.h"
+#include "themes/cat/cat_l8.h"
+#include "themes/cat/cat_layer.h"
+#include "themes/codex/render.h"
+#include "themes/system/render.h"
+
+static uint8_t packed[PANEL_BYTES],gray[CAT_L8_BYTES] __aligned(4);
+static const lv_image_dsc_t source={.header={.magic=LV_IMAGE_HEADER_MAGIC,
+ .cf=LV_COLOR_FORMAT_L8,.flags=LV_IMAGE_FLAGS_MODIFIABLE,.w=PANEL_W,.h=PANEL_H,.stride=PANEL_W},
+ .data_size=sizeof(gray),.data=gray};
+static lv_obj_t *image;
+static atomic_t battery=ATOMIC_INIT(101);
+static struct k_spinlock lock;
+static uint8_t host[DASH_DATA_SIZE],theme=IS_ENABLED(CONFIG_SHIELD_VELVET_LEFT)?1:2;
+static bool received;
+static uint32_t received_at;
+static struct cat_layer_sample layer;
+static struct dashboard_status view;
+static uint8_t history_sequence;
+static bool history_started;
+
+static int on_event(const zmk_event_t *eh){
+ const struct zmk_battery_state_changed *b=as_zmk_battery_state_changed(eh);
+ if(b&&b->state_of_charge<=100)atomic_set(&battery,b->state_of_charge);
+ const struct zmk_relay_event_received *e=as_zmk_relay_event_received(eh);
+ if(!e||!e->event_name)return ZMK_EV_EVENT_BUBBLE;
+ bool handled=false;k_spinlock_key_t key=k_spin_lock(&lock);
+ if(!strcmp(e->event_name,CAT_LAYER_EVENT))
+  handled=cat_layer_accept(&layer,e->event_data,e->event_data_size,k_uptime_get_32());
+ else if(!strcmp(e->event_name,DASH_EVENT)&&e->event_data_size==DASH_PACKET_SIZE){
+  const uint8_t *p=e->event_data;
+  if(p[0]==1&&p[1]<=2&&p[2]<=2&&dash_valid(p+3,DASH_DATA_SIZE)){
+   theme=p[IS_ENABLED(CONFIG_SHIELD_VELVET_LEFT)?1:2];memcpy(host,p+3,sizeof(host));
+   received=true;received_at=k_uptime_get_32();handled=true;
+  }
+ }
+ k_spin_unlock(&lock,key);return handled?ZMK_EV_EVENT_HANDLED:ZMK_EV_EVENT_BUBBLE;
+}
+ZMK_LISTENER(velvet_dashboard,on_event);
+ZMK_SUBSCRIPTION(velvet_dashboard,zmk_battery_state_changed);
+ZMK_SUBSCRIPTION(velvet_dashboard,zmk_relay_event_received);
+
+static void refresh(lv_timer_t *timer){
+ ARG_UNUSED(timer);uint32_t now=k_uptime_get_32();uint8_t selected,b=(uint8_t)atomic_get(&battery);
+ view.keyboard=(struct panel_status){.side=IS_ENABLED(CONFIG_SHIELD_VELVET_LEFT)?'L':'R',
+ .connected=zmk_split_bt_peripheral_is_connected(),.battery_valid=b<=100,.battery=b};
+ k_spinlock_key_t key=k_spin_lock(&lock);selected=theme;
+ view.keyboard.layer=layer.layer;view.keyboard.layer_valid=view.keyboard.connected&&cat_layer_live(&layer,now);
+ bool fresh=received&&view.keyboard.connected&&(uint32_t)(now-received_at)<3000u;
+ memcpy(view.data,host,sizeof(host));k_spin_unlock(&lock,key);
+ if(!fresh)view.data[1]=0;
+ if(!(view.data[1]&DASH_CPU)){view.count=0;history_started=false;}
+ else if(!history_started||history_sequence!=view.data[2]){
+  history_started=true;history_sequence=view.data[2];
+  if(view.count<12)view.history[view.count++]=view.data[3];
+  else {memmove(view.history,view.history+1,11);view.history[11]=view.data[3];}
+ }
+
+ if(selected==0){struct cat_status c={.connected=view.keyboard.connected,
+ .battery_valid=view.keyboard.battery_valid,.battery=b,.layer_valid=view.keyboard.layer_valid,.layer=view.keyboard.layer};cat_render(packed,c);}
+ else if(selected==1)codex_render(packed,&view);else system_render(packed,&view);
+ cat_expand_l8(packed,gray);lv_obj_invalidate(image);
+}
+lv_obj_t *zmk_display_status_screen(void){
+ lv_obj_t *screen=lv_obj_create(NULL);lv_obj_set_style_bg_color(screen,lv_color_white(),0);
+ lv_obj_set_style_bg_opa(screen,LV_OPA_COVER,0);lv_obj_set_style_pad_all(screen,0,0);
+ lv_obj_set_style_border_width(screen,0,0);lv_obj_remove_flag(screen,LV_OBJ_FLAG_SCROLLABLE);
+ image=lv_image_create(screen);lv_image_set_src(image,&source);lv_obj_set_pos(image,0,0);
+ refresh(NULL);lv_timer_create(refresh,1000,NULL);return screen;
+}

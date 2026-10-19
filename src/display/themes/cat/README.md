@@ -20,4 +20,4 @@ cc -std=c11 -Wall -Wextra -Werror -Isrc/display/themes/cat src/display/themes/ca
 
 素材生成：`python3 src/display/themes/cat/tools/draw_cat.py`（需要 Pillow）。
 
-本次仅移动文件，不表示白屏问题已通过实机验证，也未实现 DYA 主题切换。
+小猫咪素材与渲染器保持原样，由共用 dashboard_screen.c 管理。DYA 中左右主题值 0 均可选择小猫咪；新界面默认左 Codex、右系统。此改动不表示此前白屏问题已通过实机验证。
