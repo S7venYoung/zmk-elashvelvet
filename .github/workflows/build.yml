@@ -32,6 +32,10 @@ jobs:
           /tmp/test-cat
       - name: Test Cube packet cadence
         run: python3 scripts/test_scanner_payload.py
+      - name: Test display runtime diagnostic packets
+        run: |
+          cc -std=c11 -Wall -Wextra -Werror src/display/tests/test_dashboard_debug.c -o /tmp/test-dashboard-debug
+          /tmp/test-dashboard-debug
       - name: Test display relay BLE framing
         run: python3 scripts/test_dashboard_relay.py dependencies/zmk
       - name: Install physical-half scanner status fields

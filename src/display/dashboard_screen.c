@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #include <lvgl.h>
 #include <zephyr/kernel.h>
+#include <zephyr/init.h>
 #include <zephyr/sys/atomic.h>
 #include <zmk/event_manager.h>
 #include <zmk/events/battery_state_changed.h>
@@ -8,6 +9,8 @@
 #include "themes/cat/cat_frame.h"
 #include "themes/cat/cat_l8.h"
 #include "themes/cat/cat_layer.h"
+#include "common/dashboard_debug.h"
+#include <zmk/split/peripheral.h>
 #include "themes/codex-system/left/render.h"
 #include "themes/codex-system/right/render.h"
 
@@ -20,6 +23,7 @@ static atomic_t battery=ATOMIC_INIT(101);
 static struct k_spinlock lock;
 static uint8_t host[DASH_DATA_SIZE],theme=0;
 static bool received;
+static atomic_t received_count,drawn_count;
 static uint32_t received_at;
 static struct cat_layer_sample layer;
 static struct dashboard_status view;
@@ -39,6 +43,7 @@ static int on_event(const zmk_event_t *eh){
   if(dash_theme_packet_valid(p,e->event_data_size)){
    theme=p[1];memcpy(host,p+3,sizeof(host));
    received=true;received_at=k_uptime_get_32();handled=true;
+   atomic_inc(&received_count);
   }
  }
  k_spin_unlock(&lock,key);return handled?ZMK_EV_EVENT_HANDLED:ZMK_EV_EVENT_BUBBLE;
@@ -66,7 +71,7 @@ static void refresh(lv_timer_t *timer){
  if(selected==0){struct cat_status c={.connected=view.keyboard.connected,
  .battery_valid=view.keyboard.battery_valid,.battery=b,.layer_valid=view.keyboard.layer_valid,.layer=view.keyboard.layer};cat_render(packed,c);}
  else if(IS_ENABLED(CONFIG_SHIELD_VELVET_LEFT))codex_render(packed,&view);else system_render(packed,&view);
- cat_expand_l8(packed,gray);lv_obj_invalidate(image);
+ cat_expand_l8(packed,gray);lv_obj_invalidate(image);atomic_inc(&drawn_count);
 }
 lv_obj_t *zmk_display_status_screen(void){
  lv_obj_t *screen=lv_obj_create(NULL);lv_obj_set_style_bg_color(screen,lv_color_white(),0);
@@ -75,3 +80,28 @@ lv_obj_t *zmk_display_status_screen(void){
  image=lv_image_create(screen);lv_image_set_src(image,&source);lv_obj_set_pos(image,0,0);
  refresh(NULL);lv_timer_create(refresh,1000,NULL);return screen;
 }
+
+/* An independent heartbeat distinguishes stopped LVGL refresh from lost RX. */
+static void publish_display_ack(struct k_work *work);
+K_WORK_DELAYABLE_DEFINE(display_ack_work,publish_display_ack);
+static void publish_display_ack(struct k_work *work) {
+ ARG_UNUSED(work);
+ struct zmk_split_transport_peripheral_event event={
+  .type=ZMK_SPLIT_TRANSPORT_PERIPHERAL_EVENT_TYPE_RELAY_EVENT,
+  .data.relay_event.header={.event_type_size=sizeof(DASH_ACK_EVENT)-1,.event_data_size=DASH_ACK_SIZE}};
+ strcpy(event.data.relay_event.event_type,DASH_ACK_EVENT);
+ bool connected=zmk_split_bt_peripheral_is_connected();
+ k_spinlock_key_t key=k_spin_lock(&lock);
+ uint8_t selected=theme;
+ bool fresh=received&&connected&&(uint32_t)(k_uptime_get_32()-received_at)<3000u;
+ k_spin_unlock(&lock,key);
+ dash_ack_encode(event.data.relay_event.event_data,IS_ENABLED(CONFIG_SHIELD_VELVET_LEFT)?0:1,
+                 selected,connected,fresh,(uint32_t)atomic_get(&received_count),
+                 (uint32_t)atomic_get(&drawn_count));
+ (void)zmk_split_peripheral_report_event(&event);
+ k_work_reschedule(&display_ack_work,K_SECONDS(2));
+}
+static int init_display_ack(void) {
+ k_work_schedule(&display_ack_work,K_SECONDS(3));return 0;
+}
+SYS_INIT(init_display_ack,APPLICATION,90);

@@ -8,13 +8,55 @@
 #include <cormoran/zmk/custom_settings.h>
 #include <zmk/studio/custom.h>
 #include "common/dashboard_data.h"
+#include "common/dashboard_debug.h"
+#include <pb_encode.h>
 
 static struct zmk_rpc_custom_subsystem_meta meta={ZMK_RPC_CUSTOM_SUBSYSTEM_UI_URLS(),
  .security=ZMK_STUDIO_RPC_HANDLER_UNSECURED};
-static bool no_direct_request(const zmk_custom_CallRequest *req,pb_callback_t *res){
- ARG_UNUSED(req);ARG_UNUSED(res);return false;
+/* RAM-only observations; never create another persistable Custom Setting. */
+static struct k_spinlock debug_lock;
+static uint8_t debug_response[DASH_DEBUG_SIZE];
+static uint8_t acknowledgements[2][DASH_ACK_SIZE];
+static uint32_t acknowledgement_at[2];
+static bool acknowledgement_seen[2];
+static uint32_t tx_count, ack_count;
+static uint8_t selected_theme;
+static int setting_result, queue_result;
+static bool encode_debug(pb_ostream_t *stream,const pb_field_t *field,void *const *arg) {
+ ARG_UNUSED(arg);
+ /* CallResponse.payload contains protobuf field 1: bytes status. */
+ return pb_encode_tag_for_field(stream,field)&&pb_encode_varint(stream,DASH_DEBUG_SIZE+2)&&
+        pb_encode_tag(stream,PB_WT_STRING,1)&&pb_encode_string(stream,debug_response,sizeof(debug_response));
 }
-ZMK_RPC_CUSTOM_SUBSYSTEM(velvet_display,&meta,no_direct_request);
+static bool read_debug(const zmk_custom_CallRequest *req,pb_callback_t *res) {
+ if(req->payload.size!=2||req->payload.bytes[0]!=8||req->payload.bytes[1]!=1)return false;
+ uint32_t now=k_uptime_get_32();
+ k_spinlock_key_t key=k_spin_lock(&debug_lock);
+ memset(debug_response,0,sizeof(debug_response));
+ debug_response[0]=1;debug_response[1]=selected_theme;
+ debug_response[2]=(uint8_t)setting_result;debug_response[3]=(uint8_t)queue_result;
+ dash_debug_put32(debug_response+4,tx_count);dash_debug_put32(debug_response+8,ack_count);
+ memcpy(debug_response+12,acknowledgements[0],DASH_ACK_SIZE);
+ memcpy(debug_response+24,acknowledgements[1],DASH_ACK_SIZE);
+ dash_debug_put32(debug_response+36,acknowledgement_seen[0]?now-acknowledgement_at[0]:UINT32_MAX);
+ dash_debug_put32(debug_response+40,acknowledgement_seen[1]?now-acknowledgement_at[1]:UINT32_MAX);
+ dash_debug_put32(debug_response+44,now);
+ k_spin_unlock(&debug_lock,key);
+ res->funcs.encode=encode_debug;res->arg=NULL;return true;
+}
+ZMK_RPC_CUSTOM_SUBSYSTEM(velvet_display,&meta,read_debug);
+static int receive_ack(const zmk_event_t *eh) {
+ const struct zmk_relay_event_received *e=as_zmk_relay_event_received(eh);
+ if(!e||!e->event_name||strcmp(e->event_name,DASH_ACK_EVENT)||
+    !dash_ack_valid(e->event_data,e->event_data_size))return ZMK_EV_EVENT_BUBBLE;
+ unsigned side=e->event_data[1];
+ k_spinlock_key_t key=k_spin_lock(&debug_lock);
+ memcpy(acknowledgements[side],e->event_data,DASH_ACK_SIZE);
+ acknowledgement_at[side]=k_uptime_get_32();acknowledgement_seen[side]=true;ack_count++;
+ k_spin_unlock(&debug_lock,key);return ZMK_EV_EVENT_HANDLED;
+}
+ZMK_LISTENER(velvet_dashboard_ack,receive_ack);
+ZMK_SUBSCRIPTION(velvet_dashboard_ack,zmk_relay_event_received);
 #define THEME_SETTING(name,key,value) \
  ZMK_CUSTOM_SETTING_DEFINE(name,"velvet_display",key,ZMK_CUSTOM_SETTING_VALUE_TYPE_INT32, \
  ZMK_CUSTOM_SETTING_VALUE_INT32(value),ZMK_CUSTOM_SETTING_CONFIDENTIALITY_RPC_PUBLIC, \
@@ -50,11 +92,14 @@ static void send_snapshot(struct k_work *work){
  .header.event_data_size=DASH_PACKET_SIZE};
  strcpy(payload.event_type,DASH_EVENT);uint8_t*p=payload.event_data;p[0]=1;
  int32_t selected=0;
- zmk_custom_setting_get_int32(zmk_custom_setting_find("velvet_display","theme_set"),&selected);
+ int get_result=zmk_custom_setting_get_int32(zmk_custom_setting_find("velvet_display","theme_set"),&selected);
  p[1]=p[2]=selected==1?1:0;
 
  dash_age_data(p+3,last,live,now-updated);
- zmk_split_central_send_relay_event(&payload);
+ int send_result=zmk_split_central_send_relay_event(&payload);
+ k_spinlock_key_t key=k_spin_lock(&debug_lock);
+ selected_theme=p[1];setting_result=get_result;queue_result=send_result;tx_count++;
+ k_spin_unlock(&debug_lock,key);
  k_work_reschedule(&publish_work,K_SECONDS(1));
 }
 static int start(void){k_work_schedule(&publish_work,K_SECONDS(3));return 0;}
