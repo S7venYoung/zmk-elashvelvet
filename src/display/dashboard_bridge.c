@@ -46,7 +46,8 @@ static void send_snapshot(struct k_work *work){
   int rc=zmk_custom_setting_read_into(zmk_custom_setting_find("velvet_display","host_metrics"),data,sizeof(data),&len,NULL);
   if(!rc&&dash_valid(data,len)){memcpy(last,data,sizeof(last));updated=now;live=true;}
  }
- struct zmk_split_relay_event_payload payload={.header.event_data_size=DASH_PACKET_SIZE};
+ struct zmk_split_relay_event_payload payload={.header.event_type_size=sizeof(DASH_EVENT)-1,
+ .header.event_data_size=DASH_PACKET_SIZE};
  strcpy(payload.event_type,DASH_EVENT);uint8_t*p=payload.event_data;p[0]=1;
  int32_t selected=0;
  zmk_custom_setting_get_int32(zmk_custom_setting_find("velvet_display","theme_set"),&selected);

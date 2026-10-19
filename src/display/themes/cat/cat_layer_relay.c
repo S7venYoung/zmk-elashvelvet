@@ -12,7 +12,8 @@ static void publish_layer(struct k_work *work);
 K_WORK_DELAYABLE_DEFINE(cat_layer_work,publish_layer);
 static void publish_layer(struct k_work *work) {
     ARG_UNUSED(work);
-    struct zmk_split_relay_event_payload payload={.header.event_data_size=2};
+    struct zmk_split_relay_event_payload payload={.header.event_type_size=sizeof(CAT_LAYER_EVENT)-1,
+ .header.event_data_size=2};
     strcpy(payload.event_type,CAT_LAYER_EVENT);
     payload.event_data[0]=1;
     payload.event_data[1]=zmk_keymap_highest_layer_active();

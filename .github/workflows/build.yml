@@ -32,6 +32,8 @@ jobs:
           /tmp/test-cat
       - name: Test Cube packet cadence
         run: python3 scripts/test_scanner_payload.py
+      - name: Test display relay BLE framing
+        run: python3 scripts/test_dashboard_relay.py dependencies/zmk
       - name: Install physical-half scanner status fields
         run: python3 scripts/patch_dongle_status_fields.py dependencies/prospector-zmk-module/src/status_advertisement.c
       - run: west zmk-build -d ./build -q
