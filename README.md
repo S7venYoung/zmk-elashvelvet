@@ -130,3 +130,5 @@ Nano 接收器使用 `studio-rpc-usb-uart` 启用 USB CDC Studio 通道。RPC �
 ## 信息套装简化
 
 按新参考图去掉屏幕上的 CODEX 字样与 CPU 趋势图，改为左右各三行：左 5H/7D/RESET，右 CPU/RAM/TEMP。采用纯色进度条，层号放入顶部 L1；CPU 温度显示整数°C。整套选择仍是 0=左右猫咪（默认），1=额度＋系统。预览和进度量程说明见 [信息套装](src/display/themes/codex-system/README.md)。此改动未触发构建，需实机验证。
+
+简洁系统页进一步去掉 RAM 使用量/总量数字，仅显示 RAM 百分比与进度条；CPU/RAM/TEMP 三行等距对齐。此次未触发构建。
