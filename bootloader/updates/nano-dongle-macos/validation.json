@@ -1,0 +1,61 @@
+{
+  "hardware_tested": false,
+  "scope": "Existing built candidates only; no rebuild, no flashing.",
+  "bootloader": {
+    "source_commit": "d7c55d99c97633a770c5536dc113e3849f3bc91e",
+    "mode": "replug",
+    "segments": [
+      [
+        475136,
+        506888
+      ],
+      [
+        514048,
+        514136
+      ]
+    ],
+    "bootloader_start": "0x74000",
+    "mbr_params": "0x7e000",
+    "application_start_without_softdevice": "0x1000",
+    "journal_page_replug_only": "0x65000-0x65fff",
+    "hardware_tested": false,
+    "warning": "BL-only image; hardware validation required. No full-chip erase. Preserve MBR/UICR/app/settings. No SoftDevice included."
+  },
+  "uf2_update": {
+    "hardware_tested": false,
+    "requires_two_steps": true,
+    "erases_pairings_and_settings": true,
+    "staging_range": "0x63000-0x6cfff",
+    "restores_application_exactly": true,
+    "journal_cleared_after_step_2": true,
+    "source_bl_sha256": "7b71f68214f4b5fe5a9ebf097db2d0574f40d86fbefcc8fb015ca9d1c7825232",
+    "source_app_sha256": "a486c480f717ddb87f10a4225920e07024d47c2097ac6234f95b398e30c48aae",
+    "files": {
+      "01_nano_dongle_bootloader_update.uf2": "903607b2c9a723ec74164895af7fbce00e2af85f670b6ce02790380d969e8b3e",
+      "02_velvet_nano_dongle_restore.uf2": "c95e050b91dfdcebc1dc385ec887ca359c3f0f5deaf5df4838f924e98862b875"
+    }
+  },
+  "files": {
+    "nano_dongle_BL_ONLY.hex": {
+      "bytes": 87600,
+      "sha256": "7b71f68214f4b5fe5a9ebf097db2d0574f40d86fbefcc8fb015ca9d1c7825232"
+    },
+    "01_nano_dongle_bootloader_update.uf2": {
+      "bytes": 82432,
+      "sha256": "903607b2c9a723ec74164895af7fbce00e2af85f670b6ce02790380d969e8b3e"
+    },
+    "02_velvet_nano_dongle_restore.uf2": {
+      "bytes": 825344,
+      "sha256": "c95e050b91dfdcebc1dc385ec887ca359c3f0f5deaf5df4838f924e98862b875"
+    }
+  },
+  "format_verification": {
+    "BL_ONLY_range": "0x74000-0x7dfff",
+    "UF2_step_1_family": "0xd663823c",
+    "UF2_step_2_family": "0x621e937a",
+    "board_CF2_key_208": "0x239a0029",
+    "UF2_step_1_BL_matches_HEX": true,
+    "UF2_step_2_0x65000_to_0x6cfff_erased": true,
+    "warning": "Static file checks only; no device write or hardware validation."
+  }
+}
