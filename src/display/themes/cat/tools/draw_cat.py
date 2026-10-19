@@ -34,4 +34,4 @@ for y in range(im.height):
         raw.append(sum((128 >> bit) for bit in range(8)
                        if bx*8+bit < im.width and im.getpixel((bx*8+bit,y))))
 root = Path(__file__).resolve().parents[1]
-(root/'src/cat_art.h').write_text('/* SPDX-License-Identifier: MIT */\n#pragma once\n#include <stdint.h>\n#define CAT_ART_WIDTH 82\n#define CAT_ART_HEIGHT 55\n#define CAT_ART_STRIDE 11\nstatic const uint8_t cat_art[] = {\n'+''.join('    '+', '.join('0x%02x'%v for v in raw[i:i+11])+',\n' for i in range(0,len(raw),11))+'};\n')
+(root/'cat_art.h').write_text('/* SPDX-License-Identifier: MIT */\n#pragma once\n#include <stdint.h>\n#define CAT_ART_WIDTH 82\n#define CAT_ART_HEIGHT 55\n#define CAT_ART_STRIDE 11\nstatic const uint8_t cat_art[] = {\n'+''.join('    '+', '.join('0x%02x'%v for v in raw[i:i+11])+',\n' for i in range(0,len(raw),11))+'};\n')

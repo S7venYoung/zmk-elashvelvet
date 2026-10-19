@@ -16,10 +16,5 @@ if(CONFIG_SHIELD_VELVET_NANO_DONGLE OR CONFIG_SHIELD_VELVET_SPLIT_PERIPHERAL)
   target_sources(app PRIVATE src/half_telemetry.c)
 endif()
 
-# Right-only custom screen; left keeps its existing built-in display.
-if(CONFIG_VELVET_CAT_DISPLAY)
-  target_sources(app PRIVATE src/cat_display.c)
-endif()
-if(CONFIG_SHIELD_VELVET_NANO_DONGLE)
-  target_sources(app PRIVATE src/cat_layer_relay.c)
-endif()
+# Each screen theme owns its source files and build rules.
+add_subdirectory(src/display/themes/cat)
