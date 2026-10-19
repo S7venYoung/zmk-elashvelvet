@@ -1,6 +1,6 @@
 # 小猫咪主题
 
-保留现有右手 160×68 像素主题：小猫咪、实时自身电量、与接收器的 BLE 连接状态、从 1 开始显示的层号。运行配置和渲染逻辑未改。
+保留现有 160×68 像素猫咪主题，左右手共用：小猫咪、实时自身电量、与接收器的 BLE 连接状态、从 1 开始显示的层号。运行配置和渲染逻辑未改。
 
 ![主题预览](preview.svg)
 
@@ -20,6 +20,6 @@ cc -std=c11 -Wall -Wextra -Werror -Isrc/display/themes/cat src/display/themes/ca
 
 素材生成：`python3 src/display/themes/cat/tools/draw_cat.py`（需要 Pillow）。
 
-小猫咪素材与渲染器保持原样，由共用 dashboard_screen.c 管理。DYA 的整套主题值 theme_set=0 选择左右均为小猫咪；theme_set=1 选择左 Codex、右系统。默认是整套小猫咪。此改动不表示此前白屏问题已通过实机验证。
+小猫咪素材与渲染器保持原样，由共用 dashboard_screen.c 管理。DYA 的整套主题值 theme_set=0 选择左右均为小猫咪；theme_set=1 选择左 Codex、右系统。默认是整套小猫咪。双手猫咪套装和显示配置已由用户于 2026-10-19 在本次对话确认实机验证通过。
 
 本目录是左右共用的一套主题，左右各自显示本手状态；素材与渲染逻辑保持原样。

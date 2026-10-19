@@ -2,7 +2,7 @@
 
 ZMK 0.4 / Zephyr 4.1，面向无屏 nRF52833 Nano K 接收器和左右 nice!nano nRF52840 键盘，两手各有 nice!view 屏幕。接收器通过 USB 连接电脑，通过 BLE split 连接左右键盘；不包含编码器、轨迹球或鼠标配置。
 
-**本文更新范围截至双手猫咪主题套装**，包括 BL 更新、DYA、扫描仪/Cube 遥测、宏队列和猫咪显示。本文不是固件发布或实机验收记录：分支代码未回退，本次仅整理文档并附上已有 BL 文件，没有触发 Actions、重编固件或向设备刷写。
+**本文更新范围截至双手猫咪主题套装**，包括 BL 更新、DYA、扫描仪/Cube 遥测、宏队列和猫咪显示。上述功能均已通过用户实机验证（用户于 2026-10-19 在本次对话确认）。本次仅同步文档与验证记录，没有触发 Actions、重编固件或向设备刷写。
 
 ## 固件与硬件对应
 
@@ -18,7 +18,7 @@ ZMK 0.4 / Zephyr 4.1，面向无屏 nRF52833 Nano K 接收器和左右 nice!nano
 
 接收器与左右手使用同批固件。nRF52833 和 nRF52840 的应用 UF2、BL、reset 文件不能混用。reset 固件不提供 DYA，刷完后应拖入正常固件；普通更新不用先刷 reset，也不必更新 BL。
 
-Actions 仅允许手动触发；必须由用户确认后再构建。最新双手猫咪套装尚未在本轮构建及完成实机验收，**本次 BL 附件不包含新编译的双手猫咪应用固件**。
+Actions 仅允许手动触发；必须由用户确认后再构建。双手猫咪套装已由用户确认实机通过；**本次 BL 附件不包含新编译的双手猫咪应用固件**。
 
 ## 双手猫咪主题
 
@@ -34,7 +34,7 @@ Actions 仅允许手动触发；必须由用户确认后再构建。最新双手
 
 nice!view 的 VCOM 极性维护由 Zephyr 驱动执行，两手配置 33 ms 串行 VCOM。`nice_view_custom` 会关闭空闲熄屏，此行为与 PWM 外设供电的空闲设置不同。
 
-此前右手出现启动短暂显示后全白；I1/L8 格式候选并未获得修复成功的实机确认。恢复外设控制和双手共用猫咪的最新代码通过宿主检查，不等于已证明白屏根因或通过实机验收。
+早期右手曾出现启动短暂显示后全白。恢复外设控制与双手共用猫咪后的当前方案，已由用户确认实机验证通过。
 
 ## DYA Studio
 
@@ -67,20 +67,20 @@ BL 设计窗口约为 2 秒，使用不到 1 秒的操作更稳妥。正常保�
 | 文件/包 | 使用方式 | 验证状态 |
 |---|---|---|
 | [原已验证全量恢复 HEX](bootloader/firmware/nano33_replug_FULL_RECOVERY.hex) | J-Link/SWD 全量恢复后再刷应用；会清除应用和设置 | 有实机通过记录；磁盘名 NANO33TEST；仍有旧 USB 超时问题 |
-| [新版 BL-only HEX](bootloader/updates/nano-dongle-macos/nano_dongle_BL_ONLY.hex) | J-Link/SWD 仅写 BL 地址范围，保留 MBR/UICR/应用 | 含改名和 USB 超时修正；尚未实机验证 |
-| [两步 UF2 更新 ZIP](bootloader/updates/nano-dongle-macos/Nano_Dongle_UF2_Update.zip) | 现有兼容 BL 的专用自更新，严格按 01→02 顺序 | 格式/地址/模拟检查通过；尚未实机验证，会清除设置与配对 |
+| [新版 BL-only HEX](bootloader/updates/nano-dongle-macos/nano_dongle_BL_ONLY.hex) | J-Link/SWD 仅写 BL 地址范围，保留 MBR/UICR/应用 | 含改名和 USB 超时修正；用户确认实机通过 |
+| [两步 UF2 更新 ZIP](bootloader/updates/nano-dongle-macos/Nano_Dongle_UF2_Update.zip) | 现有兼容 BL 的专用自更新，严格按 01→02 顺序 | 实机验证通过；会清除设置与配对 |
 
 新版显示名为 **Nano Dongle**，UF2 卷标为 **NANO DONGLE**，包含独立短插拔与 macOS/Finder 复制过程中 USB 已连接时不再被 30 秒定时器强制复位的修正。改变 VID 并非此次修正方式。
 
 两步 UF2 单独下载：[01 更新 BL](bootloader/updates/nano-dongle-macos/01_nano_dongle_bootloader_update.uf2)、[02 恢复应用](bootloader/updates/nano-dongle-macos/02_velvet_nano_dongle_restore.uf2)。**02 是该更新包配套的旧应用恢复镜像，不是最新猫咪套装固件，也不是 settings reset**；完成恢复后再更新目标版本的同批正常应用。
 
-文件没有重新编译，保留已有内容；[SHA256SUMS](bootloader/updates/nano-dongle-macos/SHA256SUMS) 与 [validation.json](bootloader/updates/nano-dongle-macos/validation.json) 可用于核对来源、格式和未实机验证状态。不要把候选文件与旧已验证全量恢复 HEX 的验证结论混用。
+文件没有重新编译，保留已有内容；[SHA256SUMS](bootloader/updates/nano-dongle-macos/SHA256SUMS) 与 [validation.json](bootloader/updates/nano-dongle-macos/validation.json) 可用于核对来源、格式、文件内容和用户实机确认记录。新版更新文件与旧全量恢复 HEX 的功能差异见上表。
 
 ## 扫描仪与 Cube
 
 接收器使用一个传统 BLE 广播实例，完整名称固定为 **Velvet46**。标准状态与左右手遥测按 1:1 交替发送；活动周期 100 ms、空闲周期 500 ms。扫描仪使用总 WPM，Cube 使用左右手独立 WPM 与电量。
 
-左右手通过现有 split relay 报告物理左右标识，避免按连接顺序猜电量来源；0% 仍为有效电量。此前名称、两手电量及 WPM 的广播曾经抓包并获用户确认扫描仪/Cube 显示正常；这不代替本次未构建版本的实机回归。
+左右手通过现有 split relay 报告物理左右标识，避免按连接顺序猜电量来源；0% 仍为有效电量。名称、两手电量及 WPM 广播已经抓包核对，扫描仪/Cube 显示已获用户实机确认正常。
 
 接收器使用内部 RC 32 kHz 时钟及自动校准，避免无低频晶振硬件被配置为 XTAL 后启动阻塞；nRF52833 仍禁用额外扩展广播实例。
 
@@ -88,11 +88,12 @@ BL 设计窗口约为 2 秒，使用不到 1 秒的操作更稳妥。正常保�
 
 Dongle 模式的宏由接收器执行。原接收器队列被限制为 16 项，现有 11 次 tap 需要 22 个按下/松开事件，队列满可能丢弃字符或松开事件，导致最后一个字符持续重复。
 
-已将接收器 shield 配置和构建覆盖参数统一调整为 ZMK 默认 64 项，未更改宏内容或默认时序。使用实际队列代码的无敏感测试：16 项时丢弃 5 个事件并残留一个未释放键，64 项完整执行 22 个事件。此修正仍需通过配套构建和实机输入测试确认；请用无敏感测试字符串验证。
+已将接收器 shield 配置和构建覆盖参数统一调整为 ZMK 默认 64 项，未更改宏内容或默认时序。使用实际队列代码的无敏感测试：16 项时丢弃 5 个事件并残留一个未释放键，64 项完整执行 22 个事件。此修正已由用户确认实机验证通过。
 
 ## 验证与更新范围
 
 - 独立 BL 的原全量恢复 HEX：见固定 SHA256 和实机记录。
-- 新版 BL-only/两步 UF2：文件校验通过，硬件验证状态仍为 false。
-- 双手猫咪、宏队列及显示配置：源码和宿主检查不等于最新固件已构建或通过实机测试。
+- 新版 BL-only/两步 UF2：文件校验与用户实机验证均通过。
+- 双手猫咪、宏队列、显示配置、DYA 与扫描仪/Cube 遥测：用户确认实机验证通过。
+- 确认来源：用户于 2026-10-19 在本次对话确认全部实机通过；该日期为确认日期。
 - 本次只更新 README、BL 附件和校验信息，不回退分支代码，不创建 release，不触发任何 Actions。

@@ -1,6 +1,6 @@
 {
-  "hardware_tested": false,
-  "scope": "Existing built candidates only; no rebuild, no flashing.",
+  "hardware_tested": true,
+  "scope": "Existing built files; hardware validation confirmed by user. Documentation update only; no rebuild or flashing in this update.",
   "bootloader": {
     "source_commit": "d7c55d99c97633a770c5536dc113e3849f3bc91e",
     "mode": "replug",
@@ -18,11 +18,11 @@
     "mbr_params": "0x7e000",
     "application_start_without_softdevice": "0x1000",
     "journal_page_replug_only": "0x65000-0x65fff",
-    "hardware_tested": false,
-    "warning": "BL-only image; hardware validation required. No full-chip erase. Preserve MBR/UICR/app/settings. No SoftDevice included."
+    "hardware_tested": true,
+    "warning": "BL-only image; user-confirmed hardware validation passed. No full-chip erase. Preserve MBR/UICR/app/settings. No SoftDevice included."
   },
   "uf2_update": {
-    "hardware_tested": false,
+    "hardware_tested": true,
     "requires_two_steps": true,
     "erases_pairings_and_settings": true,
     "staging_range": "0x63000-0x6cfff",
@@ -56,6 +56,16 @@
     "board_CF2_key_208": "0x239a0029",
     "UF2_step_1_BL_matches_HEX": true,
     "UF2_step_2_0x65000_to_0x6cfff_erased": true,
-    "warning": "Static file checks only; no device write or hardware validation."
+    "warning": "Static checks recorded here; hardware validation separately confirmed by user in this chat."
+  },
+  "hardware_validation": {
+    "source": "user confirmation in this chat",
+    "confirmed_on": "2026-10-19",
+    "statement": "用户确认本次说明范围内全部实机验证通过；日期为确认日期。",
+    "scope": [
+      "BL-only and two-step UF2 bootloader update",
+      "paired cat theme and display configuration",
+      "DYA, scanner/Cube telemetry and macro queue"
+    ]
   }
 }
