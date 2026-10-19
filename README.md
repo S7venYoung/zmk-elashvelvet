@@ -126,3 +126,7 @@ Nano 接收器使用 `studio-rpc-usb-uart` 启用 USB CDC Studio 通道。RPC �
 主题选择改为一个 `velvet_display/theme_set`：0=左右都是原小猫咪，1=左 Codex＋右系统信息（同一套主题）。取消之前的左右独立选择；默认整套小猫咪，旧的 left_theme/right_theme 不再生效。每套主题独立目录，信息套装的左右页合并在 `src/display/themes/codex-system/`。
 
 新版信息套装改用图标状态栏、较高的 CODEX/百分比数字、较大的 CPU/RAM 标题、分区进度条和完整 LAYER 标签，按实际 160×68 重排。预览由同一 C 绘图代码生成，仍是待实机验证的候选，未触发构建。上文提及“三套主题、左右独立选择”的旧记录已由本节替代。
+
+## 信息套装简化
+
+按新参考图去掉屏幕上的 CODEX 字样与 CPU 趋势图，改为左右各三行：左 5H/7D/RESET，右 CPU/RAM/TEMP。采用纯色进度条，层号放入顶部 L1；CPU 温度显示整数°C。整套选择仍是 0=左右猫咪（默认），1=额度＋系统。预览和进度量程说明见 [信息套装](src/display/themes/codex-system/README.md)。此改动未触发构建，需实机验证。

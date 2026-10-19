@@ -2,18 +2,18 @@
 #pragma once
 #include "../../../common/header.h"
 static inline void system_render(uint8_t*p,const struct dashboard_status*s){
- memset(p,255,PANEL_BYTES);panel_header(p,s->keyboard);
- char n[24];text(p,3,20,"CPU",2);
- if(s->data[1]&DASH_CPU)snprintf(n,sizeof(n),"%u%%",s->data[3]);else strcpy(n,"--%");
- tall_text(p,3,36,n);
- if(s->data[1]&DASH_TEMP){int v=(int16_t)dash_u16(s->data+8);
- snprintf(n,sizeof(n),"%s%d.%d",v<0?"-":"",v<0?-(v/10):v/10,v<0?-(v%10):v%10);}else strcpy(n,"--");
- text(p,3,60,n,1);int end=3+(int)strlen(n)*6;outline(p,end,58,3,3);text(p,end+5,60,"C",1);
- for(unsigned i=0;i<s->count&&i<12;i++){int h=s->history[i]>100?100:s->history[i];h=h*34/100;
- box(p,53+(int)i*2,66-h,1,h,false);}
- box(p,79,20,1,47,false);text(p,85,20,"RAM",2);
- if(s->data[1]&DASH_RAM){unsigned used=(unsigned)dash_u16(s->data+10)*64,total=(unsigned)dash_u16(s->data+12)*64;
- unsigned tenth=(used*10+512)/1024;snprintf(n,sizeof(n),"%u.%u/%uG",tenth/10,tenth%10,total/1024);}else strcpy(n,"--/--G");text(p,85,37,n,1);
- if(s->data[1]&DASH_RAM)snprintf(n,sizeof(n),"%u%%",s->data[4]);else strcpy(n,"--%");text(p,85,46,n,1);
- bar(p,85,57,35,10,s->data[4],s->data[1]&DASH_RAM);panel_layer(p,123,54,s->keyboard);
+ memset(p,255,PANEL_BYTES);panel_header(p,s->keyboard);char n[24];const uint8_t flags=s->data[1];
+ text(p,3,22,"CPU",1);solid_bar(p,38,20,82,10,s->data[3],flags&DASH_CPU);
+ if(flags&DASH_CPU)snprintf(n,sizeof(n),"%u%%",s->data[3]);else strcpy(n,"--%");text(p,127,22,n,1);
+ text(p,3,39,"RAM",1);solid_bar(p,38,37,82,10,s->data[4],flags&DASH_RAM);
+ if(flags&DASH_RAM)snprintf(n,sizeof(n),"%u%%",s->data[4]);else strcpy(n,"--%");text(p,127,39,n,1);
+ if(flags&DASH_RAM){unsigned used=(unsigned)dash_u16(s->data+10)*64,total=(unsigned)dash_u16(s->data+12)*64;
+ unsigned tenth=(used*10+512)/1024;snprintf(n,sizeof(n),"%u.%u/%uG",tenth/10,tenth%10,total/1024);}else strcpy(n,"--/--G");
+ /* Keep memory amount below its bar, not mixed into CPU temperature. */
+ text(p,158-(int)strlen(n)*6,49,n,1);
+ int temperature=0;unsigned fill=0;
+ if(flags&DASH_TEMP){int v=(int16_t)dash_u16(s->data+8);temperature=v>=0?(v+5)/10:(v-5)/10;
+ snprintf(n,sizeof(n),"%d",temperature);fill=temperature<0?0:temperature>100?100:(unsigned)temperature;}else strcpy(n,"--");
+ text(p,3,59,"TEMP",1);solid_bar(p,38,57,82,10,fill,flags&DASH_TEMP);
+ text(p,127,59,n,1);int x=127+(int)strlen(n)*6;outline(p,x,57,3,3);text(p,x+5,59,"C",1);
 }
