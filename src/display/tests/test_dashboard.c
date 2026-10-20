@@ -16,12 +16,41 @@ int main(int argc,char**argv){
   codex_render(b.p,&s);system_render(b.p,&s);
   for(unsigned i=0;i<16;i++)assert(b.before[i]==0xa5&&b.after[i]==0xa5);
  }
- uint8_t theme_packet[DASH_PACKET_SIZE]={1,0,0};memcpy(theme_packet+3,sample,sizeof(sample));
+ uint8_t theme_packet[DASH_PACKET_SIZE]={DASH_PACKET_VERSION,0,DASH_OUTPUT_USB,0};
+ memcpy(theme_packet+DASH_PACKET_HEADER_SIZE,sample,sizeof(sample));
  assert(dash_theme_packet_valid(theme_packet,sizeof(theme_packet)));
- theme_packet[1]=theme_packet[2]=1;assert(dash_theme_packet_valid(theme_packet,sizeof(theme_packet)));
- theme_packet[2]=0;assert(!dash_theme_packet_valid(theme_packet,sizeof(theme_packet)));
- theme_packet[1]=theme_packet[2]=2;assert(!dash_theme_packet_valid(theme_packet,sizeof(theme_packet)));
+ theme_packet[1]=1;assert(dash_theme_packet_valid(theme_packet,sizeof(theme_packet)));
+ for(unsigned profile=1;profile<=5;profile++){
+  theme_packet[2]=DASH_OUTPUT_BLE;theme_packet[3]=profile;
+  assert(dash_theme_packet_valid(theme_packet,sizeof(theme_packet)));
+ }
+ theme_packet[3]=0;assert(!dash_theme_packet_valid(theme_packet,sizeof(theme_packet)));
+ theme_packet[3]=6;assert(!dash_theme_packet_valid(theme_packet,sizeof(theme_packet)));
+ theme_packet[2]=DASH_OUTPUT_NONE;theme_packet[3]=0;assert(dash_theme_packet_valid(theme_packet,sizeof(theme_packet)));
+ theme_packet[3]=1;assert(!dash_theme_packet_valid(theme_packet,sizeof(theme_packet)));
+ theme_packet[2]=3;assert(!dash_theme_packet_valid(theme_packet,sizeof(theme_packet)));
+ theme_packet[2]=DASH_OUTPUT_USB;theme_packet[3]=0;theme_packet[1]=2;assert(!dash_theme_packet_valid(theme_packet,sizeof(theme_packet)));
+ theme_packet[1]=1;theme_packet[0]=1;assert(!dash_theme_packet_valid(theme_packet,sizeof(theme_packet)));
  assert(!dash_theme_packet_valid(NULL,DASH_PACKET_SIZE));assert(!dash_theme_packet_valid(theme_packet,3));
+ uint8_t header_usb[PANEL_BYTES],header_ble[PANEL_BYTES],header_none[PANEL_BYTES];
+ s.keyboard.output=DASH_OUTPUT_USB;s.keyboard.profile=0;codex_render(header_usb,&s);
+ s.keyboard.output=DASH_OUTPUT_BLE;s.keyboard.profile=1;codex_render(header_ble,&s);
+ s.keyboard.output=DASH_OUTPUT_NONE;s.keyboard.profile=0;codex_render(header_none,&s);
+ assert(memcmp(header_usb,header_ble,sizeof(header_usb))&&memcmp(header_ble,header_none,sizeof(header_ble)));
+ uint8_t previous_header[PANEL_BYTES];
+ memset(previous_header,0,sizeof(previous_header));
+ for(unsigned profile=1;profile<=5;profile++){
+  s.keyboard.output=DASH_OUTPUT_BLE;s.keyboard.profile=profile;
+  codex_render(b.p,&s);
+  assert(memcmp(previous_header,b.p,sizeof(previous_header)));
+  memcpy(previous_header,b.p,sizeof(previous_header));
+  system_render(b.p,&s);
+  for(unsigned i=0;i<16;i++)assert(b.before[i]==0xa5&&b.after[i]==0xa5);
+ }
+ s.keyboard.output=DASH_OUTPUT_USB;s.keyboard.profile=0;
+ uint8_t polarity[PANEL_BYTES];memcpy(polarity,header_usb,sizeof(polarity));
+ panel_invert(polarity);for(unsigned i=0;i<PANEL_BYTES;i++)assert(polarity[i]==(uint8_t)(header_usb[i]^255u));
+ panel_invert(polarity);assert(!memcmp(polarity,header_usb,sizeof(polarity)));
  uint8_t aged[DASH_DATA_SIZE];
  dash_age_data(aged,sample,true,89999);assert(aged[1]==63&&dash_u32(aged+14)==9211);
  dash_age_data(aged,sample,true,90000);assert(aged[1]==0);

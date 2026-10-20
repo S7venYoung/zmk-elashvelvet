@@ -7,8 +7,15 @@ static inline void panel_header(uint8_t*p,struct panel_status s){
  box(p,25,1,1,11,false);
  for(int i=0;i<5;i++){px(p,25+i,1+i,false);px(p,29-i,5+i,false);px(p,22+i,3+i,false);px(p,22+i,9-i,false);}
  box(p,32,10,2,2,!s.connected);box(p,37,2,1,10,false);
- outline(p,44,1,6,6);box(p,45,2,1,2,false);box(p,48,2,1,2,false);outline(p,42,7,10,5);
- box(p,44,9,2,1,false);box(p,48,9,2,1,false);text(p,56,4,"USB",1);box(p,78,2,1,10,false);
+ if(s.output==DASH_OUTPUT_USB){
+  outline(p,44,1,6,6);box(p,45,2,1,2,false);box(p,48,2,1,2,false);outline(p,42,7,10,5);
+  box(p,44,9,2,1,false);box(p,48,9,2,1,false);text(p,56,4,"USB",1);
+ }else if(s.output==DASH_OUTPUT_BLE&&dash_output_valid(s.output,s.profile)){
+  box(p,47,1,1,11,false);
+  for(int i=0;i<5;i++){px(p,47+i,1+i,false);px(p,51-i,5+i,false);px(p,44+i,3+i,false);px(p,44+i,9-i,false);}
+  snprintf(n,sizeof(n),"BLE%u",s.profile);text(p,54,4,n,1);
+ }else text(p,51,4,"--",1);
+ box(p,78,2,1,10,false);
  outline(p,85,3,13,8);box(p,98,5,2,4,false);
  if(s.battery_valid)box(p,87,5,(int)s.battery*9/100,4,false);
  if(s.battery_valid)snprintf(n,sizeof(n),"%u%%",s.battery);else strcpy(n,"--%");
@@ -19,4 +26,9 @@ static inline void panel_header(uint8_t*p,struct panel_status s){
 static inline void solid_bar(uint8_t*p,int x,int y,int w,int h,unsigned percent,bool valid){
  outline(p,x,y,w,h);
  if(valid){unsigned fill=(percent>100?100:percent)*(unsigned)(w-4)/100;box(p,x+2,y+2,(int)fill,h-4,false);}
+}
+
+/* Reverse the existing information-page polarity; keep cat rendering untouched. */
+static inline void panel_invert(uint8_t *p){
+ for(unsigned i=0;i<PANEL_BYTES;i++)p[i]^=0xffu;
 }

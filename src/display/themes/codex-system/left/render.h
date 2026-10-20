@@ -12,4 +12,5 @@ static inline void codex_render(uint8_t*p,const struct dashboard_status*s){
  if(flags&DASH_RESET){uint32_t sec=dash_u32(s->data+14);unsigned h=(unsigned)(sec/3600);if(h>99)h=99;
  snprintf(n,sizeof(n),"%02u:%02u",h,(unsigned)(sec/60%60));percent=sec>=18000?100:(unsigned)(sec*100/18000);}else strcpy(n,"--:--");
  solid_bar(p,38,55,82,10,percent,flags&DASH_RESET);text(p,127,57,n,1);
+ panel_invert(p);
 }

@@ -5,6 +5,7 @@
 #include <zephyr/sys/atomic.h>
 #include <zmk/event_manager.h>
 #include <zmk/split/central.h>
+#include <zmk/endpoints.h>
 #include <cormoran/zmk/custom_settings.h>
 #include <zmk/studio/custom.h>
 #include "common/dashboard_data.h"
@@ -15,6 +16,9 @@ BUILD_ASSERT(sizeof(DASH_EVENT)-1 <= CONFIG_ZMK_SPLIT_RELAY_EVENT_TYPE_NAME_LEN,
              "DASH_EVENT exceeds split relay event-name capacity");
 BUILD_ASSERT(sizeof(DASH_ACK_EVENT)-1 <= CONFIG_ZMK_SPLIT_RELAY_EVENT_TYPE_NAME_LEN,
              "DASH_ACK_EVENT exceeds split relay event-name capacity");
+
+BUILD_ASSERT(ZMK_BLE_PROFILE_COUNT==DASH_BLE_PROFILES,
+             "Display expects five host BLE profiles");
 
 static struct zmk_rpc_custom_subsystem_meta meta={ZMK_RPC_CUSTOM_SUBSYSTEM_UI_URLS(),
  .security=ZMK_STUDIO_RPC_HANDLER_UNSECURED};
@@ -95,12 +99,19 @@ static void send_snapshot(struct k_work *work){
  }
  struct zmk_split_relay_event_payload payload={.header.event_type_size=sizeof(DASH_EVENT)-1,
  .header.event_data_size=DASH_PACKET_SIZE};
- strcpy(payload.event_type,DASH_EVENT);uint8_t*p=payload.event_data;p[0]=1;
+ strcpy(payload.event_type,DASH_EVENT);uint8_t*p=payload.event_data;p[0]=DASH_PACKET_VERSION;
  int32_t selected=0;
  int get_result=zmk_custom_setting_get_int32(zmk_custom_setting_find("velvet_display","theme_set"),&selected);
- p[1]=p[2]=selected==1?1:0;
+ p[1]=selected==1?1:0;
+ struct zmk_endpoint_instance endpoint=zmk_endpoint_get_selected();
+ p[2]=DASH_OUTPUT_NONE;p[3]=0;
+ if(endpoint.transport==ZMK_TRANSPORT_USB)p[2]=DASH_OUTPUT_USB;
+ else if(endpoint.transport==ZMK_TRANSPORT_BLE&&endpoint.ble.profile_index>=0&&
+         endpoint.ble.profile_index<DASH_BLE_PROFILES){
+  p[2]=DASH_OUTPUT_BLE;p[3]=(uint8_t)(endpoint.ble.profile_index+1);
+ }
 
- dash_age_data(p+3,last,live,now-updated);
+ dash_age_data(p+DASH_PACKET_HEADER_SIZE,last,live,now-updated);
  int send_result=zmk_split_central_send_relay_event(&payload);
  k_spinlock_key_t key=k_spin_lock(&debug_lock);
  selected_theme=p[1];setting_result=get_result;queue_result=send_result;tx_count++;

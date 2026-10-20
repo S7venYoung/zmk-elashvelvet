@@ -5,7 +5,13 @@
 #include <string.h>
 #define DASH_DATA_SIZE 18
 #define DASH_EVENT "vldash"
-#define DASH_PACKET_SIZE (3+DASH_DATA_SIZE)
+#define DASH_PACKET_VERSION 2
+#define DASH_PACKET_HEADER_SIZE 4
+#define DASH_PACKET_SIZE (DASH_PACKET_HEADER_SIZE+DASH_DATA_SIZE)
+#define DASH_OUTPUT_NONE 0
+#define DASH_OUTPUT_USB 1
+#define DASH_OUTPUT_BLE 2
+#define DASH_BLE_PROFILES 5
 #define DASH_CPU 1
 #define DASH_RAM 2
 #define DASH_TEMP 4
@@ -28,7 +34,7 @@ static inline bool dash_valid(const uint8_t*p,unsigned len){
  int16_t t=(int16_t)dash_u16(p+8);
  return !(p[1]&DASH_TEMP)||(t>=-500&&t<=1500);
 }
-struct panel_status {bool connected,battery_valid,layer_valid;uint8_t battery,layer;char side;};
+struct panel_status {bool connected,battery_valid,layer_valid;uint8_t battery,layer,output,profile;char side;};
 struct dashboard_status {struct panel_status keyboard;uint8_t data[DASH_DATA_SIZE];uint8_t history[12],count;};
 
 static inline void dash_age_data(uint8_t*out,const uint8_t*in,bool live,uint32_t age){
@@ -38,7 +44,12 @@ static inline void dash_age_data(uint8_t*out,const uint8_t*in,bool live,uint32_t
  dash_put32(out+14,sec>elapsed?sec-elapsed:0);}
 }
 
-/* One theme set controls both physical halves; mixed independent pages are invalid. */
+/* Output describes the receiver's selected, connected HID endpoint, not the split link. */
+static inline bool dash_output_valid(unsigned output,unsigned profile) {
+ return output<=DASH_OUTPUT_BLE &&
+        (output==DASH_OUTPUT_BLE?(profile>=1&&profile<=DASH_BLE_PROFILES):profile==0);
+}
 static inline bool dash_theme_packet_valid(const uint8_t*p,unsigned size){
- return p&&size==DASH_PACKET_SIZE&&p[0]==1&&p[1]<=1&&p[2]==p[1]&&dash_valid(p+3,DASH_DATA_SIZE);
+ return p&&size==DASH_PACKET_SIZE&&p[0]==DASH_PACKET_VERSION&&p[1]<=1&&
+        dash_output_valid(p[2],p[3])&&dash_valid(p+DASH_PACKET_HEADER_SIZE,DASH_DATA_SIZE);
 }

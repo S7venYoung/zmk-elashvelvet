@@ -12,4 +12,5 @@ static inline void system_render(uint8_t*p,const struct dashboard_status*s){
  snprintf(n,sizeof(n),"%d",temperature);fill=temperature<0?0:temperature>100?100:(unsigned)temperature;}else strcpy(n,"--");
  text(p,3,57,"TEMP",1);solid_bar(p,38,55,82,10,fill,flags&DASH_TEMP);
  text(p,127,57,n,1);int x=127+(int)strlen(n)*6;outline(p,x,55,3,3);text(p,x+5,57,"C",1);
+ panel_invert(p);
 }

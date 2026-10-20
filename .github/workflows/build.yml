@@ -134,6 +134,8 @@ jobs:
         run: |
           config=build/velvet_nano_dongle/zephyr/.config
           grep -qx 'CONFIG_ZMK_BEHAVIORS_QUEUE_SIZE=64' "$config"
+          grep -qx 'CONFIG_BT_MAX_PAIRED=7' "$config"
+          grep -qx 'CONFIG_ZMK_SPLIT_BLE_CENTRAL_PERIPHERALS=2' "$config"
           grep -qx '# CONFIG_BT_EXT_ADV is not set' "$config"
           grep -qx 'CONFIG_ZMK_STATUS_ADVERTISEMENT=y' "$config"
           grep -qx 'CONFIG_PROSPECTOR_EXPECTED_PERIPHERAL_COUNT=2' "$config"

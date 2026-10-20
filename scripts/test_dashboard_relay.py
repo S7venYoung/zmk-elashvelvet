@@ -28,7 +28,7 @@ for name in ['vldash','vldack','vlcat']:
     assert len(name)<=name_limit, f'{name}: {len(name)} bytes exceeds {name_limit}'
 
 cases = []
-for file, event, size in [('src/display/dashboard_bridge.c', 'DASH_EVENT', 21),
+for file, event, size in [('src/display/dashboard_bridge.c', 'DASH_EVENT', 22),
                           ('src/display/themes/cat/cat_layer_relay.c', 'CAT_LAYER_EVENT', 2)]:
     text = (root / file).read_text()
     init = re.search(r'struct zmk_split_relay_event_payload payload\s*=\s*\{.*?\};', text, re.S)[0]
@@ -70,7 +70,7 @@ static const struct zmk_relay_event_received *as_zmk_relay_event_received(const 
 static atomic_t battery,received_count;
 static struct k_spinlock lock;
 static struct cat_layer_sample layer;
-static uint8_t host[DASH_DATA_SIZE],theme;
+static uint8_t host[DASH_DATA_SIZE],theme,output,profile;
 static uint32_t received_at;
 static bool received;
 ''' + receiver + '\n' + structs + '\n' + header.replace('#include <zmk/split/transport/types.h>', '').replace('#pragma once', '') + r'''
@@ -79,7 +79,7 @@ static void roundtrip(struct zmk_split_relay_event_payload *p, const char *name,
     assert(p->header.event_data_size == size);
     memset(p->event_data,0,size);
     p->event_data[0]=1;
-    if(size==DASH_PACKET_SIZE){p->event_data[1]=p->event_data[2]=1;p->event_data[3]=1;}
+    if(size==DASH_PACKET_SIZE){p->event_data[0]=DASH_PACKET_VERSION;p->event_data[1]=1;p->event_data[2]=DASH_OUTPUT_BLE;p->event_data[3]=5;p->event_data[DASH_PACKET_HEADER_SIZE]=1;}
     else p->event_data[1]=2;
     uint16_t total;
     assert(zmk_split_relay_event_payload_total_size(p,&total)==0);
@@ -102,7 +102,7 @@ static void roundtrip(struct zmk_split_relay_event_payload *p, const char *name,
       .event_data=state.payload.event_data,.event_data_size=state.payload.header.event_data_size};
     zmk_event_t wrapped={.kind=2,.data=&event};
     assert(on_event(&wrapped)==ZMK_EV_EVENT_HANDLED);
-    if(size==DASH_PACKET_SIZE){assert(theme==1&&received&&received_count==1&&received_at==1000);}
+    if(size==DASH_PACKET_SIZE){assert(theme==1&&output==DASH_OUTPUT_BLE&&profile==5&&received&&received_count==1&&received_at==1000);}
     else {assert(layer.seen&&layer.layer==2);}
     /* An unrelated relay must not consume or change display state. */
     event.event_name="unrelated";

@@ -28,7 +28,7 @@ static const lv_image_dsc_t source={.header={.magic=LV_IMAGE_HEADER_MAGIC,
 static lv_obj_t *image;
 static atomic_t battery=ATOMIC_INIT(101);
 static struct k_spinlock lock;
-static uint8_t host[DASH_DATA_SIZE],theme=0;
+static uint8_t host[DASH_DATA_SIZE],theme=0,output=DASH_OUTPUT_NONE,profile;
 static bool received;
 static atomic_t received_count,drawn_count;
 static uint32_t received_at;
@@ -48,7 +48,8 @@ static int on_event(const zmk_event_t *eh){
  else if(!strcmp(e->event_name,DASH_EVENT)&&e->event_data_size==DASH_PACKET_SIZE){
   const uint8_t *p=e->event_data;
   if(dash_theme_packet_valid(p,e->event_data_size)){
-   theme=p[1];memcpy(host,p+3,sizeof(host));
+   theme=p[1];output=p[2];profile=p[3];
+   memcpy(host,p+DASH_PACKET_HEADER_SIZE,sizeof(host));
    received=true;received_at=k_uptime_get_32();handled=true;
    atomic_inc(&received_count);
   }
@@ -66,6 +67,8 @@ static void refresh(lv_timer_t *timer){
  k_spinlock_key_t key=k_spin_lock(&lock);selected=theme;
  view.keyboard.layer=layer.layer;view.keyboard.layer_valid=view.keyboard.connected&&cat_layer_live(&layer,now);
  bool fresh=received&&view.keyboard.connected&&(uint32_t)(now-received_at)<3000u;
+ view.keyboard.output=fresh?output:DASH_OUTPUT_NONE;
+ view.keyboard.profile=fresh?profile:0;
  memcpy(view.data,host,sizeof(host));k_spin_unlock(&lock,key);
  if(!fresh)view.data[1]=0;
  if(!(view.data[1]&DASH_CPU)){view.count=0;history_started=false;}
