@@ -14,6 +14,13 @@
 #include "themes/codex-system/left/render.h"
 #include "themes/codex-system/right/render.h"
 
+BUILD_ASSERT(sizeof(DASH_EVENT)-1 <= CONFIG_ZMK_SPLIT_RELAY_EVENT_TYPE_NAME_LEN,
+             "DASH_EVENT exceeds split relay event-name capacity");
+BUILD_ASSERT(sizeof(DASH_ACK_EVENT)-1 <= CONFIG_ZMK_SPLIT_RELAY_EVENT_TYPE_NAME_LEN,
+             "DASH_ACK_EVENT exceeds split relay event-name capacity");
+BUILD_ASSERT(sizeof(CAT_LAYER_EVENT)-1 <= CONFIG_ZMK_SPLIT_RELAY_EVENT_TYPE_NAME_LEN,
+             "CAT_LAYER_EVENT exceeds split relay event-name capacity");
+
 static uint8_t packed[PANEL_BYTES],gray[CAT_L8_BYTES] __aligned(4);
 static const lv_image_dsc_t source={.header={.magic=LV_IMAGE_HEADER_MAGIC,
  .cf=LV_COLOR_FORMAT_L8,.flags=LV_IMAGE_FLAGS_MODIFIABLE,.w=PANEL_W,.h=PANEL_H,.stride=PANEL_W},

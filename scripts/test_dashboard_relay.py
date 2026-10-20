@@ -15,6 +15,18 @@ structs = '\n'.join(re.search(r'struct ' + name + r' \{.*?\} __packed;', types, 
 
 receiver=(root / "src/display/dashboard_screen.c").read_text()
 receiver=receiver[receiver.index("static int on_event("):receiver.index("ZMK_LISTENER(velvet_dashboard,")]
+# Read the explicit production settings instead of assuming a 32-byte capacity.
+limits=[]
+for name in ['velvet_nano_dongle.conf','velvet_split_peripheral.conf']:
+    text=(root/'boards/shields/velvet'/name).read_text()
+    values=re.findall(r'^CONFIG_ZMK_SPLIT_RELAY_EVENT_TYPE_NAME_LEN=(\d+)$',text,re.M)
+    assert values, f'{name}: relay name limit must be explicit (ZMK defaults to 4)'
+    limits.append(int(values[-1]))
+assert limits[0]==limits[1], 'central and peripheral relay-name capacities differ'
+name_limit=limits[0]
+for name in ['vldash','vldack','vlcat']:
+    assert len(name)<=name_limit, f'{name}: {len(name)} bytes exceeds {name_limit}'
+
 cases = []
 for file, event, size in [('src/display/dashboard_bridge.c', 'DASH_EVENT', 21),
                           ('src/display/themes/cat/cat_layer_relay.c', 'CAT_LAYER_EVENT', 2)]:
@@ -30,7 +42,7 @@ program = r'''
 #include <stdio.h>
 #define __packed __attribute__((packed))
 #define CONFIG_ZMK_SPLIT_RELAY_EVENT 1
-#define CONFIG_ZMK_SPLIT_RELAY_EVENT_TYPE_NAME_LEN 32
+#define CONFIG_ZMK_SPLIT_RELAY_EVENT_TYPE_NAME_LEN @NAME_LIMIT@
 #define CONFIG_ZMK_SPLIT_RELAY_EVENT_DATA_LEN 64
 #define IS_ENABLED(x) (x)
 #define BIT(x) (1u << (x))
@@ -101,6 +113,6 @@ int main(void) {
 with tempfile.TemporaryDirectory() as d:
     source = pathlib.Path(d) / 'test.c'
     binary = pathlib.Path(d) / 'test'
-    source.write_text(program)
+    source.write_text(program.replace("@NAME_LIMIT@",str(name_limit)))
     subprocess.run(['cc', '-std=c11', '-Wall', '-Wextra', '-Werror', '-I'+str(root/'src/display/common'), '-I'+str(root/'src/display/themes/cat'), str(source), '-o', str(binary)], check=True)
     subprocess.run([str(binary)], check=True)

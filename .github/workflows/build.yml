@@ -46,6 +46,14 @@ jobs:
         run: |
           cc -std=c11 -Wall -Wextra -Werror src/display/tests/test_dashboard.c -o /tmp/test-dashboard
           /tmp/test-dashboard
+      - name: Verify actual display relay-name capacity
+        shell: bash
+        run: |
+          for target in velvet_nano_dongle velvet_left_dongle velvet_right_dongle; do
+            cfg="build/$target/zephyr/.config"
+            grep -qx 'CONFIG_ZMK_SPLIT_RELAY_EVENT_TYPE_NAME_LEN=32' "$cfg"
+            grep '^CONFIG_ZMK_SPLIT_RELAY_EVENT_TYPE_NAME_LEN=' "$cfg"
+          done
       - name: Verify physical-half telemetry relay
         shell: bash
         run: |

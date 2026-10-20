@@ -8,6 +8,9 @@
 #include <zmk/split/central.h>
 #include "cat_layer.h"
 
+BUILD_ASSERT(sizeof(CAT_LAYER_EVENT)-1 <= CONFIG_ZMK_SPLIT_RELAY_EVENT_TYPE_NAME_LEN,
+             "CAT_LAYER_EVENT exceeds split relay event-name capacity");
+
 static void publish_layer(struct k_work *work);
 K_WORK_DELAYABLE_DEFINE(cat_layer_work,publish_layer);
 static void publish_layer(struct k_work *work) {

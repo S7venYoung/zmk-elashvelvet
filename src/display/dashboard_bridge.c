@@ -11,6 +11,11 @@
 #include "common/dashboard_debug.h"
 #include <pb_encode.h>
 
+BUILD_ASSERT(sizeof(DASH_EVENT)-1 <= CONFIG_ZMK_SPLIT_RELAY_EVENT_TYPE_NAME_LEN,
+             "DASH_EVENT exceeds split relay event-name capacity");
+BUILD_ASSERT(sizeof(DASH_ACK_EVENT)-1 <= CONFIG_ZMK_SPLIT_RELAY_EVENT_TYPE_NAME_LEN,
+             "DASH_ACK_EVENT exceeds split relay event-name capacity");
+
 static struct zmk_rpc_custom_subsystem_meta meta={ZMK_RPC_CUSTOM_SUBSYSTEM_UI_URLS(),
  .security=ZMK_STUDIO_RPC_HANDLER_UNSECURED};
 /* RAM-only observations; never create another persistable Custom Setting. */
