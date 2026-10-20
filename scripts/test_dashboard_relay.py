@@ -72,7 +72,12 @@ static struct k_spinlock lock;
 static struct cat_layer_sample layer;
 static uint8_t host[DASH_DATA_SIZE],theme,output,profile;
 static uint32_t received_at;
-static bool received;
+static bool received,theme_known;
+static uint8_t saved_theme=255;
+static int theme_save_work;
+#define CONFIG_ZMK_SETTINGS_SAVE_DEBOUNCE 100
+#define K_MSEC(x) (x)
+static void k_work_schedule(int *work,int delay){(void)work;(void)delay;}
 ''' + receiver + '\n' + structs + '\n' + header.replace('#include <zmk/split/transport/types.h>', '').replace('#pragma once', '') + r'''
 static void roundtrip(struct zmk_split_relay_event_payload *p, const char *name, unsigned size) {
     assert(p->header.event_type_size == strlen(name));

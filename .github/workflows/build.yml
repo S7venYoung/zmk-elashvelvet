@@ -37,7 +37,9 @@ jobs:
           cc -std=c11 -Wall -Wextra -Werror src/display/tests/test_dashboard_debug.c -o /tmp/test-dashboard-debug
           /tmp/test-dashboard-debug
       - name: Test display relay BLE framing
-        run: python3 scripts/test_dashboard_relay.py dependencies/zmk
+        run: |
+          python3 scripts/test_dashboard_relay.py dependencies/zmk
+          python3 scripts/test_dashboard_theme_cache.py
       - name: Install physical-half scanner status fields
         run: python3 scripts/patch_dongle_status_fields.py dependencies/prospector-zmk-module/src/status_advertisement.c
       - run: west zmk-build -d ./build -q
