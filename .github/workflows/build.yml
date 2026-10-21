@@ -8,7 +8,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: west init -l config && west update --narrow && west zephyr-export
+      - name: Test reset bootloader transition
+        run: python3 scripts/test_settings_reset_bootloader.py
+      - name: Make settings reset return to bootloader
+        run: python3 scripts/patch_settings_reset_bootloader.py dependencies/zmk/app/src/settings/reset_settings_on_start.c
       - run: west zmk-build -d ./build -q
+      - name: Verify settings reset returns to bootloader
+        run: python3 scripts/verify_settings_reset_bootloader.py
       - name: Report effective configuration and RAM allocations
         if: always()
         shell: bash
