@@ -11,3 +11,4 @@ include:
     artifact-name: velvet_right
   - board: nice_nano//zmk
     shield: settings_reset
+    artifact-name: settings_reset
