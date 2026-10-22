@@ -1,5 +1,11 @@
 # Velvet46 ZMK 配置
 
+## Cube 分支：右手系统信息主题
+
+`zmk-esp32-cube` 的 `velvet_right_cube.uf2` 使用与 Nano 分支一致的系统信息主题：CPU、RAM 百分比和 CPU 温度，反色、修正蓝牙图标以及 USB/BLE 1–5 状态栏。右手启动直接显示该页；左手显示与 Cube 发现服务保留。屏幕供电和 serial VCOM 配置沿用 Nano 的修复。
+
+实时数据需由 [Cube 主控分支](https://github.com/S7venYoung/ESP32-S3-Cube-Scanner/tree/codex/xingzhi-cube-dongle) 发送。核对时该分支尚未发送 `vldash` / `vlcat`，因此本次只接好键盘接收端，缺失数据显示 `--`；协议说明见 [屏幕文档](src/display/README.md)。所有构建仍需手动触发。
+
 这是 Velvet46 的 ZMK 0.4 / Zephyr 4.1 配置，保留左右键盘各自的 Nice!View，并支持两种 USB dongle：Prospector dongle 分支由 XIAO Prospector 担任 BLE split central；标准模式仍构建左右手键盘。Prospector 使用 WALL-E / Codex 主题。
 
 DYA Studio 模块包括 BLE 管理、Custom Settings、Fast Keymap、Device Info、Watchdog、Runtime Macro 和 Runtime Combo。Dongle 模式 central 运行 Studio，左右手作为 BLE peripheral 并 relay 设置。键盘不包含编码器、轨迹球或鼠标控制功能。

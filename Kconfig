@@ -1,0 +1,5 @@
+config VELVET_CUBE_SYSTEM_DISPLAY
+    bool "System information page on the Cube right keyboard"
+    depends on SHIELD_VELVET_RIGHT && SHIELD_VELVET_CUBE_PERIPHERAL && ZMK_DISPLAY && ZMK_SPLIT_RELAY_EVENT
+    select LV_USE_IMAGE
+    default n

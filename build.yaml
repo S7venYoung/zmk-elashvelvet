@@ -6,8 +6,8 @@ include:
     cmake-args: -DCONFIG_ZMK_DISPLAY_STATUS_SCREEN_BUILT_IN=y
     artifact: velvet_left_cube
   - board: nice_nano//zmk
-    shield: velvet_right nice_view velvet_cube_peripheral
-    cmake-args: -DCONFIG_ZMK_DISPLAY_STATUS_SCREEN_BUILT_IN=y
+    shield: velvet_right nice_view_custom velvet_cube_peripheral
+    cmake-args: -DCONFIG_ZMK_DISPLAY_STATUS_SCREEN_BUILT_IN=n -DCONFIG_ZMK_DISPLAY_STATUS_SCREEN_CUSTOM=y -DCONFIG_NICE_VIEW_WIDGET_STATUS=n -DCONFIG_VELVET_CUBE_SYSTEM_DISPLAY=y
     artifact: velvet_right_cube
   - board: nice_nano//zmk
     shield: settings_reset
