@@ -3,3 +3,9 @@ config VELVET_CUBE_SYSTEM_DISPLAY
     depends on SHIELD_VELVET_RIGHT && SHIELD_VELVET_CUBE_PERIPHERAL && ZMK_DISPLAY && ZMK_SPLIT_RELAY_EVENT
     select LV_USE_IMAGE
     default n
+
+config VELVET_CUBE_CAT_DISPLAY
+    bool "Cat theme on the Cube left keyboard"
+    depends on SHIELD_VELVET_LEFT && SHIELD_VELVET_CUBE_PERIPHERAL && ZMK_DISPLAY && ZMK_SPLIT_RELAY_EVENT
+    select LV_USE_IMAGE
+    default n

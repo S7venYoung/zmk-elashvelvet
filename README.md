@@ -1,8 +1,8 @@
 # Velvet46 ZMK 配置
 
-## Cube 分支：右手系统信息主题
+## Cube 分支：左手猫咪、右手系统信息主题
 
-`zmk-esp32-cube` 的 `velvet_right_cube.uf2` 使用与 Nano 分支一致的系统信息主题：CPU、RAM 百分比和 CPU 温度，反色、修正蓝牙图标以及 USB/BLE 1–5 状态栏。右手启动直接显示该页；左手显示与 Cube 发现服务保留。屏幕供电和 serial VCOM 配置沿用 Nano 的修复。
+`zmk-esp32-cube` 的 `velvet_right_cube.uf2` 使用与 Nano 分支一致的系统信息主题：CPU、RAM 百分比和 CPU 温度，反色、修正蓝牙图标以及 USB/BLE 1–5 状态栏。右手启动直接显示该页；左手 `velvet_left_cube.uf2` 固定使用猫咪主题，显示自身电量、连接状态及收到的层号；Cube 发现服务保留。屏幕供电和 serial VCOM 配置沿用 Nano 的修复。
 
 实时数据需由 [Cube 主控分支](https://github.com/S7venYoung/ESP32-S3-Cube-Scanner/tree/codex/xingzhi-cube-dongle) 发送。核对时该分支尚未发送 `vldash` / `vlcat`，因此本次只接好键盘接收端，缺失数据显示 `--`；协议说明见 [屏幕文档](src/display/README.md)。所有构建仍需手动触发。
 

@@ -12,6 +12,10 @@ jobs:
         run: python3 scripts/test_settings_reset_bootloader.py
       - name: Make settings reset return to bootloader
         run: python3 scripts/patch_settings_reset_bootloader.py dependencies/zmk/app/src/settings/reset_settings_on_start.c
+      - name: Test left cat theme
+        run: |
+          cc -std=c11 -Wall -Wextra -Werror -Isrc/display/themes/cat src/display/themes/cat/tests/test_cat_display.c -o /tmp/test-cat
+          /tmp/test-cat
       - name: Test right system dashboard
         run: |
           cc -std=c11 -Wall -Wextra -Werror src/display/tests/test_dashboard.c -o /tmp/test-dashboard
@@ -29,6 +33,14 @@ jobs:
           grep -q vcom_toggle_thread build/velvet_right_cube/zephyr/zmk.map
       - name: Verify settings reset returns to bootloader
         run: python3 scripts/verify_settings_reset_bootloader.py
+      - name: Verify left cat theme and memory LCD
+        run: |
+          grep -qx 'CONFIG_VELVET_CUBE_CAT_DISPLAY=y' build/velvet_left_cube/zephyr/.config
+          grep -qx '# CONFIG_ZMK_DISPLAY_STATUS_SCREEN_BUILT_IN is not set' build/velvet_left_cube/zephyr/.config
+          grep -qx 'CONFIG_ZMK_BACKLIGHT_ON_START=y' build/velvet_left_cube/zephyr/.config
+          find build/velvet_left_cube -name cat_display.c.obj -print -quit | grep -q .
+          grep -q serial-vcom-inversion build/velvet_left_cube/zephyr/zephyr.dts
+          grep -q vcom_toggle_thread build/velvet_left_cube/zephyr/zmk.map
       - name: Verify Cube discovery module is linked into both halves
         shell: bash
         run: |

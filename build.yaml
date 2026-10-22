@@ -3,7 +3,7 @@
 include:
   - board: nice_nano//zmk
     shield: velvet_left nice_view_custom velvet_cube_peripheral
-    cmake-args: -DCONFIG_ZMK_DISPLAY_STATUS_SCREEN_BUILT_IN=y
+    cmake-args: -DCONFIG_ZMK_DISPLAY_STATUS_SCREEN_BUILT_IN=n -DCONFIG_ZMK_DISPLAY_STATUS_SCREEN_CUSTOM=y -DCONFIG_NICE_VIEW_WIDGET_STATUS=n -DCONFIG_VELVET_CUBE_CAT_DISPLAY=y
     artifact: velvet_left_cube
   - board: nice_nano//zmk
     shield: velvet_right nice_view_custom velvet_cube_peripheral

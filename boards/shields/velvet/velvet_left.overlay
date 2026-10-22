@@ -26,3 +26,11 @@
         ;
 };
 
+
+/* Match Nano's independently serviced memory-LCD VCOM cadence. */
+&nice_view_spi {
+    ls0xx@0 {
+        serial-vcom-inversion;
+        serial-vcom-interval = <33>;
+    };
+};
