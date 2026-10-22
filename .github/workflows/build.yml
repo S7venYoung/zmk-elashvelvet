@@ -8,6 +8,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: west init -l config && west update --narrow && west zephyr-export
+      - name: Normalize public behavior names
+        run: python3 scripts/patch_behavior_names.py dependencies
       - name: Bound Nano custom settings metadata RAM
         run: python3 scripts/patch_nano_settings_ram.py dependencies/zmk-feature-custom-settings
       - name: Install Nano Studio action hook
