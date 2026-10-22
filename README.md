@@ -4,7 +4,7 @@
 
 `zmk-esp32-cube` 的 `velvet_right_cube.uf2` 使用与 Nano 分支一致的系统信息主题：CPU、RAM 百分比和 CPU 温度，反色、修正蓝牙图标以及 USB/BLE 1–5 状态栏。右手启动直接显示该页；左手 `velvet_left_cube.uf2` 固定使用猫咪主题，显示自身电量、连接状态及收到的层号；Cube 发现服务保留。屏幕供电和 serial VCOM 配置沿用 Nano 的修复。
 
-实时数据需由 [Cube 主控分支](https://github.com/S7venYoung/ESP32-S3-Cube-Scanner/tree/codex/xingzhi-cube-dongle) 发送。核对时该分支尚未发送 `vldash` / `vlcat`，因此本次只接好键盘接收端，缺失数据显示 `--`；协议说明见 [屏幕文档](src/display/README.md)。所有构建仍需手动触发。
+实时数据需由 [Cube 主控分支](https://github.com/S7venYoung/ESP32-S3-Cube-Scanner/tree/codex/xingzhi-cube-dongle) 发送。主控已加入 `vldash` / `vlcat` 转发，配套软件 main 已复用现有系统信息采集补齐 Cube USB/Wi-Fi 发送。需更新主控、配套软件和对应键盘固件；缺失数据显示 `--`。协议说明见 [屏幕文档](src/display/README.md)。所有构建仍需手动触发。
 
 这是 Velvet46 的 ZMK 0.4 / Zephyr 4.1 配置，保留左右键盘各自的 Nice!View，并支持两种 USB dongle：Prospector dongle 分支由 XIAO Prospector 担任 BLE split central；标准模式仍构建左右手键盘。Prospector 使用 WALL-E / Codex 主题。
 
