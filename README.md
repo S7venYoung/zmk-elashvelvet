@@ -10,3 +10,7 @@ DYA Studio 模块包括 BLE 管理、持久化自定义设置、运行时宏和�
 - **Build Prospector scanner**：单独构建 scanner 固件，使用 Codex2 主题。
 
 DYA Studio 通过 USB 连接右手键盘，在 Chromium 打开 <https://studio.dya.cormoran.works/>。构建矩阵见 [`build.yaml`](build.yaml)，DYA/ZMK/Zephyr 依赖见 [`config/west-dependency.yml`](config/west-dependency.yml)。
+
+## DYA 功能接入
+
+已补齐 Runtime Tap Dance 及常用 DYA 模块的显式配置，保留现有键位。详见 [功能审计与使用说明](docs/dya-feature-audit.md)。构建仍手动触发。
