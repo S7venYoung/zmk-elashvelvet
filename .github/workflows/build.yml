@@ -22,6 +22,8 @@ jobs:
           /tmp/test-dashboard
           python3 scripts/test_cube_system_relay.py dependencies/zmk
       - run: west zmk-build -d ./build -q
+      - name: Verify DYA central capabilities
+        run: python3 scripts/verify_dya_features.py build --peripheral-only
       - name: Verify right system dashboard and memory LCD
         run: |
           grep -qx 'CONFIG_VELVET_CUBE_SYSTEM_DISPLAY=y' build/velvet_right_cube/zephyr/.config
