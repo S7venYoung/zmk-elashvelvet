@@ -1,2 +1,8 @@
 /* Marker shield for DYA Studio central-only Kconfig. */
 / { };
+
+/* Runtime Tap Dance: available in Studio without replacing any key. */
+#ifndef VELVET_RUNTIME_TAPDANCE_DEFINED
+#define VELVET_RUNTIME_TAPDANCE_DEFINED
+#include <behaviors/runtime_tapdance.dtsi>
+#endif

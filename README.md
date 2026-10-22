@@ -20,3 +20,7 @@ Dongle 模式三块设备应刷写同一次 Actions 生成的固件。清除旧�
 接收器使用 WALLE 自定义屏幕和 RGB565（16 位）彩色绘图。240×280 屏幕采用两个各占整屏 10% 的绘图缓冲，总计 26,880 字节，通过分块刷新保留完整分辨率与颜色；LVGL 界面内存池为 49,152 字节，显示线程栈为 8,192 字节。不要把单色 Nice!View 的缓冲配置直接用于接收器。
 
 `build.yaml` 显式覆盖 `config/velvet.conf` 的通用设置，接收器行为队列为 64，BLE ACL/事件/L2CAP 发送缓冲数量分别为 3/6/4。DYA 模块保持启用，USB RPC 使用 `studio-rpc-usb-uart` snippet。Actions 会打印最终配置与 RAM 分配，便于检查覆盖是否生效。
+
+## DYA 功能接入
+
+已补齐 Runtime Tap Dance 及常用 DYA 模块的显式配置，保留现有键位。详见 [功能审计与使用说明](docs/dya-feature-audit.md)。构建仍手动触发。
