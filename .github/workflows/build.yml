@@ -8,6 +8,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: west init -l config && west update --narrow && west zephyr-export
+      - name: Normalize public behavior names
+        run: python3 scripts/patch_behavior_names.py dependencies
       - name: Test reset bootloader transition
         run: python3 scripts/test_settings_reset_bootloader.py
       - name: Make settings reset return to bootloader
