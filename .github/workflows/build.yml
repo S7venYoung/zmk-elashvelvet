@@ -23,6 +23,8 @@ jobs:
       - name: Install physical-half scanner status fields
         run: python3 scripts/patch_dongle_status_fields.py dependencies/prospector-zmk-module/src/status_advertisement.c
       - run: west zmk-build -d ./build -q
+      - name: Verify DYA central capabilities
+        run: python3 scripts/verify_dya_features.py build
       - name: Verify physical-half telemetry relay
         shell: bash
         run: |

@@ -54,3 +54,7 @@ Dongle 按 AUX central 配置：左手来自 peripheral 0，右手来自 periphe
 ## Dongle 扫描仪左右遥测
 
 左右手在现有 split relay 通道内每秒发送一份带物理左右标识的 WPM/电量，接收器汇总后写入标准 Prospector 广播和 Fight 广播。无需按连接先后猜左右索引，也不把无电池接收器当右手电量。WPM 使用每半本地按键统计，报告中断 5 秒后归零；0% 电量仍有效。nRF52833 保持单广播实例。首次使用该方案需要接收器、左右手全部更新为本次构建；不需要刷 reset 或重烧 BL。此修复需实机核对屏幕、WPM 和左右电量。
+
+## DYA 功能接入
+
+已补齐 Runtime Tap Dance 及常用 DYA 模块的显式配置，保留现有键位。详见 [功能审计与使用说明](docs/dya-feature-audit.md)。构建仍手动触发。
