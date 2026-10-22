@@ -52,6 +52,7 @@ manifest:
     - name: zmk-module-settings-rpc
       import: true
     - name: zmk-feature-custom-settings
+      revision: c6a7fef3a3be3d3ace5de9a4b0628c6418cd1f3f
       import: true
     - name: zmk-feature-fast-keymap
       import: true
@@ -66,6 +67,10 @@ manifest:
       import: true
       revision: codex/custom-rpc-rewrite
     - name: zmk-feature-os-detection
+      import: true
+    - name: zmk-feature-runtime-tapdance
+      remote: cormoran
+      revision: 3ed2c36ed94b16601eeba2ed39a27cc93e9a53ee
       import: true
     - name: zmk-feature-runtime-macro
       import: true

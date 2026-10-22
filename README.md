@@ -15,3 +15,7 @@
 刷写固件后，将键盘通过 USB 连接电脑，并使用 Chromium 浏览器打开 <https://studio.dya.cormoran.works/> 连接 DYA Studio。
 
 构建目标定义在 [`build.yaml`](build.yaml)，依赖及 ZMK/Zephyr 版本定义在 [`config/west-dependency.yml`](config/west-dependency.yml)。
+
+## DYA 功能接入
+
+已补齐 Runtime Tap Dance 及常用 DYA 模块的显式配置，保留现有键位。详见 [功能审计与使用说明](docs/dya-feature-audit.md)。构建仍手动触发。
