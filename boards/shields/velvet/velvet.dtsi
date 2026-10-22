@@ -33,19 +33,6 @@
         diode-direction = "col2row";
     };
 
-	left_encoder: encoder_left {
-		compatible = "alps,ec11";
-		label = "LEFT_ENCODER";
-		resolution = <4>;
-        steps = <40>;
-		status = "disabled";
-	};
-
-    sensors {
-		compatible = "zmk,keymap-sensors";
-		sensors = <&left_encoder>;
-	};
-
 };
 
 

@@ -159,6 +159,9 @@ jobs:
         if: contains(matrix.shield, 'settings_reset')
         run: python3 scripts/verify_settings_reset_bootloader.py "${{ env.build_dir }}"
 
+      - name: Verify DYA central capabilities
+        run: python3 scripts/verify_dya_features.py "${{ env.build_dir }}" --peripheral-only
+
       - name: Warn about building from main if build fails
         if: failure() && env.zmk_revision == 'main'
         run: |
