@@ -81,6 +81,6 @@ lv_obj_t *zmk_display_status_screen(void) {
     lv_image_set_src(image,&image_source);
     lv_obj_set_pos(image,0,0);
     refresh(NULL);
-    lv_timer_create(refresh,250,NULL);
+    lv_timer_create(refresh,50,NULL);
     return screen;
 }

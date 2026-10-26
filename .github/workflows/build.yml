@@ -23,6 +23,7 @@ jobs:
           cc -std=c11 -Wall -Wextra -Werror src/display/tests/test_dashboard.c -o /tmp/test-dashboard
           /tmp/test-dashboard
           python3 scripts/test_cube_system_relay.py dependencies/zmk
+          python3 scripts/test_cube_layer_refresh.py
       - run: west zmk-build -d ./build -q
       - name: Verify DYA central capabilities
         run: python3 scripts/verify_dya_features.py build --peripheral-only

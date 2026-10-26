@@ -37,6 +37,9 @@ static atomic_t received_count,drawn_count;
 static uint32_t received_at;
 static struct cat_layer_sample layer;
 static struct dashboard_status view;
+static struct dashboard_status previous_view;
+static bool drawn;
+static uint32_t drawn_at;
 static uint8_t history_sequence;
 static bool history_started;
 
@@ -82,6 +85,9 @@ static void refresh(lv_timer_t *timer){
   else {memmove(view.history,view.history+1,11);view.history[11]=view.data[3];}
  }
 
+ /* Poll layers quickly without redrawing unchanged system metrics at 20Hz. */
+ if(drawn&&!memcmp(&previous_view,&view,sizeof(view))&&(uint32_t)(now-drawn_at)<1000u)return;
+ previous_view=view;drawn=true;drawn_at=now;
  system_render(packed,&view);
  expand_l8(packed,gray);lv_obj_invalidate(image);atomic_inc(&drawn_count);
 }
@@ -90,7 +96,7 @@ lv_obj_t *zmk_display_status_screen(void){
  lv_obj_set_style_bg_opa(screen,LV_OPA_COVER,0);lv_obj_set_style_pad_all(screen,0,0);
  lv_obj_set_style_border_width(screen,0,0);lv_obj_remove_flag(screen,LV_OBJ_FLAG_SCROLLABLE);
  image=lv_image_create(screen);lv_image_set_src(image,&source);lv_obj_set_pos(image,0,0);
- refresh(NULL);lv_timer_create(refresh,1000,NULL);return screen;
+ refresh(NULL);lv_timer_create(refresh,50,NULL);return screen;
 }
 
 /* An independent heartbeat distinguishes stopped LVGL refresh from lost RX. */
