@@ -10,7 +10,6 @@
 };
 
 &touch_sensor { status = "disabled"; };
-&apds9960 { status = "disabled"; };
 
 /* BLK on this module is driven high for light, unlike the old adapter panel. */
 &pwm1_default {

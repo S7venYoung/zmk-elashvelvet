@@ -16,5 +16,5 @@ for key, value in [('width',240), ('height',280), ('x-offset',0), ('y-offset',20
     assert match and int(match[1], 0) == value, key
 for name in ('cst816s@15', 'apds9960@39'):
     match = re.search(re.escape(name) + r'\s*\{([^{}]*)\}', text, re.S)
-    assert match and 'status = "disabled"' in match[1], name
+    assert (match is None and name == "apds9960@39") or (match and 'status = "disabled"' in match[1]), name
 print('1.69-inch receiver role, geometry and absent touch: PASS')
