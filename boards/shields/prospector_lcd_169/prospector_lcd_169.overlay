@@ -1,4 +1,4 @@
-/* 1.69-inch ST7789V3 module, no touch. Preserve the adapter's SPI/control pins.
+/* 1.69-inch ST7789V3 module, no touch. Use the user's SPI wiring and D0/D1 LCD control pins.
  * Native panel geometry stays portrait; the existing renderer rotates to landscape.
  */
 &st7789 {
@@ -22,4 +22,10 @@
 };
 &spi3_sleep {
     group1 { psels = <NRF_PSEL(SPIM_SCK, 1, 13)>, <NRF_PSEL(SPIM_MOSI, 1, 15)>; };
+};
+
+/* These are LCD DC/RES, not touch IRQ/RST. No touch device uses D0/D1. */
+&{/mipi_dbi} {
+    dc-gpios = <&xiao_d 0 GPIO_ACTIVE_HIGH>;
+    reset-gpios = <&xiao_d 1 GPIO_ACTIVE_LOW>;
 };

@@ -8,8 +8,8 @@ Photo identifies the actual panel as ST7789V3 240x280; the earlier Waveshare pro
 | --- | --- |
 | BLK | D6 / P1.11, active high |
 | CS | D9 / P1.10 |
-| DC | D7 / P1.12 |
-| RES | D3 / P0.29 |
+| DC | D0 / P0.02 |
+| RES | D1 / P0.28 |
 | SDA (SPI MOSI) | D10 / P1.15 |
 | SCL (SPI SCK) | D8 / P1.13 |
 | VCC | existing compatible supply; confirm module voltage specification |
@@ -18,3 +18,7 @@ Photo identifies the actual panel as ST7789V3 240x280; the earlier Waveshare pro
 Touch and APDS9960 nodes are disabled; brightness is fixed at 60 percent. There is no touch-based page/layer selector; keyboard/DYA actions remain available. The extra LCD shield loads last and removes the old inverted backlight polarity and redundant MISO mapping (the LCD is write-only and D9 is CS). Base pin definitions and old branches are preserved. No bootloader changes are needed.
 
 After flashing, verify image position, colors, brightness, DYA connectivity and both-half input. Build and generated-device-tree checks do not prove physical operation. Only this receiver is built; reuse matching Velvet peripheral firmware.
+
+## Wiring correction
+
+LCD DC is connected to D0 and RES to D1. The panel has no IRQ pin; D0 carries command/data selection, not touch interrupts. The first build inherited DC=D7 and RES=D3 and does not match this wiring. This revision overrides the MIPI DBI control GPIOs to D0/D1 while preserving CS=D9, SCK=D8, MOSI=D10 and BLK=D6. Touch remains disabled. Do not reuse the earlier UF2 for this wiring.
