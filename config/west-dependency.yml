@@ -84,11 +84,11 @@ manifest:
       revision: main
     - name: prospector-zmk-module
       remote: s7venyoung
-      revision: core/zephyr-4-1
+      revision: 519c75d0556ed06806cf09ba4a65cfa9529e329d
     - name: zmk-prospector-themes
       remote: s7venyoung
       repo-path: zmk-prospector
-      revision: prospector-themes
+      revision: f3932124e8c963bf8ede39e5630cd640ee4f008f
       path: modules/zmk-prospector-themes
     - name: mario-peripheral-animation
       remote: gpeye

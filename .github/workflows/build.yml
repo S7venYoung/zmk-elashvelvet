@@ -10,15 +10,11 @@ jobs:
       - run: west init -l config && west update --narrow && west zephyr-export
       - name: Normalize public behavior names
         run: python3 scripts/patch_behavior_names.py dependencies
-      - name: Test reset bootloader transition
-        run: python3 scripts/test_settings_reset_bootloader.py
-      - name: Make settings reset return to bootloader
-        run: python3 scripts/patch_settings_reset_bootloader.py dependencies/zmk/app/src/settings/reset_settings_on_start.c
       - run: west zmk-build -d ./build -q
+      - name: Verify 1.69-inch receiver hardware
+        run: python3 scripts/verify_prospector_169.py build/velvet_prospector_dongle_169/zephyr
       - name: Verify DYA central capabilities
         run: python3 scripts/verify_dya_features.py build
-      - name: Verify settings reset returns to bootloader
-        run: python3 scripts/verify_settings_reset_bootloader.py
       - name: Report effective configuration and RAM allocations
         if: always()
         shell: bash
@@ -54,13 +50,7 @@ jobs:
             cp "$image" "firmware/${name}.uf2"
           done < <(find build -type f -path '*/zephyr/zmk.uf2' -print0)
 
-          expected=(
-            velvet_prospector_dongle_walle.uf2
-            velvet_left_dongle.uf2
-            velvet_right_dongle.uf2
-            settings_reset_xiao.uf2
-            settings_reset.uf2
-          )
+          expected=(velvet_prospector_dongle_169.uf2)
           for name in "${expected[@]}"; do
             test -s "firmware/$name" || { echo "Missing firmware: $name" >&2; exit 1; }
           done

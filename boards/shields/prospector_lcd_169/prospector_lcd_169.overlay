@@ -1,0 +1,26 @@
+/* 1.69-inch ST7789V3 module, no touch. Preserve the adapter's SPI/control pins.
+ * Native panel geometry stays portrait; the existing renderer rotates to landscape.
+ */
+&st7789 {
+    width = <240>;
+    height = <280>;
+    x-offset = <0>;
+    y-offset = <20>;
+    mipi-max-frequency = <20000000>;
+};
+
+&touch_sensor { status = "disabled"; };
+&apds9960 { status = "disabled"; };
+
+/* BLK on this module is driven high for light, unlike the old adapter panel. */
+&pwm1_default {
+    group1 { /delete-property/ nordic,invert; };
+};
+
+/* The display is write-only; D9/P1.10 belongs to CS, not MISO. */
+&spi3_default {
+    group1 { psels = <NRF_PSEL(SPIM_SCK, 1, 13)>, <NRF_PSEL(SPIM_MOSI, 1, 15)>; };
+};
+&spi3_sleep {
+    group1 { psels = <NRF_PSEL(SPIM_SCK, 1, 13)>, <NRF_PSEL(SPIM_MOSI, 1, 15)>; };
+};

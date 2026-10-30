@@ -24,3 +24,7 @@ Dongle 模式三块设备应刷写同一次 Actions 生成的固件。清除旧�
 ## DYA 功能接入
 
 已补齐 Runtime Tap Dance 及常用 DYA 模块的显式配置，保留现有键位。详见 [功能审计与使用说明](docs/dya-feature-audit.md)。构建仍手动触发。
+
+## 1.69 英寸无触摸 Dongle
+
+本分支只构建 XIAO nRF52840 接收器，见 [接线与固件说明](docs/prospector-169-dongle.md)。
