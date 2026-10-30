@@ -10,6 +10,8 @@ jobs:
       - run: west init -l config && west update --narrow && west zephyr-export
       - name: Normalize public behavior names
         run: python3 scripts/patch_behavior_names.py dependencies
+      - name: Guard optional WALL-E touch backend
+        run: python3 scripts/patch_prospector_no_touch.py dependencies/modules/zmk-prospector-themes/themes/walle/src/theme.c
       - run: west zmk-build -d ./build -q
       - name: Verify 1.69-inch receiver hardware
         run: python3 scripts/verify_prospector_169.py build/velvet_prospector_dongle_169/zephyr
