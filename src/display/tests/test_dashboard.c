@@ -57,6 +57,12 @@ int main(int argc,char**argv){
  dash_age_data(aged,sample,false,0);assert(aged[1]==0);
  uint8_t reset[DASH_DATA_SIZE];memcpy(reset,sample,sizeof(reset));dash_put32(reset+14,1);
  dash_age_data(aged,reset,true,2000);assert(dash_u32(aged+14)==0);
+ uint8_t clock[DASH_DATA_SIZE];memcpy(clock,sample,sizeof(clock));
+ dash_put32(clock+14,DASH_RESET_CLOCK|(19u*60u+20u));assert(dash_valid(clock,sizeof(clock)));
+ dash_age_data(aged,clock,true,89999);assert(dash_u32(aged+14)==(DASH_RESET_CLOCK|1160u));
+ dash_age_data(aged,clock,true,90000);assert(aged[1]==0);
+ dash_put32(clock+14,DASH_RESET_CLOCK|1440u);assert(!dash_valid(clock,sizeof(clock)));
+ dash_put32(clock+14,DASH_RESET_CLOCK);assert(dash_valid(clock,sizeof(clock)));
  uint8_t bad[DASH_DATA_SIZE];memcpy(bad,sample,sizeof(bad));bad[3]=101;assert(!dash_valid(bad,sizeof(bad)));
  memcpy(bad,sample,sizeof(bad));bad[1]=64;assert(!dash_valid(bad,sizeof(bad)));
  memcpy(bad,sample,sizeof(bad));bad[12]=bad[13]=0;assert(!dash_valid(bad,sizeof(bad)));
