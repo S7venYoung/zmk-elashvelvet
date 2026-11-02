@@ -7,6 +7,9 @@ jobs:
     container: zmkfirmware/zmk-build-arm:stable
     steps:
       - uses: actions/checkout@v4
+      - name: Test three-peripheral layout and layer isolation
+        run: python3 scripts/test_numpad_dongle.py
+
       - run: west init -l config && west update --narrow && west zephyr-export
       - name: Normalize public behavior names
         run: python3 scripts/patch_behavior_names.py dependencies
@@ -142,16 +145,18 @@ jobs:
         run: |
           config=build/velvet_nano_dongle/zephyr/.config
           grep -qx 'CONFIG_ZMK_BEHAVIORS_QUEUE_SIZE=64' "$config"
-          grep -qx 'CONFIG_BT_MAX_PAIRED=7' "$config"
-          grep -qx 'CONFIG_ZMK_SPLIT_BLE_CENTRAL_PERIPHERALS=2' "$config"
+          grep -qx 'CONFIG_BT_MAX_PAIRED=8' "$config"
+          grep -qx 'CONFIG_ZMK_SPLIT_BLE_CENTRAL_PERIPHERALS=3' "$config"
           grep -qx '# CONFIG_BT_EXT_ADV is not set' "$config"
           grep -qx 'CONFIG_ZMK_STATUS_ADVERTISEMENT=y' "$config"
-          grep -qx 'CONFIG_PROSPECTOR_EXPECTED_PERIPHERAL_COUNT=2' "$config"
+          grep -qx 'CONFIG_PROSPECTOR_EXPECTED_PERIPHERAL_COUNT=3' "$config"
           grep -qx 'CONFIG_SYSTEM_WORKQUEUE_STACK_SIZE=4096' "$config"
           for source in status_advertisement.c velvet_stats.c scanner_payload.c; do
             find build/velvet_nano_dongle -name "$source.obj" -print -quit | grep -q .
           done
           test -z "$(find build/velvet_nano_dongle -name fight_telemetry.c.obj -print -quit)"
+      - name: Verify lightweight numpad peripheral
+        run: python3 scripts/verify_numpad_build.py build
       - name: Report Nano memory
         run: west build -d build/velvet_nano_dongle -t ram_report
       - name: Verify Nano replug bootloader is linked
@@ -194,10 +199,12 @@ jobs:
             cp "$image" "firmware/${name}.uf2"
           done < <(find build -type f -path '*/zephyr/zmk.uf2' -print0)
 
+          cp build/eyelash_numpad_peripheral/zephyr/zmk.hex firmware/eyelash_numpad_peripheral.hex
           expected=(
             velvet_nano_dongle.uf2
             velvet_left_dongle.uf2
             velvet_right_dongle.uf2
+            eyelash_numpad_peripheral.hex
             settings_reset_nano.uf2
             settings_reset.uf2
           )
@@ -207,4 +214,53 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: firmware
-          path: firmware/*.uf2
+          path: firmware/
+
+  numpad-bootloader:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r numpad/requirements-dfu.txt
+      - name: Host tests for peripheral bootloader and DFU packaging
+        run: python -m unittest discover -s numpad/tests -v
+      - name: Install ARM compiler
+        run: sudo apt-get update && sudo apt-get install -y gcc-arm-none-eabi libnewlib-arm-none-eabi
+      - run: bash numpad/scripts/build_bootloader.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: eyelash-numpad-peripheral-bootloader
+          path: numpad/dist/bootloader/*.hex
+          if-no-files-found: error
+
+  package-numpad:
+    needs: [build, numpad-bootloader]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r numpad/requirements-dfu.txt
+      - uses: actions/download-artifact@v4
+        with:
+          name: firmware
+          path: incoming/firmware
+      - uses: actions/download-artifact@v4
+        with:
+          name: eyelash-numpad-peripheral-bootloader
+          path: incoming/bootloader
+      - name: Validate and package peripheral-only OTA and initial SWD image
+        run: >-
+          python numpad/scripts/firmware_artifacts.py
+          --application incoming/firmware/eyelash_numpad_peripheral.hex
+          --bootloader incoming/bootloader/eyelash-numpad-peripheral-bootloader-s132.hex
+          --output numpad/dist/release
+      - run: cp docs/nano-dongle-numpad.md numpad/dist/release/README.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: eyelash-numpad-peripheral-swd-and-ble-dfu
+          path: numpad/dist/release/
+          if-no-files-found: error

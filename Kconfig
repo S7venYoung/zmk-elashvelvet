@@ -19,3 +19,11 @@ config VELVET_DASHBOARD_DISPLAY
     depends on SHIELD_VELVET_SPLIT_PERIPHERAL && ZMK_DISPLAY && ZMK_SPLIT_RELAY_EVENT
     select LV_USE_IMAGE
     default n
+config ZMK_BEHAVIOR_EYELASH_DFU
+    bool "Eyelash numpad peripheral BLE DFU entry"
+    default y
+    depends on SOC_SERIES_NRF52X && DT_HAS_EYELASH_BEHAVIOR_DFU_ENABLED
+    help
+      Keep this behavior on the central and peripherals so the source-local
+      request can be forwarded by its stable behavior ID. Only the nRF52832
+      numpad executes the bootloader request.

@@ -1,8 +1,10 @@
 #define BASE 0
 #define LOWER 1
+#define NUMPAD_FN 3
 
 #include <behaviors/runtime_macro.dtsi>
 #include <behaviors.dtsi>
+#include <behaviors/eyelash_dfu.dtsi>
 #include <dt-bindings/zmk/bt.h>
 #include <dt-bindings/zmk/keys.h>
 
@@ -24,7 +26,7 @@
 
             // 1 tap: m
             // 2 taps: password + Enter
-            bindings = <&kp M>, <&pwd_enter>;
+            bindings = <&kp M>, <&none>;
 
             tapping-term-ms = <200>;
         };
@@ -38,20 +40,7 @@
             key-positions = <0 11>;
         };
     };
-    macros {
-        pwd_enter: pwd_enter {
-            compatible = "zmk,behavior-macro";
-            label = "PWD_ENTER";
-            #binding-cells = <0>;
 
-            // outputs: x y 1 9 0 0 9 1 8 8 + Enter
-            bindings =
-                <&kp X>, <&kp Y>,
-                <&kp N1>, <&kp N9>, <&kp N0>, <&kp N0>,
-                <&kp N9>, <&kp N1>, <&kp N8>, <&kp N8>,
-                <&kp ENTER>;
-        };
-    };
 
     keymap {
         compatible = "zmk,keymap";
@@ -63,6 +52,12 @@
 &kp LCMD   &kp A         &kp S             &kp D         &kp F   &kp G      &trans     &kp H         &kp J   &kp K       &kp L      &kp SEMI   &kp ENTER
 &kp LSHFT  &kp Z         &kp X             &kp C         &kp V   &kp B      &trans     &kp N         &kp M   &kp COMMA   &kp DOT    &kp SLASH  &kp RIGHT_SHIFT
            &kp CAPSLOCK  &kp LEFT_CONTROL  &kp LEFT_ALT  &mo 2   &kp SPACE             &kp SPACE     &mo 1   &kp DELETE  &kp MINUS  &kp EQUAL
+
+                /* Numpad 61..76: identical on all existing Velvet layers. */
+                &kp KP_N7 &kp KP_N8 &kp KP_N9 &kp KP_DIVIDE
+                &kp KP_N4 &kp KP_N5 &kp KP_N6 &kp KP_MULTIPLY
+                &kp KP_N1 &kp KP_N2 &kp KP_N3 &kp KP_MINUS
+                &lt NUMPAD_FN KP_ENTER &kp KP_N0 &kp KP_DOT &kp KP_PLUS
             >;
 
             label = "BASE";
@@ -75,6 +70,12 @@
 &kp F12    &kp N1  &kp N2  &kp N3        &kp N4           &kp N5  &trans  &kp C_VOLUME_DOWN  &kp PAGE_UP       &kp PAGE_DOWN      &kp HOME        &kp END          &kp INSERT
 &trans     &trans  &trans  &trans        &trans           &trans  &trans  &kp C_MUTE         &trans            &trans             &trans          &trans           &trans
            &trans  &trans  &trans        &trans           &trans          &trans             &trans            &trans             &trans          &trans
+
+                /* Numpad 61..76: identical on all existing Velvet layers. */
+                &kp KP_N7 &kp KP_N8 &kp KP_N9 &kp KP_DIVIDE
+                &kp KP_N4 &kp KP_N5 &kp KP_N6 &kp KP_MULTIPLY
+                &kp KP_N1 &kp KP_N2 &kp KP_N3 &kp KP_MINUS
+                &lt NUMPAD_FN KP_ENTER &kp KP_N0 &kp KP_DOT &kp KP_PLUS
             >;
 
         };
@@ -86,8 +87,30 @@
 &trans     &trans  &trans  &trans  &trans  &trans  &trans  &trans        &kp LEFT      &kp DOWN      &kp RIGHT     &trans          &trans
 &trans     &trans  &trans  &trans  &trans  &trans  &trans  &bt BT_SEL 0  &bt BT_SEL 1  &bt BT_SEL 2  &bt BT_SEL 3  &bt BT_SEL 4    &trans
            &trans  &trans  &trans  &trans  &trans          &trans        &trans        &trans        &bt BT_CLR    &bt BT_CLR_ALL
+
+                /* Numpad 61..76: identical on all existing Velvet layers. */
+                &kp KP_N7 &kp KP_N8 &kp KP_N9 &kp KP_DIVIDE
+                &kp KP_N4 &kp KP_N5 &kp KP_N6 &kp KP_MULTIPLY
+                &kp KP_N1 &kp KP_N2 &kp KP_N3 &kp KP_MINUS
+                &lt NUMPAD_FN KP_ENTER &kp KP_N0 &kp KP_DOT &kp KP_PLUS
             >;
 
+        };
+        numpad_fn {
+            label = "NUMPAD_FN";
+            bindings = <
+                &trans &trans &trans &trans &trans &trans &trans &trans &trans &trans &trans &trans
+                &trans &trans &trans &trans &trans &trans &trans &trans &trans &trans &trans &trans
+                &trans &trans &trans &trans &trans &trans &trans &trans &trans &trans &trans &trans
+                &trans &trans &trans &trans &trans &trans &trans &trans &trans &trans &trans &trans
+                &trans &trans &trans &trans &trans &trans &trans &trans &trans &trans &trans &trans
+                &trans
+                /* Transparent prefix preserves held Velvet layer state. */
+                &kp KP_NUMLOCK &kp KP_ENTER &kp DELETE &kp BACKSPACE
+                &kp C_MUTE &kp C_VOL_UP &kp C_VOL_DN &none
+                &bt BT_SEL 0 &bt BT_SEL 1 &bt BT_SEL 2 &none
+                &trans &none &none &eyelash_dfu
+            >;
         };
     };
 };

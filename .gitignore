@@ -1,0 +1,8 @@
+build/
+firmware/
+dependencies/
+.west/
+__pycache__/
+.venv/
+numpad/.deps/
+numpad/dist/
