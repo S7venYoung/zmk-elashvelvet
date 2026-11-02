@@ -63,6 +63,16 @@ int main(int argc,char**argv){
  dash_age_data(aged,clock,true,90000);assert(aged[1]==0);
  dash_put32(clock+14,DASH_RESET_CLOCK|1440u);assert(!dash_valid(clock,sizeof(clock)));
  dash_put32(clock+14,DASH_RESET_CLOCK);assert(dash_valid(clock,sizeof(clock)));
+ dash_put32(clock+14,DASH_RESET_CLOCK|1160u|(7200u<<DASH_RESET_SECONDS_SHIFT));
+ assert(dash_valid(clock,sizeof(clock)));dash_age_data(aged,clock,true,10000);
+ assert((dash_u32(aged+14)&DASH_RESET_MINUTES_MASK)==1160u);
+ assert(((dash_u32(aged+14)>>DASH_RESET_SECONDS_SHIFT)&DASH_RESET_SECONDS_MASK)==7190u);
+ dash_put32(clock+14,DASH_RESET_CLOCK|1160u|(18001u<<DASH_RESET_SECONDS_SHIFT));assert(!dash_valid(clock,sizeof(clock)));
+ // Background must remain dark, and RESET must retain a visible progress bar.
+ memcpy(s.data,sample,sizeof(sample));dash_put32(s.data+14,DASH_RESET_CLOCK|1160u|(9000u<<DASH_RESET_SECONDS_SHIFT));
+ codex_render(b.p,&s);assert(b.p[0]==0);
+ unsigned nonzero=0;for(unsigned y=55;y<65;y++)for(unsigned x=38;x<120;x++)nonzero+=!!(b.p[y*20+x/8]&(0x80u>>(x%8)));
+ assert(nonzero>0&&nonzero<820);
  uint8_t bad[DASH_DATA_SIZE];memcpy(bad,sample,sizeof(bad));bad[3]=101;assert(!dash_valid(bad,sizeof(bad)));
  memcpy(bad,sample,sizeof(bad));bad[1]=64;assert(!dash_valid(bad,sizeof(bad)));
  memcpy(bad,sample,sizeof(bad));bad[12]=bad[13]=0;assert(!dash_valid(bad,sizeof(bad)));

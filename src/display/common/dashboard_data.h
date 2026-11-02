@@ -20,17 +20,23 @@
 #define DASH_RESET 32
 /* Tagged local wall-clock minutes; the high bit distinguishes legacy countdowns. */
 #define DASH_RESET_CLOCK 0x80000000u
+#define DASH_RESET_MINUTES_MASK 0x7ffu
+#define DASH_RESET_SECONDS_MASK 0x7fffu
+#define DASH_RESET_SECONDS_SHIFT 11
+#define DASH_RESET_RESERVED_MASK 0x7c000000u
 #define DASH_HOST_TTL_MS 90000u
 /* v1, flags, sequence, cpu%, ram%, quota5 remaining%, quota7 remaining%, reserved,
  * signed temperature in 0.1 C (LE16), RAM used/total in 64 MiB (LE16 each),
- * reset value (LE32): high bit set = local minutes since midnight; otherwise legacy countdown seconds. */
+ * reset value (LE32): high bit set = local minutes (bits 0-10) plus remaining seconds (bits 11-25); otherwise legacy countdown seconds. */
 static inline uint16_t dash_u16(const uint8_t*p){return (uint16_t)p[0]|(uint16_t)p[1]<<8;}
 static inline uint32_t dash_u32(const uint8_t*p){return (uint32_t)dash_u16(p)|(uint32_t)dash_u16(p+2)<<16;}
 static inline void dash_put32(uint8_t*p,uint32_t v){for(unsigned i=0;i<4;i++)p[i]=(uint8_t)(v>>(8*i));}
 static inline bool dash_valid(const uint8_t*p,unsigned len){
  if(!p||len!=DASH_DATA_SIZE||p[0]!=1||p[1]&~63u||p[7])return false;
  if((p[1]&DASH_RESET)&&(dash_u32(p+14)&DASH_RESET_CLOCK)&&
-    (dash_u32(p+14)&~DASH_RESET_CLOCK)>=1440u)return false;
+    ((dash_u32(p+14)&DASH_RESET_MINUTES_MASK)>=1440u ||
+     (dash_u32(p+14)&DASH_RESET_RESERVED_MASK) ||
+     ((dash_u32(p+14)>>DASH_RESET_SECONDS_SHIFT)&DASH_RESET_SECONDS_MASK)>18000u))return false;
  if((p[1]&DASH_CPU)&&p[3]>100)return false;
  if((p[1]&DASH_RAM)&&(p[4]>100||!dash_u16(p+12)||dash_u16(p+10)>dash_u16(p+12)))return false;
  if((p[1]&DASH_QUOTA5)&&p[5]>100)return false;
@@ -44,7 +50,13 @@ struct dashboard_status {struct panel_status keyboard;uint8_t data[DASH_DATA_SIZ
 static inline void dash_age_data(uint8_t*out,const uint8_t*in,bool live,uint32_t age){
  memcpy(out,in,DASH_DATA_SIZE);
  if(!live||age>=DASH_HOST_TTL_MS)out[1]=0;
- else if((out[1]&DASH_RESET)&&!(dash_u32(in+14)&DASH_RESET_CLOCK)){uint32_t sec=dash_u32(in+14),elapsed=age/1000;
+ else if((out[1]&DASH_RESET)&&(dash_u32(in+14)&DASH_RESET_CLOCK)){
+  uint32_t value=dash_u32(in+14),elapsed=age/1000;
+  uint32_t sec=(value>>DASH_RESET_SECONDS_SHIFT)&DASH_RESET_SECONDS_MASK;
+  dash_put32(out+14,DASH_RESET_CLOCK|(value&DASH_RESET_MINUTES_MASK)|
+   ((sec>elapsed?sec-elapsed:0)<<DASH_RESET_SECONDS_SHIFT));
+ }
+ else if(out[1]&DASH_RESET){uint32_t sec=dash_u32(in+14),elapsed=age/1000;
  dash_put32(out+14,sec>elapsed?sec-elapsed:0);}
 }
 
