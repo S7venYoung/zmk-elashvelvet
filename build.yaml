@@ -15,7 +15,7 @@ include:
     cmake-args: -DCONFIG_ZMK_DISPLAY_STATUS_SCREEN_BUILT_IN=n -DCONFIG_ZMK_DISPLAY_STATUS_SCREEN_CUSTOM=y -DCONFIG_NICE_VIEW_WIDGET_STATUS=n -DCONFIG_VELVET_CAT_DISPLAY=n -DCONFIG_VELVET_DASHBOARD_DISPLAY=y -DCONFIG_ZMK_SPLIT_RELAY_EVENT_DATA_LEN=256
     artifact: velvet_right_dongle
   - board: eyelash_numpad/nrf52832
-    shield: ""
+    shield: eyelash_numpad
     artifact: eyelash_numpad_peripheral
   - board: nice_nano_k/nrf52833
     shield: settings_reset
