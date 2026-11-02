@@ -177,7 +177,9 @@ def release(application_path, bootloader_path, destination, nrfutil="adafruit-nr
     write_hex(app, destination / "eyelash-numpad-peripheral-zmk.hex")
     write_hex(boot, destination / "eyelash-numpad-peripheral-bootloader-s132.hex")
     write_hex({**boot, **app}, destination / "eyelash-numpad-peripheral-first-install-swd.hex")
-    report = {"layout": LAYOUT, "application_bytes": len(binary),
+    report = {"layout": LAYOUT,
+              "web_dfu": json.loads((ROOT / "bootloader/web-dfu.json").read_text()),
+              "application_bytes": len(binary),
               "application_limit_bytes": APP_END - APP_START,
               "validation": "image boundaries, vectors, S132 ID, UICR and DFU CRC; not hardware validation",
               "files": {path.name: hashlib.sha256(path.read_bytes()).hexdigest()

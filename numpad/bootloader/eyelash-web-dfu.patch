@@ -1,0 +1,17 @@
+diff --git a/lib/sdk11/components/ble/ble_services/ble_dfu/ble_dfu.c b/lib/sdk11/components/ble/ble_services/ble_dfu/ble_dfu.c
+--- a/lib/sdk11/components/ble/ble_services/ble_dfu/ble_dfu.c
++++ b/lib/sdk11/components/ble/ble_services/ble_dfu/ble_dfu.c
+@@ -470,8 +470,13 @@
+     const ble_uuid128_t base_uuid128 =
+     {
+         {
++#ifdef EYELASH_WEB_DFU
++            0x01, 0x09, 0xE9, 0xD7, 0xB5, 0x72, 0x72, 0x8C,
++            0x12, 0x4F, 0x8F, 0x9D, 0x00, 0x00, 0xA1, 0xE7
++#else
+             0x23, 0xD1, 0xBC, 0xEA, 0x5F, 0x78, 0x23, 0x15,
+             0xDE, 0xEF, 0x12, 0x12, 0x00, 0x00, 0x00, 0x00
++#endif
+         }
+     };
+ 

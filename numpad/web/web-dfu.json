@@ -1,0 +1,8 @@
+{
+  "protocol": "Adafruit Legacy DFU over Eyelash vendor GATT service",
+  "advertised_name": "Eyelash_WebDFU",
+  "base_uuid": "e7a10000-9d8f-4f12-8c72-72b5d7e90901",
+  "service_uuid": "e7a11530-9d8f-4f12-8c72-72b5d7e90901",
+  "control_uuid": "e7a11531-9d8f-4f12-8c72-72b5d7e90901",
+  "packet_uuid": "e7a11532-9d8f-4f12-8c72-72b5d7e90901"
+}

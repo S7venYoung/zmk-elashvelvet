@@ -24,16 +24,18 @@ def prepare(destination, fetch=True):
     if head != LOCK["revision"]:
         raise ValueError(f"Upstream revision mismatch: {head}")
     # Normalize the two upstream CRLF files before applying the small patch.
-    for relative in ("Makefile", "src/main.c", "src/boards/boards.c"):
+    for relative in ("Makefile", "src/main.c", "src/boards/boards.c",
+                     "lib/sdk11/components/ble/ble_services/ble_dfu/ble_dfu.c"):
         path = destination / relative
         path.write_bytes(path.read_bytes().replace(b"\r\n", b"\n"))
-    patch = str(ROOT / "bootloader/eyelash.patch")
-    cmd = ["git", "-C", str(destination), "apply"]
-    already = subprocess.run(cmd + ["--reverse", "--check", patch],
-                             capture_output=True).returncode == 0
-    if not already:
-        subprocess.run(cmd + ["--check", patch], check=True)
-        subprocess.run(cmd + [patch], check=True)
+    for name in ("eyelash.patch", "eyelash-web-dfu.patch"):
+        patch = str(ROOT / "bootloader" / name)
+        cmd = ["git", "-C", str(destination), "apply"]
+        already = subprocess.run(cmd + ["--reverse", "--check", patch],
+                                 capture_output=True).returncode == 0
+        if not already:
+            subprocess.run(cmd + ["--check", patch], check=True)
+            subprocess.run(cmd + [patch], check=True)
     source = ROOT / "bootloader/boards" / LOCK["board"]
     target = destination / "src/boards" / LOCK["board"]
     target.mkdir(parents=True, exist_ok=True)

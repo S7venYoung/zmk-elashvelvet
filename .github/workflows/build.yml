@@ -226,6 +226,8 @@ jobs:
       - run: pip install -r numpad/requirements-dfu.txt
       - name: Host tests for peripheral bootloader and DFU packaging
         run: python -m unittest discover -s numpad/tests -v
+      - name: Test browser DFU package and ACK protocol
+        run: node numpad/tests_web/test_web_dfu.mjs
       - name: Install ARM compiler
         run: sudo apt-get update && sudo apt-get install -y gcc-arm-none-eabi libnewlib-arm-none-eabi
       - run: bash numpad/scripts/build_bootloader.sh
