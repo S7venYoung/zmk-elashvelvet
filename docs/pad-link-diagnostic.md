@@ -11,3 +11,5 @@ Preparation only: `python3 scripts/build_pad_diagnostic.py` prints the exact sin
 Capture after flashing: use the added log CDC port at 115200, then power-cycle only Pad. Preserve bonds. Capture connection lines (`PAD_LINK`, `Connected`, `Disconnected`, `security`, `bond`, `discover`, `subscribe`, or connection errors), without retaining arbitrary typing logs or Bluetooth key material. Do not enable Bluetooth SMP key debug output. Restore the production Dongle UF2 after diagnosis.
 
 Status: source and command preparation only; ARM compilation and hardware behavior unverified. No Actions dispatched for this variant.
+
+After explicit approval, dispatch the existing registered `build.yml` workflow on `codex/nano-dongle-numpad` with `variant=pad-diagnostic`. Its normal firmware/bootloader/package jobs are skipped in diagnostic mode; only the single receiver is built. The default variant remains `normal`.

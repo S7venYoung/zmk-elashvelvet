@@ -1,8 +1,17 @@
 name: Build ZMK firmware
 on:
   workflow_dispatch:
+    inputs:
+      variant:
+        description: Build normal firmware or a single Pad receiver diagnostic image
+        type: choice
+        default: normal
+        options:
+          - normal
+          - pad-diagnostic
 jobs:
   build:
+    if: ${{ inputs.variant != 'pad-diagnostic' }}
     runs-on: ubuntu-latest
     container: zmkfirmware/zmk-build-arm:stable
     steps:
@@ -232,6 +241,7 @@ jobs:
           if-no-files-found: error
 
   numpad-bootloader:
+    if: ${{ inputs.variant != 'pad-diagnostic' }}
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -283,3 +293,52 @@ jobs:
           name: eyelash-numpad-peripheral-swd-and-ble-dfu
           path: numpad/dist/release/
           if-no-files-found: error
+
+  pad-dongle-diagnostic:
+    if: ${{ inputs.variant == 'pad-diagnostic' }}
+    runs-on: ubuntu-latest
+    container: zmkfirmware/zmk-build-arm:stable
+    steps:
+      - uses: actions/checkout@v4
+      - run: west init -l config && west update --narrow && west zephyr-export
+      - name: Apply normal Nano source preparation
+        run: |
+          python3 scripts/patch_behavior_names.py dependencies
+          python3 scripts/patch_nano_settings_ram.py dependencies/zmk-feature-custom-settings
+          python3 scripts/patch_studio_binding_actions.py dependencies/zmk/app/src/keymap.c
+          python3 scripts/patch_nano_scanner_advertising.py dependencies/prospector-zmk-module/src/status_advertisement.c
+          python3 scripts/patch_settings_reset_bootloader.py dependencies/zmk/app/src/settings/reset_settings_on_start.c
+          python3 scripts/patch_dongle_status_fields.py dependencies/prospector-zmk-module/src/status_advertisement.c
+      - name: Build only the three-peer receiver diagnostic variant
+        run: python3 scripts/build_pad_diagnostic.py --build
+      - name: Verify compiled diagnostics and preserved bonds policy
+        run: |
+          python3 scripts/verify_dya_features.py build
+          cfg=build/pad_dongle_diagnostic/zephyr/.config
+          grep -qx 'CONFIG_VELVET_PAD_LINK_DIAGNOSTICS=y' "$cfg"
+          grep -qx 'CONFIG_ZMK_USB_LOGGING=y' "$cfg"
+          grep -qx 'CONFIG_ZMK_SPLIT_BLE_CENTRAL_PERIPHERALS=3' "$cfg"
+          ! grep -qx 'CONFIG_ZMK_BLE_CLEAR_BONDS_ON_START=y' "$cfg"
+          ! grep -qx 'CONFIG_ZMK_SETTINGS_RESET_ON_START=y' "$cfg"
+          find build/pad_dongle_diagnostic -name pad_link_diagnostics.c.obj | grep -q .
+      - name: Collect clearly named diagnostic image
+        run: |
+          mkdir -p firmware
+          cp build/pad_dongle_diagnostic/zephyr/zmk.uf2 firmware/velvet_nano_dongle_pad_diagnostic.uf2
+          cp docs/pad-link-diagnostic.md firmware/README.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pad-dongle-diagnostic
+          path: firmware/
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pad-dongle-diagnostic-evidence
+          path: |
+            build/pad_dongle_diagnostic/zephyr/.config
+            build/pad_dongle_diagnostic/zephyr/zephyr.dts
+            build/pad_dongle_diagnostic/zephyr/zmk.elf
+            build/pad_dongle_diagnostic/zephyr/zmk.map
+            build/pad_dongle_diagnostic/zephyr/zephyr_pre0.map
+          include-hidden-files: true
