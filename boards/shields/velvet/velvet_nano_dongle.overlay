@@ -1,3 +1,13 @@
+/* Keep software mouse behaviors available for Studio even without default bindings. */
+#ifndef ZMK_BEHAVIORS_KEEP_MKP
+#define ZMK_BEHAVIORS_KEEP_MKP
+#endif
+#ifndef ZMK_BEHAVIORS_KEEP_MMV
+#define ZMK_BEHAVIORS_KEEP_MMV
+#endif
+#ifndef ZMK_BEHAVIORS_KEEP_MSC
+#define ZMK_BEHAVIORS_KEEP_MSC
+#endif
 /* Keyless central: the Nano K hosts the keyboard split without a display. */
 #include <dt-bindings/zmk/matrix_transform.h>
 #include "velvet-layouts.dtsi"
