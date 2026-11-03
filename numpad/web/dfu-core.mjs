@@ -20,6 +20,9 @@ export function parsePackage(zip) {
   const manifest=JSON.parse(new TextDecoder().decode(files['manifest.json'])).manifest;
   if(!manifest || Object.keys(manifest).sort().join(',')!=='application,dfu_version' || manifest.dfu_version!==0.5)throw Error('只接受 Legacy 应用包，不接受启动程序或 SoftDevice 更新');
   const binary=files[manifest.application.bin_file],init=files[manifest.application.dat_file];
+  return validateFirmware(binary,init);
+}
+function validateFirmware(binary,init) {
   if(!binary || binary.length<8 || binary.length>0x47000 || binary.length%4 || !init || init.length!==14)throw Error('应用大小或初始化包不符合要求');
   const words=new DataView(binary.buffer,binary.byteOffset,binary.byteLength),info=new DataView(init.buffer,init.byteOffset,init.byteLength);
   const sp=words.getUint32(0,true),reset=words.getUint32(4,true),entry=reset&~1;
@@ -28,6 +31,48 @@ export function parsePackage(zip) {
   if(info.getUint16(12,true)!==crc16(binary))throw Error('固件 CRC16 校验失败');
   return {binary,init};
 }
+export function parseHex(text) {
+  if(text.length>1048576)throw Error('HEX 超过 1 MB');
+  const memory=new Map();let base=0,ended=false,maximum=0;
+  for(const [index,raw] of text.split(/\r?\n/).entries()){
+    const line=raw.trim();if(!line)continue;
+    if(ended || !/^:[0-9a-fA-F]+$/.test(line) || (line.length-1)%2)throw Error(`HEX 第 ${index+1} 行格式或 EOF 错误`);
+    const bytes=Uint8Array.from(line.slice(1).match(/../g),x=>parseInt(x,16));
+    if(bytes.length<5 || bytes.length!==bytes[0]+5 || (bytes.reduce((a,b)=>a+b,0)&255))throw Error(`HEX 第 ${index+1} 行校验失败`);
+    const count=bytes[0],address=bytes[1]*256+bytes[2],type=bytes[3];
+    if(type===0){
+      if(address+count>0x10000)throw Error('HEX 数据跨越 64 KiB 边界');
+      for(let i=0;i<count;i++){
+        const absolute=base+address+i,value=bytes[4+i];
+        if(absolute<0x26000 || absolute>=0x6d000)throw Error('只接受应用 HEX（0x26000–0x6CFFF），不能包含 SoftDevice、启动程序、存储区或 UICR');
+        if(memory.has(absolute) && memory.get(absolute)!==value)throw Error('HEX 包含冲突地址');
+        memory.set(absolute,value);maximum=Math.max(maximum,absolute);
+      }
+    }else if(type===1 && count===0 && address===0){ended=true;}
+    else if((type===2 || type===4) && count===2 && address===0){base=(bytes[4]*256+bytes[5])*(type===2?16:65536);}
+    else if((type===3 || type===5) && count===4 && address===0){/* Vector table is authoritative. */}
+    else throw Error('不支持或无效的 HEX 记录类型');
+  }
+  if(!ended || !memory.size)throw Error('HEX 缺少数据或 EOF');
+  for(let i=0;i<8;i++)if(!memory.has(0x26000+i))throw Error('HEX 缺少应用向量表');
+  const entry=(memory.get(0x26004)+memory.get(0x26005)*256+memory.get(0x26006)*65536+memory.get(0x26007)*16777216)&~1;
+  if(!memory.has(entry))throw Error('HEX 缺少复位入口数据');
+  const length=Math.ceil((maximum-0x26000+1)/4)*4;
+  if(length>0x47000)throw Error('应用超出分区');
+  const binary=new Uint8Array(length);binary.fill(255);
+  for(const [address,value] of memory)binary[address-0x26000]=value;
+  const init=new Uint8Array(14),view=new DataView(init.buffer);
+  view.setUint16(0,0x52,true);view.setUint16(2,0xadaf,true);
+  view.setUint32(4,0xffffffff,true);view.setUint16(8,1,true);
+  view.setUint16(10,0xb7,true);view.setUint16(12,crc16(binary),true);
+  return validateFirmware(binary,init);
+}
+export function parseFirmware(bytes,name='') {
+  const hex=name.toLowerCase().endsWith('.hex') || bytes[0]===0x3a;
+  const result=hex?parseHex(new TextDecoder('utf-8',{fatal:true}).decode(bytes)):parsePackage(bytes);
+  return {...result,format:hex?'HEX':'ZIP'};
+}
+
 class Inbox {
   constructor(){this.queue=[];this.pending=null;this.error=null;}
   put(item){if(this.pending){const p=this.pending;this.pending=null;clearTimeout(p.timer);p.resolve(item);}else this.queue.push(item);}

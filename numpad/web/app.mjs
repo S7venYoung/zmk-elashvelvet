@@ -1,4 +1,4 @@
-import {UUID,parsePackage,DfuSession,connectDevice} from './dfu-core.mjs';
+import {UUID,parseFirmware,DfuSession,connectDevice} from './dfu-core.mjs';
 const $=id=>document.getElementById(id),supported=!!navigator.bluetooth&&window.isSecureContext;
 let link=null,firmware=null,busy=false,selecting=false,loadGeneration=0;
 function controls(){
@@ -13,10 +13,10 @@ async function loadFirmware(){
   firmware=null;controls();$('fileinfo').textContent='正在校验升级包……';
   try{
     const file=$('file').files[0];
-    if(!file){$('fileinfo').textContent='请选择本板兼容的 Legacy DFU 应用 ZIP';return;}
-    if(file.size>1048576)throw Error('ZIP 超过 1 MB');
+    if(!file){$('fileinfo').textContent='请选择本板兼容的 应用 HEX 或 Legacy DFU OTA ZIP';return;}
+    if(file.size>1048576)throw Error('文件超过 1 MB');
     const data=new Uint8Array(await file.arrayBuffer());
-    if(generation!==loadGeneration)return;firmware=parsePackage(data);$('fileinfo').textContent=`校验通过 · ${firmware.binary.length.toLocaleString()} 字节应用 · S132 6.1.1`;
+    if(generation!==loadGeneration)return;firmware=parseFirmware(data,file.name);$('fileinfo').textContent=`${firmware.format} 校验通过 · ${firmware.binary.length.toLocaleString()} 字节应用 · S132 6.1.1`;
   }catch(e){if(generation===loadGeneration){$('fileinfo').textContent=e.message;firmware=null;}}finally{controls();}
 }
 $('connect').onclick=async()=>{

@@ -62,3 +62,5 @@ BT0      BT1    BT2     无
 2026-11-03：Mac 扫描可以收到 Eyelash_WebDFU 名称，但该次广播未返回服务 UUID；网页改用名称筛选，并通过 optionalServices 授权后在连接阶段核对专用服务。Mac 只进行了广播扫描，未自动连接或刷写。
 
 网页按用户要求仅接受本地选择的 OTA ZIP，不内置或分发固件文件。固件产物从对应 GitHub Actions 或本地构建目录单独取得；网页不上传所选文件。
+
+网页现支持本地应用 HEX 和 Legacy OTA ZIP；HEX 在浏览器本地校验并转换初始化数据，和 nrfutil 生成的应用包逐字节对比通过。仍不托管固件；只接受 0x26000–0x6CFFF 应用区，拒绝包含 SoftDevice、启动程序、存储或 UICR 的合并 HEX。
