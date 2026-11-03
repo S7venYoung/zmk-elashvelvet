@@ -27,3 +27,8 @@ config ZMK_BEHAVIOR_EYELASH_DFU
       Keep this behavior on the central and peripherals so the source-local
       request can be forwarded by its stable behavior ID. Only the nRF52832
       numpad executes the bootloader request.
+
+config VELVET_PAD_LINK_DIAGNOSTICS
+    bool "Temporary read-only Pad split connection logging"
+    depends on SHIELD_VELVET_NANO_DONGLE && ZMK_SPLIT_BLE && ZMK_SPLIT_ROLE_CENTRAL && LOG
+    default n

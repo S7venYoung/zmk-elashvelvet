@@ -26,3 +26,5 @@ if(CONFIG_SHIELD_VELVET_NANO_DONGLE)
   target_sources(app PRIVATE src/display/dashboard_bridge.c)
 endif()
 target_sources_ifdef(CONFIG_ZMK_BEHAVIOR_EYELASH_DFU app PRIVATE src/behavior_eyelash_dfu.c)
+
+target_sources_ifdef(CONFIG_VELVET_PAD_LINK_DIAGNOSTICS app PRIVATE src/pad_link_diagnostics.c)
