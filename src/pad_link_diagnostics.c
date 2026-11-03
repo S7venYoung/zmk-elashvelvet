@@ -32,7 +32,7 @@ K_WORK_DELAYABLE_DEFINE(snapshot_work, snapshot);
 static void snapshot(struct k_work *work) {
     ARG_UNUSED(work);
     uint32_t mask = 0;
-    bt_foreach_conn(BT_CONN_TYPE_LE, inspect_connection, &mask);
+    bt_conn_foreach(BT_CONN_TYPE_LE, inspect_connection, &mask);
     LOG_INF("PAD_LINK configured_slots=%u connected_mask=0x%02x",
             (unsigned)CONFIG_ZMK_SPLIT_BLE_CENTRAL_PERIPHERALS, (unsigned)mask);
     k_work_reschedule(&snapshot_work, K_SECONDS(5));
