@@ -4,7 +4,7 @@ let link=null,firmware=null,busy=false,selecting=false,loadGeneration=0;
 function controls(){
   $('connect').disabled=!supported||busy||selecting;
   $('flash').disabled=!link?.device.gatt.connected||!firmware||busy||selecting||!$('confirm').checked;
-  for(const id of ['file','firmware','confirm'])$(id).disabled=busy||selecting;
+  for(const id of ['file','confirm'])$(id).disabled=busy||selecting;
 }
 function update(message,percent){$('message').textContent=message;if(percent!==undefined){$('percent').textContent=percent+'%';$('progress').value=percent;}
   const lines=$('logs').textContent==='暂无记录'?[]:$('logs').textContent.split('\n');if(lines.at(-1)!==message)$('logs').textContent=[...lines,message].slice(-30).join('\n');}
@@ -12,15 +12,10 @@ async function loadFirmware(){
   const generation=++loadGeneration;
   firmware=null;controls();$('fileinfo').textContent='正在校验升级包……';
   try{
-    let data;
-    if($('firmware').value==='custom'){
-      const file=$('file').files[0];if(!file){$('fileinfo').textContent='请选择本板兼容的 Legacy 应用 ZIP';return;}
-      if(file.size>1048576)throw Error('ZIP 超过 1 MB');data=new Uint8Array(await file.arrayBuffer());
-    }else{
-      const r=await fetch('firmware/eyelash-numpad-peripheral-ota.zip',{cache:'no-store'});if(!r.ok)throw Error('固件下载失败');data=new Uint8Array(await r.arrayBuffer());
-      const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',data)),x=>x.toString(16).padStart(2,'0')).join('');
-      if(hash!=='655e0c16495bd45735dd1a24fe84336c78ecd8319f0811cd02485ca419f1751e')throw Error('内置固件 SHA256 校验失败');
-    }
+    const file=$('file').files[0];
+    if(!file){$('fileinfo').textContent='请选择本板兼容的 Legacy DFU 应用 ZIP';return;}
+    if(file.size>1048576)throw Error('ZIP 超过 1 MB');
+    const data=new Uint8Array(await file.arrayBuffer());
     if(generation!==loadGeneration)return;firmware=parsePackage(data);$('fileinfo').textContent=`校验通过 · ${firmware.binary.length.toLocaleString()} 字节应用 · S132 6.1.1`;
   }catch(e){if(generation===loadGeneration){$('fileinfo').textContent=e.message;firmware=null;}}finally{controls();}
 }
@@ -46,7 +41,6 @@ $('flash').onclick=async()=>{
   finally{busy=false;link=null;$('confirm').checked=false;controls();}
 };
 $('confirm').onchange=controls;
-$('file').onchange=loadFirmware;
-$('firmware').onchange=()=>{$('file').hidden=$('firmware').value!=='custom';$('confirm').checked=false;loadFirmware();};
+$('file').onchange=()=>{$('confirm').checked=false;loadFirmware();};
 if(!supported)update('当前浏览器不支持 Web Bluetooth，请使用 Mac Chrome。');
 controls();loadFirmware();
