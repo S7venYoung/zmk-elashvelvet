@@ -19,7 +19,7 @@ async function loadFirmware(){
     }else{
       const r=await fetch('firmware/eyelash-numpad-peripheral-ota.zip',{cache:'no-store'});if(!r.ok)throw Error('固件下载失败');data=new Uint8Array(await r.arrayBuffer());
       const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',data)),x=>x.toString(16).padStart(2,'0')).join('');
-      if(hash!=='1bb8dd95fa5e549f497dda069c43d583c09d8e86632b145b67d6a9c26913a807')throw Error('内置固件 SHA256 校验失败');
+      if(hash!=='655e0c16495bd45735dd1a24fe84336c78ecd8319f0811cd02485ca419f1751e')throw Error('内置固件 SHA256 校验失败');
     }
     if(generation!==loadGeneration)return;firmware=parsePackage(data);$('fileinfo').textContent=`校验通过 · ${firmware.binary.length.toLocaleString()} 字节应用 · S132 6.1.1`;
   }catch(e){if(generation===loadGeneration){$('fileinfo').textContent=e.message;firmware=null;}}finally{controls();}
