@@ -10,6 +10,7 @@ on:
           - normal
           - pad-diagnostic
           - pad-clear-bonds
+          - pad-local-dfu
 jobs:
   build:
     if: ${{ inputs.variant == 'normal' }}
@@ -385,3 +386,48 @@ jobs:
             build/pad_clear_bonds/zephyr/.config
             build/pad_clear_bonds/zephyr/zephyr.dts
             build/pad_clear_bonds/zephyr/zmk.map
+
+  pad-local-dfu:
+    if: ${{ inputs.variant == 'pad-local-dfu' }}
+    runs-on: ubuntu-latest
+    container: zmkfirmware/zmk-build-arm:stable
+    steps:
+      - uses: actions/checkout@v4
+      - run: west init -l config && west update --narrow && west zephyr-export
+      - run: python3 scripts/patch_behavior_names.py dependencies
+      - name: Build normal Pad with local DFU shortcut
+        run: >-
+          west build -s dependencies/zmk/app -d build/pad_local_dfu
+          -b eyelash_numpad/nrf52832 --
+          -DZMK_CONFIG=$PWD/config
+          -DZMK_EXTRA_MODULES=$PWD
+          -DSHIELD=eyelash_numpad
+          -DCONFIG_ZMK_BLE_CLEAR_BONDS_ON_START=n
+      - name: Verify target and restricted reset policy
+        run: |
+          cfg=build/pad_local_dfu/zephyr/.config
+          grep -qx '# CONFIG_ZMK_BLE_CLEAR_BONDS_ON_START is not set' "$cfg"
+          grep -qx 'CONFIG_SOC_NRF52832=y' "$cfg"
+          ! grep -qx 'CONFIG_ZMK_SETTINGS_RESET_ON_START=y' "$cfg"
+          ! grep -qx 'CONFIG_ZMK_SPLIT_ROLE_CENTRAL=y' "$cfg"
+          find build/pad_local_dfu -name eyelash_local_dfu.c.obj | grep -q .
+          cc -std=c11 -Wall -Wextra -Werror -Isrc scripts/test_eyelash_local_dfu.c -o /tmp/test-local-dfu
+          /tmp/test-local-dfu
+          mkdir -p firmware
+          cp build/pad_local_dfu/zephyr/zmk.hex firmware/eyelash_numpad_peripheral_local_dfu.hex
+          cp docs/nano-dongle-numpad.md firmware/README.md
+          sha256sum firmware/*.hex > firmware/SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: eyelash-pad-local-dfu
+          path: firmware/
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eyelash-pad-local-dfu-evidence
+          include-hidden-files: true
+          path: |
+            build/pad_local_dfu/zephyr/.config
+            build/pad_local_dfu/zephyr/zephyr.dts
+            build/pad_local_dfu/zephyr/zmk.map

@@ -28,3 +28,8 @@ endif()
 target_sources_ifdef(CONFIG_ZMK_BEHAVIOR_EYELASH_DFU app PRIVATE src/behavior_eyelash_dfu.c)
 
 target_sources_ifdef(CONFIG_VELVET_PAD_LINK_DIAGNOSTICS app PRIVATE src/pad_link_diagnostics.c)
+
+# Local recovery must run on the Pad, even without a split connection.
+if(CONFIG_SHIELD_EYELASH_NUMPAD AND CONFIG_SOC_NRF52832_QFAA)
+  target_sources(app PRIVATE src/eyelash_local_dfu.c)
+endif()
