@@ -356,8 +356,8 @@ jobs:
         run: >-
           west build -s dependencies/zmk/app -d build/pad_clear_bonds
           -b eyelash_numpad/nrf52832 --
-          -DZMK_CONFIG=${{ github.workspace }}/config
-          -DZMK_EXTRA_MODULES=${{ github.workspace }}
+          -DZMK_CONFIG=$PWD/config
+          -DZMK_EXTRA_MODULES=$PWD
           -DSHIELD=eyelash_numpad
           -DCONFIG_ZMK_BLE_CLEAR_BONDS_ON_START=y
       - name: Verify target and restricted reset policy
