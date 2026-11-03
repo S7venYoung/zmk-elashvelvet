@@ -9,9 +9,10 @@ on:
         options:
           - normal
           - pad-diagnostic
+          - pad-clear-bonds
 jobs:
   build:
-    if: ${{ inputs.variant != 'pad-diagnostic' }}
+    if: ${{ inputs.variant == 'normal' }}
     runs-on: ubuntu-latest
     container: zmkfirmware/zmk-build-arm:stable
     steps:
@@ -241,7 +242,7 @@ jobs:
           if-no-files-found: error
 
   numpad-bootloader:
-    if: ${{ inputs.variant != 'pad-diagnostic' }}
+    if: ${{ inputs.variant == 'normal' }}
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -342,3 +343,45 @@ jobs:
             build/pad_dongle_diagnostic/zephyr/zmk.map
             build/pad_dongle_diagnostic/zephyr/zephyr_pre0.map
           include-hidden-files: true
+
+  pad-clear-bonds:
+    if: ${{ inputs.variant == 'pad-clear-bonds' }}
+    runs-on: ubuntu-latest
+    container: zmkfirmware/zmk-build-arm:stable
+    steps:
+      - uses: actions/checkout@v4
+      - run: west init -l config && west update --narrow && west zephyr-export
+      - run: python3 scripts/patch_behavior_names.py dependencies
+      - name: Build Pad only with Bluetooth bond clearing enabled
+        run: >-
+          west build -s dependencies/zmk/app -d build/pad_clear_bonds
+          -b eyelash_numpad/nrf52832 --
+          -DZMK_CONFIG=${{ github.workspace }}/config
+          -DZMK_EXTRA_MODULES=${{ github.workspace }}
+          -DSHIELD=eyelash_numpad
+          -DCONFIG_ZMK_BLE_CLEAR_BONDS_ON_START=y
+      - name: Verify target and restricted reset policy
+        run: |
+          cfg=build/pad_clear_bonds/zephyr/.config
+          grep -qx 'CONFIG_ZMK_BLE_CLEAR_BONDS_ON_START=y' "$cfg"
+          grep -qx 'CONFIG_SOC_NRF52832=y' "$cfg"
+          ! grep -qx 'CONFIG_ZMK_SETTINGS_RESET_ON_START=y' "$cfg"
+          ! grep -qx 'CONFIG_ZMK_SPLIT_ROLE_CENTRAL=y' "$cfg"
+          mkdir -p firmware
+          cp build/pad_clear_bonds/zephyr/zmk.hex firmware/eyelash_numpad_clear_bonds.hex
+          cp docs/pad-clear-bonds.md firmware/README.md
+          sha256sum firmware/*.hex > firmware/SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: eyelash-pad-clear-bonds
+          path: firmware/
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eyelash-pad-clear-bonds-evidence
+          include-hidden-files: true
+          path: |
+            build/pad_clear_bonds/zephyr/.config
+            build/pad_clear_bonds/zephyr/zephyr.dts
+            build/pad_clear_bonds/zephyr/zmk.map
