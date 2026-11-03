@@ -28,7 +28,7 @@ $('connect').onclick=async()=>{
   selecting=true;controls();
   try{
     // requestDevice must remain in the user click gesture, before any async work.
-    const device=await navigator.bluetooth.requestDevice({filters:[{services:[UUID.service]}]});
+    const device=await navigator.bluetooth.requestDevice({filters:[{namePrefix:'Eyelash_WebDFU'}],optionalServices:[UUID.service]});
     if(link?.device.gatt.connected)link.device.gatt.disconnect();
     link=null;update('正在连接设备……');const next=await connectDevice(device);link=next;
     $('device').textContent=device.name||'Eyelash WebDFU';$('connection').textContent='蓝牙设备已连接';$('dot').className='online';$('phase').textContent='就绪';
