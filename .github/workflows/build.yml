@@ -215,6 +215,21 @@ jobs:
         with:
           name: firmware
           path: firmware/
+      - name: Preserve numpad and dongle memory evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: numpad-build-evidence
+          path: |
+            build/velvet_nano_dongle/zephyr/.config
+            build/velvet_nano_dongle/zephyr/zmk.elf
+            build/velvet_nano_dongle/zephyr/zmk.map
+            build/velvet_nano_dongle/stdout_and_stderr.log
+            build/eyelash_numpad_peripheral/zephyr/.config
+            build/eyelash_numpad_peripheral/zephyr/zmk.elf
+            build/eyelash_numpad_peripheral/zephyr/zmk.map
+            build/eyelash_numpad_peripheral/stdout_and_stderr.log
+          include-hidden-files: true
+          if-no-files-found: error
 
   numpad-bootloader:
     runs-on: ubuntu-24.04
