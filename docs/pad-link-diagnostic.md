@@ -13,3 +13,12 @@ Capture after flashing: use the added log CDC port at 115200, then power-cycle o
 Status: two Actions builds failed at the link stage; the second overflowed FLASH by 10136 bytes. This revision reduces other modules' logging further; it has not yet been built or tested on hardware.
 
 After explicit approval, dispatch the existing registered `build.yml` workflow on `codex/nano-dongle-numpad` with `variant=pad-diagnostic`. Its normal firmware/bootloader/package jobs are skipped in diagnostic mode; only the single receiver is built. The default variant remains `normal`.
+
+
+Expanded trace: PAD_TRACE stage 1 = split candidate slot reservation (>=0 success,
+negative means rejected/no free slot); stage 2 = scan stop; stage 3 = connection
+creation; stage 4 = scan start. Stages 2–4 report 0 on success or negative errno.
+scan_flags bit 0 = transport enabled, bit 1 = scan flag in the split central
+(the flag alone is not proof the controller is scanning; inspect stage 4 result).
+Connection callbacks report HCI errors/reasons and security results. A connected
+slot alone does not prove subscriptions or key delivery. No pairing material is logged.

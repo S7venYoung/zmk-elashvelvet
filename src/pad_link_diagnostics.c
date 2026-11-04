@@ -9,6 +9,40 @@ LOG_MODULE_REGISTER(pad_link_diagnostics, LOG_LEVEL_INF);
 /* Non-mutating slot lookup exported by the pinned ZMK split central. */
 extern int peripheral_slot_index_for_conn(struct bt_conn *conn);
 
+extern int eyelash_diagnostic_scan_state(void);
+
+/* Stage 1: slot reservation; 2: stop scan; 3: create; 4: start scan. */
+void eyelash_diagnostic_stage(unsigned stage, int result) {
+    static int previous[5];
+    static int64_t last[5];
+    int64_t now = k_uptime_get();
+    if (stage >= ARRAY_SIZE(last)) { return; }
+    if (last[stage] && previous[stage] == result && now - last[stage] < 1000) { return; }
+    previous[stage] = result;
+    last[stage] = now ? now : 1;
+    LOG_INF("PAD_TRACE stage=%u result=%d", stage, result);
+}
+
+static void trace_connected(struct bt_conn *conn, uint8_t err) {
+    struct bt_conn_info info;
+    if (bt_conn_get_info(conn, &info)) { return; }
+    LOG_INF("PAD_TRACE connected role=%u hci_error=%u slot=%d",
+            (unsigned)info.role, (unsigned)err, peripheral_slot_index_for_conn(conn));
+}
+static void trace_disconnected(struct bt_conn *conn, uint8_t reason) {
+    ARG_UNUSED(conn);
+    LOG_INF("PAD_TRACE disconnected hci_reason=%u", (unsigned)reason);
+}
+static void trace_security(struct bt_conn *conn, bt_security_t level, enum bt_security_err err) {
+    ARG_UNUSED(conn);
+    LOG_INF("PAD_TRACE security level=%u error=%u", (unsigned)level, (unsigned)err);
+}
+BT_CONN_CB_DEFINE(eyelash_diagnostic_callbacks) = {
+    .connected = trace_connected,
+    .disconnected = trace_disconnected,
+    .security_changed = trace_security,
+};
+
 static void inspect_connection(struct bt_conn *conn, void *context) {
     uint32_t *mask = context;
     struct bt_conn_info info;
@@ -17,6 +51,8 @@ static void inspect_connection(struct bt_conn *conn, void *context) {
         return;
     }
     int slot = peripheral_slot_index_for_conn(conn);
+    LOG_INF("PAD_TRACE central_connection slot=%d state=%u security=%u",
+            slot, (unsigned)info.state, (unsigned)bt_conn_get_security(conn));
     if (slot < 0 || slot >= CONFIG_ZMK_SPLIT_BLE_CENTRAL_PERIPHERALS) {
         return;
     }
@@ -32,6 +68,8 @@ K_WORK_DELAYABLE_DEFINE(snapshot_work, snapshot);
 static void snapshot(struct k_work *work) {
     ARG_UNUSED(work);
     uint32_t mask = 0;
+    LOG_INF("PAD_TRACE scan_flags=%d (bit0=enabled bit1=scanning)",
+            eyelash_diagnostic_scan_state());
     bt_conn_foreach(BT_CONN_TYPE_LE, inspect_connection, &mask);
     LOG_INF("PAD_LINK configured_slots=%u connected_mask=0x%02x",
             (unsigned)CONFIG_ZMK_SPLIT_BLE_CENTRAL_PERIPHERALS, (unsigned)mask);

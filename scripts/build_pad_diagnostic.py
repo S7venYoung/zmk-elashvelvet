@@ -30,4 +30,6 @@ if __name__ == '__main__':
     cmd = command()
     print(json.dumps({'build': args.build, 'command': cmd}, ensure_ascii=False, indent=2))
     if args.build:
+        subprocess.run(["python3", str(ROOT / "scripts/patch_pad_link_trace.py"),
+                        str(ROOT / "dependencies/zmk/app/src/split/bluetooth/central.c")], check=True)
         subprocess.run(cmd, cwd=ROOT, check=True)
