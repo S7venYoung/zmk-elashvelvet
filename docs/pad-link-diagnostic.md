@@ -1,4 +1,4 @@
-# Pad connection diagnosis (not built)
+# Pad connection diagnosis
 
 Target: `codex/nano-dongle-numpad`, nice_nano_k/nrf52833 + velvet_nano_dongle only.
 
@@ -10,7 +10,7 @@ Preparation only: `python3 scripts/build_pad_diagnostic.py` prints the exact sin
 
 Capture after flashing: use the added log CDC port at 115200, then power-cycle only Pad. Preserve bonds. Capture connection lines (`PAD_LINK`, `Connected`, `Disconnected`, `security`, `bond`, `discover`, `subscribe`, or connection errors), without retaining arbitrary typing logs or Bluetooth key material. Do not enable Bluetooth SMP key debug output. Restore the production Dongle UF2 after diagnosis.
 
-Status: two Actions builds failed at the link stage; the second overflowed FLASH by 10136 bytes. This revision reduces other modules' logging further; it has not yet been built or tested on hardware.
+Build verification: Actions run 41754254196 succeeded for revision a5319aa. FLASH uses 380704 bytes (93.88%); RAM uses 129840 bytes (99.06%). This is a temporary diagnostic image with only 1232 bytes of unallocated RAM. Physical connection diagnosis remains pending capture from this image.
 
 After explicit approval, dispatch the existing registered `build.yml` workflow on `codex/nano-dongle-numpad` with `variant=pad-diagnostic`. Its normal firmware/bootloader/package jobs are skipped in diagnostic mode; only the single receiver is built. The default variant remains `normal`.
 
@@ -22,3 +22,14 @@ scan_flags bit 0 = transport enabled, bit 1 = scan flag in the split central
 (the flag alone is not proof the controller is scanning; inspect stage 4 result).
 Connection callbacks report HCI errors/reasons and security results. A connected
 slot alone does not prove subscriptions or key delivery. No pairing material is logged.
+
+
+Initialization trace revision: scan_flags additionally includes bit 2 (settings
+commit completed) and bit 3 (transport callback registered). PAD_INIT periodically
+reports the reached stage bitmask and the most recent settings handler phase:
+1=set entered, 2=set returned, 3=commit entered, 4=commit returned. Only subsystem
+names are recorded; no setting values, bond keys or user typing are logged.
+Stages 5=split settings registration result, 6=split commit reached, 7=transport
+enabled argument, 8=status callback registered, 9=main settings initialization
+entered, 10=settings subsystem initialization returned, 11=settings load returned.
+The diagnostic instrumentation does not force-enable scanning or change ordering.

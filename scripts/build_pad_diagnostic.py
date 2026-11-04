@@ -32,4 +32,7 @@ if __name__ == '__main__':
     if args.build:
         subprocess.run(["python3", str(ROOT / "scripts/patch_pad_link_trace.py"),
                         str(ROOT / "dependencies/zmk/app/src/split/bluetooth/central.c")], check=True)
+        subprocess.run(["python3", str(ROOT / "scripts/patch_pad_init_trace.py"),
+                        str(ROOT / "dependencies/zmk/app/src/main.c"),
+                        str(ROOT / "dependencies/zephyr/subsys/settings/src/settings.c")], check=True)
         subprocess.run(cmd, cwd=ROOT, check=True)

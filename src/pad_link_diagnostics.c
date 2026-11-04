@@ -11,13 +11,24 @@ extern int peripheral_slot_index_for_conn(struct bt_conn *conn);
 
 extern int eyelash_diagnostic_scan_state(void);
 
+static uint32_t reached_stages;
+static const char *settings_handler = "none";
+static int settings_phase, settings_result;
+
+void eyelash_diagnostic_settings(const char *name, int phase, int result) {
+    settings_handler = name;
+    settings_phase = phase;
+    settings_result = result;
+}
+
 /* Stage 1: slot reservation; 2: stop scan; 3: create; 4: start scan. */
 void eyelash_diagnostic_stage(unsigned stage, int result) {
-    static int previous[5];
-    static int64_t last[5];
+    static int previous[12];
+    static int64_t last[12];
     int64_t now = k_uptime_get();
     if (stage >= ARRAY_SIZE(last)) { return; }
     if (last[stage] && previous[stage] == result && now - last[stage] < 1000) { return; }
+    reached_stages |= BIT(stage);
     previous[stage] = result;
     last[stage] = now ? now : 1;
     LOG_INF("PAD_TRACE stage=%u result=%d", stage, result);
@@ -68,8 +79,10 @@ K_WORK_DELAYABLE_DEFINE(snapshot_work, snapshot);
 static void snapshot(struct k_work *work) {
     ARG_UNUSED(work);
     uint32_t mask = 0;
-    LOG_INF("PAD_TRACE scan_flags=%d (bit0=enabled bit1=scanning)",
+    LOG_INF("PAD_TRACE scan_flags=%d (enabled=1 scan=2 loaded=4 callback=8)",
             eyelash_diagnostic_scan_state());
+    LOG_INF("PAD_INIT stages=0x%x handler=%s phase=%d result=%d",
+            (unsigned)reached_stages, settings_handler, settings_phase, settings_result);
     bt_conn_foreach(BT_CONN_TYPE_LE, inspect_connection, &mask);
     LOG_INF("PAD_LINK configured_slots=%u connected_mask=0x%02x",
             (unsigned)CONFIG_ZMK_SPLIT_BLE_CENTRAL_PERIPHERALS, (unsigned)mask);
