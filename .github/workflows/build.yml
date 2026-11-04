@@ -63,6 +63,8 @@ jobs:
       - name: Install physical-half scanner status fields
         run: python3 scripts/patch_dongle_status_fields.py dependencies/prospector-zmk-module/src/status_advertisement.c
       - run: west zmk-build -d ./build -q
+      - name: Verify actual Nano split initialization order
+        run: python3 scripts/verify_nano_split_init.py build/velvet_nano_dongle/zephyr/zmk.elf
       - name: Verify DYA central capabilities
         run: python3 scripts/verify_dya_features.py build
       - name: Test Codex and system dashboard renderers
@@ -318,6 +320,7 @@ jobs:
         run: python3 scripts/build_pad_diagnostic.py --build
       - name: Verify compiled diagnostics and preserved bonds policy
         run: |
+          python3 scripts/verify_nano_split_init.py build/pad_dongle_diagnostic/zephyr/zmk.elf
           python3 scripts/verify_dya_features.py build
           cfg=build/pad_dongle_diagnostic/zephyr/.config
           grep -qx 'CONFIG_VELVET_PAD_LINK_DIAGNOSTICS=y' "$cfg"
