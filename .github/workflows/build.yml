@@ -8,6 +8,7 @@ on:
         default: normal
         options:
           - normal
+          - nano-stable
           - pad-diagnostic
           - pad-clear-bonds
           - pad-local-dfu
@@ -299,6 +300,57 @@ jobs:
           name: eyelash-numpad-peripheral-swd-and-ble-dfu
           path: numpad/dist/release/
           if-no-files-found: error
+
+  nano-stable:
+    if: ${{ inputs.variant == 'nano-stable' }}
+    runs-on: ubuntu-latest
+    container: zmkfirmware/zmk-build-arm:stable
+    steps:
+      - uses: actions/checkout@v4
+      - run: west init -l config && west update --narrow && west zephyr-export
+      - name: Apply normal Nano source preparation
+        run: |
+          python3 scripts/patch_behavior_names.py dependencies
+          python3 scripts/patch_nano_settings_ram.py dependencies/zmk-feature-custom-settings
+          python3 scripts/patch_nano_split_init.py dependencies/zmk/app/src/split/bluetooth/central.c
+          python3 scripts/patch_studio_binding_actions.py dependencies/zmk/app/src/keymap.c
+          python3 scripts/patch_nano_scanner_advertising.py dependencies/prospector-zmk-module/src/status_advertisement.c
+          python3 scripts/patch_settings_reset_bootloader.py dependencies/zmk/app/src/settings/reset_settings_on_start.c
+          python3 scripts/patch_dongle_status_fields.py dependencies/prospector-zmk-module/src/status_advertisement.c
+      - name: Build only the normal Nano receiver without temporary diagnostics
+        run: python3 scripts/build_nano_stable.py
+      - name: Verify initialization, DYA features, stack and preserved bonds
+        run: |
+          python3 scripts/verify_nano_split_init.py build/nano_stable/zephyr/zmk.elf
+          python3 scripts/verify_dya_features.py build
+          cfg=build/nano_stable/zephyr/.config
+          grep -qx 'CONFIG_ZMK_LOW_PRIORITY_THREAD_STACK_SIZE=4096' "$cfg"
+          grep -qx 'CONFIG_ZMK_SPLIT_BLE_CENTRAL_PERIPHERALS=3' "$cfg"
+          ! grep -qx 'CONFIG_VELVET_PAD_LINK_DIAGNOSTICS=y' "$cfg"
+          ! grep -qx 'CONFIG_ZMK_USB_LOGGING=y' "$cfg"
+          ! grep -qx 'CONFIG_ZMK_BLE_CLEAR_BONDS_ON_START=y' "$cfg"
+          ! grep -qx 'CONFIG_ZMK_SETTINGS_RESET_ON_START=y' "$cfg"
+      - name: Collect normal receiver image
+        run: |
+          mkdir -p firmware
+          cp build/nano_stable/zephyr/zmk.uf2 firmware/velvet_nano_dongle.uf2
+          cp docs/nano-settings-ram.md firmware/README.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nano-stable
+          path: firmware/
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nano-stable-evidence
+          path: |
+            build/nano_stable/zephyr/.config
+            build/nano_stable/zephyr/zephyr.dts
+            build/nano_stable/zephyr/zmk.elf
+            build/nano_stable/zephyr/zmk.map
+            build/nano_stable/zephyr/zephyr_pre0.map
+          include-hidden-files: true
 
   pad-dongle-diagnostic:
     if: ${{ inputs.variant == 'pad-diagnostic' }}
