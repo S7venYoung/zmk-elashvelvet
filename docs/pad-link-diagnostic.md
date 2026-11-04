@@ -33,3 +33,12 @@ Stages 5=split settings registration result, 6=split commit reached, 7=transport
 enabled argument, 8=status callback registered, 9=main settings initialization
 entered, 10=settings subsystem initialization returned, 11=settings load returned.
 The diagnostic instrumentation does not force-enable scanning or change ordering.
+
+
+Nano init ordering fix: ELF a5319aa placed __init_zmk_split_bt_central_init
+at 0x477ec before __init_zmk_ble_init at 0x477fc, both priority 50.
+bt_enable's first settings_subsys_init clears settings_handlers, dropping the
+previously registered ble_central dynamic commit handler. The Nano-only patch
+moves split BLE initialization to UTIL_INC(CONFIG_ZMK_BLE_INIT_PRIORITY), so
+Bluetooth/settings initialization precedes registration even with LTO. Verify
+this order in the final ELF; physical reconnection remains a separate check.

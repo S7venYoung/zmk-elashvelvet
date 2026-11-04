@@ -26,6 +26,8 @@ jobs:
         run: python3 scripts/patch_behavior_names.py dependencies
       - name: Bound Nano custom settings metadata RAM
         run: python3 scripts/patch_nano_settings_ram.py dependencies/zmk-feature-custom-settings
+      - name: Order Nano split initialization after Bluetooth
+        run: python3 scripts/patch_nano_split_init.py dependencies/zmk/app/src/split/bluetooth/central.c
       - name: Install Nano Studio action hook
         run: python3 scripts/patch_studio_binding_actions.py dependencies/zmk/app/src/keymap.c
       - name: Install single-advertiser Nano scanner patch
@@ -307,6 +309,7 @@ jobs:
         run: |
           python3 scripts/patch_behavior_names.py dependencies
           python3 scripts/patch_nano_settings_ram.py dependencies/zmk-feature-custom-settings
+          python3 scripts/patch_nano_split_init.py dependencies/zmk/app/src/split/bluetooth/central.c
           python3 scripts/patch_studio_binding_actions.py dependencies/zmk/app/src/keymap.c
           python3 scripts/patch_nano_scanner_advertising.py dependencies/prospector-zmk-module/src/status_advertisement.c
           python3 scripts/patch_settings_reset_bootloader.py dependencies/zmk/app/src/settings/reset_settings_on_start.c
