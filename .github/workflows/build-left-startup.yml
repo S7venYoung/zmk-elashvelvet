@@ -1,0 +1,14 @@
+name: Diagnose left startup (manual only)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  select-nano-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Select the diagnostic branch
+        run: |
+          echo "Run this workflow on codex/nano-dongle to build the left USB diagnostic image."
+          echo "This default-branch registration does not build or flash firmware."
+          exit 1
