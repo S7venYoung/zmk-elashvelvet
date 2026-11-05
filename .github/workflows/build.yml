@@ -176,6 +176,10 @@ jobs:
           test -z "$(find build/velvet_nano_dongle -name fight_telemetry.c.obj -print -quit)"
       - name: Verify lightweight numpad peripheral
         run: python3 scripts/verify_numpad_build.py build
+      - name: Verify compiled idle and deep-sleep policy
+        shell: bash
+        run: |
+          python3 scripts/verify_power_policy.py build
       - name: Report Nano memory
         run: west build -d build/velvet_nano_dongle -t ram_report
       - name: Verify Nano replug bootloader is linked
