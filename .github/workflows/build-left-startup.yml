@@ -58,7 +58,8 @@ jobs:
           assert len(entries) == 1, 'Expected exactly one left peripheral target'
           entry = entries[0]
           assert 'velvet_split_peripheral' in entry['shield']
-          entry['cmake-args'] = entry.get('cmake-args', '') + ' -DCONFIG_ZMK_USB_LOGGING=y -DCONFIG_LOG=y -DCONFIG_LOG_BUFFER_SIZE=8192 -DCONFIG_LOG_PROCESS_THREAD_STACK_SIZE=2048 -DCONFIG_ASSERT=y -DCONFIG_STACK_SENTINEL=y -DCONFIG_RESET_ON_FATAL_ERROR=n'
+          entry['snippet'] = 'zmk-usb-logging'
+          entry['cmake-args'] = entry.get('cmake-args', '') + ' -DCONFIG_ZMK_USB_LOGGING=y -DCONFIG_ZMK_USB=n -DCONFIG_ZMK_SPLIT_BLE_CENTRAL_BATTERY_LEVEL_FETCHING=n -DCONFIG_ZMK_SPLIT_BLE_CENTRAL_BATTERY_LEVEL_PROXY=n -DCONFIG_LOG=y -DCONFIG_LOG_BUFFER_SIZE=8192 -DCONFIG_LOG_PROCESS_THREAD_STACK_SIZE=2048 -DCONFIG_ASSERT=y -DCONFIG_STACK_SENTINEL=y'
           matrix['include'] = entries
           path.write_text(yaml.safe_dump(matrix, sort_keys=False))
           PYMATRIX
