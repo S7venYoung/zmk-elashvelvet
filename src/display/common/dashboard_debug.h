@@ -5,7 +5,7 @@
 #include <string.h>
 #define DASH_ACK_EVENT "vldack"
 #define DASH_ACK_SIZE 12
-#define DASH_DEBUG_SIZE 52
+#define DASH_DEBUG_SIZE 64
 static inline void dash_debug_put32(uint8_t *p, uint32_t value) {
     for (unsigned i=0;i<4;i++) p[i]=(uint8_t)(value>>(8*i));
 }

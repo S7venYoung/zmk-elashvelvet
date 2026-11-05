@@ -223,6 +223,21 @@ static int split_central_subscribe(struct bt_conn *conn,
 
     return err;
 }
+
+void zmk_split_central_get_debug(uint8_t debug[12]) {
+    memset(debug, 0, 12);
+    debug[0] = is_enabled ? 1 : 0;
+    debug[1] = is_scanning ? 1 : 0;
+    for (size_t i = 0; i < 2; i++) {
+        size_t offset = 2 + i * 4;
+        debug[offset] = (uint8_t)peripherals[i].state;
+        debug[offset + 1] = peripherals[i].conn ? 1 : 0;
+        debug[offset + 2] = peripherals[i].conn
+                                ? (uint8_t)bt_conn_get_security(peripherals[i].conn)
+                                : UINT8_MAX;
+        debug[offset + 3] = (uint8_t)atomic_get(&peripherals[i].subscribe_retry_mask);
+    }
+}
 '''
 
 
