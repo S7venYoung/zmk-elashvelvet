@@ -23,6 +23,10 @@ jobs:
         run: python3 scripts/test_numpad_dongle.py
 
       - run: west init -l config && west update --narrow && west zephyr-export
+      - name: Test and install Pad RMK-style advertising sleep
+        run: |
+          python3 scripts/test_pad_rmk_idle.py dependencies/zmk/app/src/split/bluetooth/peripheral.c
+          python3 scripts/patch_pad_rmk_idle.py dependencies/zmk/app/src/split/bluetooth/peripheral.c
       - name: Normalize public behavior names
         run: python3 scripts/patch_behavior_names.py dependencies
       - name: Bound Nano custom settings metadata RAM
@@ -460,6 +464,10 @@ jobs:
       - uses: actions/checkout@v4
       - run: west init -l config && west update --narrow && west zephyr-export
       - run: python3 scripts/patch_behavior_names.py dependencies
+      - name: Test and install Pad RMK-style advertising sleep
+        run: |
+          python3 scripts/test_pad_rmk_idle.py dependencies/zmk/app/src/split/bluetooth/peripheral.c
+          python3 scripts/patch_pad_rmk_idle.py dependencies/zmk/app/src/split/bluetooth/peripheral.c
       - name: Build normal Pad with local DFU shortcut
         run: >-
           west build -s dependencies/zmk/app -d build/pad_local_dfu

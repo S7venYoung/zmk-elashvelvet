@@ -1,50 +1,78 @@
-# Pad wake and idle policy
+# Pad RMK-compatible idle policy
 
-The Pad previously entered deep sleep after 900000 ms (15 minutes), versus
-7200000 ms (two hours) for the Velvet halves. `app/src/activity.c` in the
-cormoran ZMK fork enters `sys_poweroff()` on deep sleep after suspending devices.
-A key wake consequently requires a boot and BLE reconnect/discovery, rather
-than resuming an existing connected link. Extending the Pad timeout to two
-hours avoids this path during typical intermittent numpad use while retaining
-long-idle power saving. It does not accelerate boot or guarantee the wake key
-is delivered after actual deep sleep.
+## Owning source
 
-Velvet idle/display blanking changes from 15 to 60 seconds. Idle is distinct
-from deep sleep: the activity worker only raises the idle event; the split BLE
-peripheral code does not subscribe to it or disconnect in response. USB power
-prevents deep sleep on the receiver in this fork. The receiver shares the
-Velvet idle default for its status advertisement cadence.
+The original Pad repository at `b9fd173fc27dfdc002b157d8e7c9b585e822c70c`
+uses RMK `936a2a828fddc195d20e42bd952119cd3afa8172` in both its original and
+Codex builds. Both keyboard.toml files set
+`split_central_sleep_timeout_seconds = 7200`. Despite its name, the pinned
+`rmk/src/ble/sleep.rs` runs this manager for standalone BLE keyboards too.
 
-Split connections are created by `app/src/split/bluetooth/central.c` using
-`ZMK_SPLIT_BLE_PREF_*`: interval 6 (7.5 ms), peripheral latency 30 and supervision
-timeout 400 (4 seconds). `BT_PERIPHERAL_PREF_*` in `velvet.conf` describes the
-receiver/keyboard's host-facing peripheral connection, not these split links.
-Peripheral latency permits skipping connection events; it is not evidence of
-a fixed 232.5 ms key delay. Preserve these parameters until device timing or
-HCI disconnect evidence supports changing them. Reconnect already starts with
-high-duty directed advertising for bonded peripherals and falls back to low
-duty after its timeout. No scan/advertising patch is justified by the report
-alone.
+Sources:
+- https://github.com/S7venYoung/eyelash-codex-pad/blob/b9fd173fc27dfdc002b157d8e7c9b585e822c70c/firmware/original/keyboard.toml
+- https://github.com/S7venYoung/eyelash-codex-pad/blob/b9fd173fc27dfdc002b157d8e7c9b585e822c70c/scripts/prepare-rmk.sh
+- https://github.com/HaoboGu/rmk/blob/936a2a828fddc195d20e42bd952119cd3afa8172/rmk/src/ble/sleep.rs
+- https://github.com/HaoboGu/rmk/blob/936a2a828fddc195d20e42bd952119cd3afa8172/rmk/src/ble/mod.rs
+- https://github.com/HaoboGu/rmk/blob/936a2a828fddc195d20e42bd952119cd3afa8172/rmk/src/matrix.rs
 
-The fork persists runtime activity settings under `activity/s`. Those values
-replace compiled defaults when present. Existing DYA idle/sleep customizations
-are preserved, not silently reset. After updating the halves, inspect their
-actual DYA idle/deep-sleep values and explicitly select 60000/7200000 ms if old
-values remain. Pad has no settings RPC in this configuration; its default
-changes on update unless an older firmware has stored an activity override.
-Do not clear all settings or bonds to apply this policy.
+RMK's two-hour sleep switches a software state and publishes a sleep event;
+it does not power off or force a connected standalone keyboard to disconnect.
+Activity clears it. An async matrix waits for GPIO activity when no keys need
+rescanning. Unconnected advertising has a 300-second timeout, after which a
+key/pointing event restarts advertising. HID host suspend can also request
+software sleep. This Pad has no pointing sensor or display.
 
-CI checks the merged `.config` of all four application targets and retains
-the DYA stack/buffer/batched-notification fixes. Confirm the new RAM report
-before delivery. Compile checks cannot validate battery life or wake latency.
+## ZMK behavior
 
-Device acceptance (manual, no automatic flashing):
-- Leave .11101 unchanged. Do not unplug/reflash .11201 as part of investigation.
-- With the new Pad application, test input after 30 s, 16 min and 60 min; the
-  split connection should remain established (absent radio/power problems).
-- With updated halves, check display blanking around 60 s and immediate input
-  on wake from idle; verify runtime values first.
-- After more than two hours idle on battery, verify wake/reconnect and check
-  whether the first key is retained; record timing separately from idle wake.
-- Reopen DYA advanced settings repeatedly and check watchdog records for
-  regressions. Measure battery life over normal use before calling it stable.
+The earlier ZMK Pad entered `sys_poweroff()` after 15 minutes. Merely extending
+that to two hours still cold-boots and reconnects after long idle, unlike RMK.
+The Pad now disables only system-off deep sleep (`CONFIG_ZMK_SLEEP=n`) and
+uses a two-hour software idle default. ZMK's matrix remains interrupt-driven
+and the CPU/BLE controller can idle normally. This is not disabling all power
+saving. A live split connection is retained across long idle.
+
+The Pad-only patch in `scripts/patch_pad_rmk_idle.py` stops unconnected
+advertising after five minutes and resumes it on a physical key press. The
+high-duty to low-duty directed advertising fallback does not renew that
+budget. Connected links cancel the timeout. Work is submitted to the existing
+system queue; no thread or receiver allocation is added. Stop errors permit
+retry. Transport disable still wins over key wake.
+
+This preserves the observable connected-idle and disconnected-key-wake policy,
+not binary-identical internals: RMK is standalone HID; this Pad is a ZMK split
+peripheral. Host HID suspend is owned by the Dongle. RMK's battery notification
+gating and split-central connection adaptation are not copied to this Pad.
+ZMK retains its existing 60-second battery sampling and split connection
+parameters (7.5 ms, latency 30, supervision 4 seconds); RMK's HID host link is
+not equivalent. No claim of equal measured current or wake latency is made.
+
+Velvet halves and receiver retain the 4512451 power configuration, including
+15-second display idle and two-hour deep sleep (USB power blocks deep sleep).
+The earlier 60-second display change is withdrawn: a screenless Pad's RMK
+policy provides no evidence for changing the Velvet displays.
+
+## Configuration, build and device checks
+
+The fork persists runtime activity values under `activity/s`; existing values
+are preserved. Pad cannot system-off even if old sleep settings exist because
+the code path is compiled out. Its software idle default can still be replaced
+by a stored idle value, which does not disconnect BLE or turn off the MCU.
+No settings/bond clearing or migration is performed.
+
+Host tests execute the actual patched advertising callbacks with Bluetooth
+and work mocks: connected guard, 300-second budget, fallback, release/press
+wake, repeated keys, stop failure and disabled transport. CI verifies the
+merged Pad `.config` and linked callback symbols, plus unchanged DYA receiver
+stack/buffer/batched-notification fixes. Review actual RAM in the new build.
+
+Manual acceptance, without touching control Dongle .11101:
+- Upgrade only the Pad via application OTA; stable .11201 needs no reflash.
+- After 16 minutes and more than two hours idle with the receiver present,
+  check immediate input, no cold boot and no missed first key.
+- With the receiver unavailable, check advertising stops after five minutes;
+  restore the receiver and press a Pad key to reconnect. That key initiates
+  reconnect and is not guaranteed delivered while the link was absent.
+- Repeat disconnect/wake cycles and test three peers plus DYA advanced settings.
+- Measure current and battery life before claiming RMK-equivalent consumption.
+
+No device is automatically flashed, reset, unplugged or power-cycled.
