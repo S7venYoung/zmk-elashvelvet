@@ -87,6 +87,34 @@ static void split_central_restore_saved_handle(struct peripheral_slot *slot,
 static void split_central_cancel_subscribe_retry(struct peripheral_slot *slot) {
     atomic_set(&slot->subscribe_retry_mask, 0);
     (void)k_work_cancel_delayable(&slot->subscribe_retry_work);
+    (void)k_work_cancel_delayable(&slot->security_repair_work);
+}
+
+static void split_central_security_repair_work(struct k_work *work) {
+    struct peripheral_slot *slot =
+        CONTAINER_OF(work, struct peripheral_slot, security_repair_work.work);
+
+    if (slot->state != PERIPHERAL_SLOT_STATE_CONNECTED || slot->conn == NULL ||
+        bt_conn_get_security(slot->conn) >= BT_SECURITY_L2) {
+        return;
+    }
+
+    const bt_addr_le_t *peer = bt_conn_get_dst(slot->conn);
+    char addr[BT_ADDR_LE_STR_LEN];
+    bt_addr_le_to_str(peer, addr, sizeof(addr));
+
+    /* A connected split link that never reaches L2 has a stale or unusable
+     * bond. Remove only this peer's central-side key, then reconnect. Other
+     * split slots and all keyboard-to-host bonds remain untouched. */
+    int unpair_err = bt_unpair(BT_ID_DEFAULT, peer);
+    if (unpair_err < 0 && unpair_err != -ENOENT) {
+        LOG_ERR("Failed to clear stale split bond for %s (%d)", addr, unpair_err);
+    }
+    LOG_WRN("Repairing split security for %s", addr);
+    int disconnect_err = bt_conn_disconnect(slot->conn, BT_HCI_ERR_AUTH_FAIL);
+    if (disconnect_err < 0) {
+        LOG_ERR("Failed to restart stale split link (%d)", disconnect_err);
+    }
 }
 
 static void split_central_schedule_subscribe_retry(
@@ -272,6 +300,7 @@ static void split_central_subscribe_retry_work(struct k_work *work);
     enum peripheral_slot_state state;
     struct bt_conn *conn;
     struct k_work_delayable subscribe_retry_work;
+    struct k_work_delayable security_repair_work;
     atomic_t subscribe_retry_mask;
     uint16_t subscribe_retry_position_handle;
     uint16_t subscribe_retry_sensor_handle;
@@ -306,6 +335,8 @@ static void split_central_subscribe_retry_work(struct k_work *work);
             release_peripheral_slot(i);
             k_work_init_delayable(&peripherals[i].subscribe_retry_work,
                                   split_central_subscribe_retry_work);
+            k_work_init_delayable(&peripherals[i].security_repair_work,
+                                  split_central_security_repair_work);
             atomic_set(&peripherals[i].subscribe_retry_mask, 0);
             peripherals[i].state = PERIPHERAL_SLOT_STATE_CONNECTING;
 """,
@@ -321,7 +352,16 @@ static void split_central_subscribe_retry_work(struct k_work *work);
     end = source.index("static int stop_scanning", begin)
     part = source[begin:end]
     anchor = "    if (!slot->subscribe_params.value_handle) {"
-    part = _replace_once(part, anchor, SECURITY_GUARD + anchor, "split discovery security gate")
+    guard = SECURITY_GUARD.replace(
+        """        /* Do not block discovery of the other half while security is pending. */
+        start_scanning();""",
+        """        /* Stale split bonds can connect without ever emitting a security
+         * callback. Repair only this peer if encryption remains incomplete. */
+        (void)k_work_reschedule(&slot->security_repair_work, K_SECONDS(5));
+        /* Do not block discovery of the other half while security is pending. */
+        start_scanning();""",
+    )
+    part = _replace_once(part, anchor, guard + anchor, "split discovery security gate")
     source = source[:begin] + part + source[end:]
 
     begin = source.index("static void split_central_security_changed(")
@@ -360,6 +400,8 @@ static void split_central_subscribe_retry_work(struct k_work *work);
          * delayable work object before scanning can reserve a slot. */
         k_work_init_delayable(&peripherals[i].subscribe_retry_work,
                               split_central_subscribe_retry_work);
+        k_work_init_delayable(&peripherals[i].security_repair_work,
+                              split_central_security_repair_work);
         atomic_set(&peripherals[i].subscribe_retry_mask, 0);
     }
 

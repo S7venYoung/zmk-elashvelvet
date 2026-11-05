@@ -54,12 +54,16 @@ prefix = r'''
 #define CONFIG_ZMK_SPLIT_BLE_CENTRAL_BATTERY_LEVEL_FETCHING 1
 #define ZMK_SPLIT_BLE_PERIPHERAL_COUNT 1
 #define K_MSEC(value) (value)
+#define K_SECONDS(value) ((value) * 1000)
 #define K_NO_WAIT 0
 #define LOG_DBG(...) ((void)0)
 #define LOG_WRN(...) ((void)0)
 #define LOG_ERR(...) ((void)0)
 #define BT_SECURITY_L2 2
 #define BT_GATT_SUBSCRIBE_FLAG_NO_RESUB 0
+#define BT_HCI_ERR_AUTH_FAIL 0x05
+#define BT_ID_DEFAULT 0
+#define BT_ADDR_LE_STR_LEN 32
 #define BT_ATT_FIRST_ATTRIBUTE_HANDLE 1
 #define BT_ATT_LAST_ATTRIBUTE_HANDLE 65535
 #define BT_GATT_DISCOVER_PRIMARY 1
@@ -78,6 +82,8 @@ enum peripheral_slot_state {
     PERIPHERAL_SLOT_STATE_CONNECTED,
 };
 struct bt_conn { int security; int request_error; };
+struct bt_addr_le_t { uint8_t type; uint8_t val[6]; };
+typedef struct bt_addr_le_t bt_addr_le_t;
 struct k_work { int unused; };
 struct k_work_delayable { struct k_work work; int delay; };
 struct bt_gatt_discover_params {
@@ -99,6 +105,7 @@ struct peripheral_slot {
     enum peripheral_slot_state state;
     struct bt_conn *conn;
     struct k_work_delayable subscribe_retry_work;
+    struct k_work_delayable security_repair_work;
     atomic_t subscribe_retry_mask;
     uint16_t subscribe_retry_position_handle;
     uint16_t subscribe_retry_sensor_handle;
@@ -116,18 +123,42 @@ struct bt_conn_info { struct { int interval, latency, phy; } le; };
 static struct peripheral_slot state;
 static bool present = true;
 static unsigned requested, discovered, scans, layouts, reschedules, cancels, subscribes;
+static unsigned unpaired, disconnected;
 static int subscribe_result;
 static struct { int uuid; } split_service_uuid;
 static int update_peripherals_selected_layouts_work;
+static struct bt_addr_le_t peer_addr = {.type = 1, .val = {1, 2, 3, 4, 5, 6}};
 
 static struct peripheral_slot *peripheral_slot_for_conn(struct bt_conn *conn) {
     return present && state.conn == conn ? &state : NULL;
 }
 static int bt_conn_get_security(struct bt_conn *conn) { return conn->security; }
+static const struct bt_addr_le_t *bt_conn_get_dst(struct bt_conn *conn) {
+    (void)conn;
+    return &peer_addr;
+}
 static int bt_conn_set_security(struct bt_conn *conn, int level) {
     assert(level == BT_SECURITY_L2);
     requested++;
     return conn->request_error;
+}
+static void bt_addr_le_to_str(const struct bt_addr_le_t *addr, char *buf, size_t size) {
+    (void)addr;
+    if (size) {
+        buf[0] = '\0';
+    }
+}
+static int bt_unpair(int id, const struct bt_addr_le_t *addr) {
+    assert(id == BT_ID_DEFAULT);
+    assert(addr == &peer_addr);
+    unpaired++;
+    return 0;
+}
+static int bt_conn_disconnect(struct bt_conn *conn, uint8_t reason) {
+    assert(reason == BT_HCI_ERR_AUTH_FAIL);
+    (void)conn;
+    disconnected++;
+    return 0;
 }
 static int bt_gatt_discover(struct bt_conn *conn, void *params) {
     (void)params;
@@ -150,7 +181,7 @@ static void split_central_service_discovery_func(void) {}
 static void k_work_submit(void *work) { (void)work; layouts++; }
 static int k_work_reschedule(struct k_work_delayable *work, int delay) {
     (void)work;
-    assert(delay == 0 || delay == 750);
+    assert(delay == 0 || delay == 750 || delay == 5000);
     reschedules++;
     return 0;
 }
@@ -265,7 +296,7 @@ int main(void) {
     /* Releasing a slot cancels the in-flight retry and clears stale failure bits. */
     before_resume = cancels;
     split_central_cancel_subscribe_retry(&state);
-    assert(cancels == before_resume + 1 && state.subscribe_retry_mask == 0);
+    assert(cancels == before_resume + 2 && state.subscribe_retry_mask == 0);
 
     /* A callback from an old connection cannot poison a reused slot. */
     state.conn = &current;
@@ -283,6 +314,22 @@ int main(void) {
     split_central_security_changed(&current, BT_SECURITY_L2, BT_SECURITY_ERR_AUTH_FAIL);
     split_central_security_changed(&current, 1, BT_SECURITY_ERR_SUCCESS);
     assert(discovered == 0);
+
+    /* A connection stuck below L2 is repaired by removing only that peer's
+     * stale central key, then disconnecting so scanning can reconnect it. */
+    state.state = PERIPHERAL_SLOT_STATE_CONNECTED;
+    state.conn = &current;
+    current.security = 1;
+    split_central_process_connection(&current);
+    unsigned before_unpair = unpaired;
+    unsigned before_disconnect = disconnected;
+    split_central_security_repair_work(&state.security_repair_work.work);
+    assert(unpaired == before_unpair + 1);
+    assert(disconnected == before_disconnect + 1);
+    current.security = 2;
+    split_central_security_repair_work(&state.security_repair_work.work);
+    assert(unpaired == before_unpair + 1);
+    assert(disconnected == before_disconnect + 1);
     return 0;
 }
 '''
@@ -292,6 +339,7 @@ security_functions = "\n".join(
     for name in (
         "static void split_central_process_connection(",
         "static void split_central_security_changed(",
+        "static void split_central_security_repair_work(",
     )
 )
 
