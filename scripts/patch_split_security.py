@@ -86,7 +86,7 @@ static void split_central_restore_saved_handle(struct peripheral_slot *slot,
 
 static void split_central_cancel_subscribe_retry(struct peripheral_slot *slot) {
     atomic_set(&slot->subscribe_retry_mask, 0);
-    (void)k_work_cancel(&slot->subscribe_retry_work);
+    (void)k_work_cancel_delayable(&slot->subscribe_retry_work);
 }
 
 static void split_central_schedule_subscribe_retry(
@@ -146,7 +146,7 @@ static int split_central_subscribe(struct bt_conn *conn,
 
 static void split_central_subscribe_retry_work(struct k_work *work) {
     struct peripheral_slot *slot =
-        CONTAINER_OF(work, struct peripheral_slot, subscribe_retry_work);
+        CONTAINER_OF(work, struct peripheral_slot, subscribe_retry_work.work);
 
     if (slot->state != PERIPHERAL_SLOT_STATE_CONNECTED || slot->conn == NULL ||
         bt_conn_get_security(slot->conn) < BT_SECURITY_L2) {
@@ -253,7 +253,7 @@ static void split_central_subscribe_retry_work(struct k_work *work);
         """struct peripheral_slot {
     enum peripheral_slot_state state;
     struct bt_conn *conn;
-    struct k_work subscribe_retry_work;
+    struct k_work_delayable subscribe_retry_work;
     atomic_t subscribe_retry_mask;
     uint16_t subscribe_retry_position_handle;
     uint16_t subscribe_retry_sensor_handle;
@@ -286,8 +286,8 @@ static void split_central_subscribe_retry_work(struct k_work *work);
 """,
         """            // Be sure the slot is fully reinitialized.
             release_peripheral_slot(i);
-            k_work_init(&peripherals[i].subscribe_retry_work,
-                        split_central_subscribe_retry_work);
+            k_work_init_delayable(&peripherals[i].subscribe_retry_work,
+                                  split_central_subscribe_retry_work);
             atomic_set(&peripherals[i].subscribe_retry_mask, 0);
             peripherals[i].state = PERIPHERAL_SLOT_STATE_CONNECTING;
 """,

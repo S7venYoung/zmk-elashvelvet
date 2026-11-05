@@ -78,6 +78,7 @@ enum peripheral_slot_state {
 };
 struct bt_conn { int security; int request_error; };
 struct k_work { int unused; };
+struct k_work_delayable { struct k_work work; int delay; };
 struct bt_gatt_discover_params {
     void *uuid;
     void (*func)(void);
@@ -96,7 +97,7 @@ struct bt_gatt_subscribe_params {
 struct peripheral_slot {
     enum peripheral_slot_state state;
     struct bt_conn *conn;
-    struct k_work subscribe_retry_work;
+    struct k_work_delayable subscribe_retry_work;
     atomic_t subscribe_retry_mask;
     uint16_t subscribe_retry_position_handle;
     uint16_t subscribe_retry_sensor_handle;
@@ -146,13 +147,17 @@ static int bt_gatt_subscribe(struct bt_conn *conn,
 }
 static void split_central_service_discovery_func(void) {}
 static void k_work_submit(void *work) { (void)work; layouts++; }
-static int k_work_reschedule(struct k_work *work, int delay) {
+static int k_work_reschedule(struct k_work_delayable *work, int delay) {
     (void)work;
     assert(delay == 0 || delay == 750);
     reschedules++;
     return 0;
 }
-static int k_work_cancel(struct k_work *work) { (void)work; cancels++; return 0; }
+static int k_work_cancel_delayable(struct k_work_delayable *work) {
+    (void)work;
+    cancels++;
+    return 0;
+}
 static void atomic_set(atomic_t *target, atomic_val_t value) { *target = value; }
 static atomic_val_t atomic_get(atomic_t *target) { return *target; }
 static atomic_val_t atomic_or(atomic_t *target, atomic_val_t value) {
@@ -216,20 +221,20 @@ int main(void) {
     split_central_subscribe_complete(&current, 0,
                                      &state.relay_event_subscribe_params);
     assert(state.subscribe_retry_mask == 0);
-    split_central_subscribe_retry_work(&state.subscribe_retry_work);
+    split_central_subscribe_retry_work(&state.subscribe_retry_work.work);
     assert(subscribes == 0);
 
     /* Retry waits for L2 and resumes when security is established. */
     atomic_or(&state.subscribe_retry_mask, SPLIT_SUB_RELAY_EVENT);
     current.security = 1;
-    split_central_subscribe_retry_work(&state.subscribe_retry_work);
+    split_central_subscribe_retry_work(&state.subscribe_retry_work.work);
     assert(subscribes == 0);
     current.security = 2;
     unsigned before_resume = reschedules;
     split_central_resume_subscribe_retries(&state);
     assert(reschedules == before_resume + 1);
     subscribe_result = 0;
-    split_central_subscribe_retry_work(&state.subscribe_retry_work);
+    split_central_subscribe_retry_work(&state.subscribe_retry_work.work);
     assert(subscribes == 1);
     assert(state.relay_event_subscribe_params.subscribe ==
            split_central_subscribe_complete);
