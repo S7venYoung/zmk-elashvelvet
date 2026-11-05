@@ -34,6 +34,7 @@ for marker in (
     "split_central_cancel_subscribe_retry(slot);",
     "params->subscribe = split_central_subscribe_complete;",
     "split_central_resume_subscribe_retries(slot);",
+    "before scanning can reserve a slot",
 ):
     assert marker in patched, marker
 
@@ -158,6 +159,10 @@ static int k_work_cancel_delayable(struct k_work_delayable *work) {
     cancels++;
     return 0;
 }
+static void k_work_init_delayable(struct k_work_delayable *work, void (*handler)(struct k_work *)) {
+    (void)handler;
+    work->delay = 1;
+}
 static void atomic_set(atomic_t *target, atomic_val_t value) { *target = value; }
 static atomic_val_t atomic_get(atomic_t *target) { return *target; }
 static atomic_val_t atomic_or(atomic_t *target, atomic_val_t value) {
@@ -187,6 +192,9 @@ helpers = "\n".join(
 main = r'''
 int main(void) {
     struct bt_conn current = {.security = 1}, stale = {.security = 2};
+    k_work_init_delayable(&state.subscribe_retry_work,
+                          split_central_subscribe_retry_work);
+    assert(state.subscribe_retry_work.delay == 1);
     state.conn = &current;
     state.state = PERIPHERAL_SLOT_STATE_CONNECTED;
 
@@ -243,6 +251,15 @@ int main(void) {
     state.subscribe_retry_mask = 0;
     subscribe_result = -ENOMEM;
     assert(split_central_subscribe(&current, &state.subscribe_params) == -ENOMEM);
+    assert(state.subscribe_retry_mask == SPLIT_SUB_POSITION);
+
+    /* Zephyr's -EALREADY path removes the duplicate and clears value_handle.
+     * Restore it and keep the retry armed instead of treating this as success. */
+    state.subscribe_retry_mask = 0;
+    state.subscribe_params.value_handle = 10;
+    subscribe_result = -EALREADY;
+    assert(split_central_subscribe(&current, &state.subscribe_params) == -EALREADY);
+    assert(state.subscribe_params.value_handle == 10);
     assert(state.subscribe_retry_mask == SPLIT_SUB_POSITION);
 
     /* Releasing a slot cancels the in-flight retry and clears stale failure bits. */

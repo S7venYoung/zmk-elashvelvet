@@ -197,12 +197,15 @@ static int split_central_subscribe(struct bt_conn *conn,
     int err = bt_gatt_subscribe(conn, params);
     switch (err) {
     case -EALREADY: {
-        struct peripheral_slot *slot = peripheral_slot_for_conn(conn);
         int bit = slot ? split_central_subscription_bit(slot, params) : -EINVAL;
-        if (bit >= 0) {
-            atomic_and(&slot->subscribe_retry_mask, ~bit);
+        LOG_WRN("[SUBSCRIPTION BUSY] Zephyr removed the duplicate subscription");
+        if (slot && bit >= 0) {
+            /* Zephyr removes the existing params before returning -EALREADY.
+             * Its notify(NULL) callback clears value_handle, so this is not a
+             * successful subscription and must take the normal retry path. */
+            split_central_restore_saved_handle(slot, params);
+            split_central_schedule_subscribe_retry(slot, params);
         }
-        LOG_DBG("[ALREADY SUBSCRIBED]");
         break;
     }
     case 0:
@@ -328,6 +331,27 @@ static void split_central_subscribe_retry_work(struct k_work *work);
         "split security callback completion",
     )
     source = source[:begin] + part + source[end:]
+
+    source = _replace_once(
+        source,
+        """    bt_conn_cb_register(&conn_callbacks);
+
+#if IS_ENABLED(CONFIG_SETTINGS)
+""",
+        """    bt_conn_cb_register(&conn_callbacks);
+    for (size_t i = 0; i < ARRAY_SIZE(peripherals); i++) {
+        /* reserve_peripheral_slot() releases the slot before first use, and
+         * release_peripheral_slot() cancels this work. Initialize every
+         * delayable work object before scanning can reserve a slot. */
+        k_work_init_delayable(&peripherals[i].subscribe_retry_work,
+                              split_central_subscribe_retry_work);
+        atomic_set(&peripherals[i].subscribe_retry_mask, 0);
+    }
+
+#if IS_ENABLED(CONFIG_SETTINGS)
+""",
+        "split retry work initialization",
+    )
     return source
 
 
