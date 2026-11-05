@@ -37,9 +37,6 @@ static bool encode_debug(pb_ostream_t *stream,const pb_field_t *field,void *cons
  return pb_encode_tag_for_field(stream,field)&&pb_encode_varint(stream,DASH_DEBUG_SIZE+2)&&
         pb_encode_tag(stream,PB_WT_STRING,1)&&pb_encode_string(stream,debug_response,sizeof(debug_response));
 }
-#if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
-void zmk_split_central_get_debug(uint8_t debug[12]);
-#endif
 static bool read_debug(const zmk_custom_CallRequest *req,pb_callback_t *res) {
  if(req->payload.size!=2||req->payload.bytes[0]!=8||req->payload.bytes[1]!=1)return false;
  uint32_t now=k_uptime_get_32();
@@ -53,9 +50,6 @@ static bool read_debug(const zmk_custom_CallRequest *req,pb_callback_t *res) {
  dash_debug_put32(debug_response+36,acknowledgement_seen[0]?now-acknowledgement_at[0]:UINT32_MAX);
  dash_debug_put32(debug_response+40,acknowledgement_seen[1]?now-acknowledgement_at[1]:UINT32_MAX);
  dash_debug_put32(debug_response+44,now);
-#if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
- zmk_split_central_get_debug(debug_response+52);
-#endif
  k_spin_unlock(&debug_lock,key);
  res->funcs.encode=encode_debug;res->arg=NULL;return true;
 }

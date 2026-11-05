@@ -11,7 +11,6 @@
 #include "themes/cat/cat_l8.h"
 #include "themes/cat/cat_layer.h"
 #include "common/dashboard_debug.h"
-#include "common/wait_screen.h"
 #include <zmk/split/peripheral.h>
 #include "themes/codex-system/left/render.h"
 #include "themes/codex-system/right/render.h"
@@ -118,7 +117,7 @@ static void refresh(lv_timer_t *timer){
   else {memmove(view.history,view.history+1,11);view.history[11]=view.data[3];}
  }
 
- if(!known)dashboard_render_wait(packed,view.keyboard.connected);
+ if(!known)memset(packed,0xff,sizeof(packed));
  else if(selected==0){struct cat_status c={.connected=view.keyboard.connected,
  .battery_valid=view.keyboard.battery_valid,.battery=b,.layer_valid=view.keyboard.layer_valid,.layer=view.keyboard.layer};cat_render(packed,c);}
  else if(IS_ENABLED(CONFIG_SHIELD_VELVET_LEFT))codex_render(packed,&view);else system_render(packed,&view);

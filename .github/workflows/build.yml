@@ -12,10 +12,6 @@ jobs:
         run: python3 scripts/patch_behavior_names.py dependencies
       - name: Bound Nano custom settings metadata RAM
         run: python3 scripts/patch_nano_settings_ram.py dependencies/zmk-feature-custom-settings
-      - name: Test and install split encryption sequencing
-        run: |
-          python3 scripts/test_split_security.py dependencies/zmk/app/src/split/bluetooth/central.c
-          python3 scripts/patch_split_security.py dependencies/zmk/app/src/split/bluetooth/central.c
       - name: Install Nano Studio action hook
         run: python3 scripts/patch_studio_binding_actions.py dependencies/zmk/app/src/keymap.c
       - name: Install single-advertiser Nano scanner patch
@@ -58,8 +54,6 @@ jobs:
         run: |
           cc -std=c11 -Wall -Wextra -Werror src/display/tests/test_dashboard.c -o /tmp/test-dashboard
           /tmp/test-dashboard
-          cc -std=c11 -Wall -Wextra -Werror src/display/tests/test_wait_screen.c -o /tmp/test-wait-screen
-          /tmp/test-wait-screen
       - name: Verify actual display relay-name capacity
         shell: bash
         run: |
