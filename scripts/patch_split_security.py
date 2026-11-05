@@ -286,6 +286,7 @@ def patch(source):
 struct peripheral_slot;
 static void split_central_cancel_subscribe_retry(struct peripheral_slot *slot);
 static void split_central_subscribe_retry_work(struct k_work *work);
+static void split_central_security_repair_work(struct k_work *work);
 """,
         "start-scanning declaration",
     )

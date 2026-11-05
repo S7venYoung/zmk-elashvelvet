@@ -35,6 +35,7 @@ for marker in (
     "params->subscribe = split_central_subscribe_complete;",
     "split_central_resume_subscribe_retries(slot);",
     "before scanning can reserve a slot",
+    "static void split_central_security_repair_work(struct k_work *work);",
 ):
     assert marker in patched, marker
 
