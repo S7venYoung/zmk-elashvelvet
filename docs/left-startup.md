@@ -1,0 +1,7 @@
+# Left startup diagnostic (manual only)
+
+The regular left application has no USB logging. On 2026-11-05, a readback of the left application matched all 370944 bytes of the Actions 41371459929 left UF2. Receiver diagnostics showed regular right acknowledgements but no left acknowledgements. A 20-second CoreBluetooth scan saw HID/telemetry advertisements but no unconnected split-service advertisements. These observations do not distinguish failed BLE initialization from a directed-advertising/bond mismatch; no cause is claimed yet.
+
+The Diagnose left startup workflow builds only the existing nice!nano left peripheral with USB CDC logging, debug messages, assertions and stack sentinel. It does not erase settings, rewrite the bootloader, modify production keymaps, or change the normal build workflow. Fatal resets are disabled in this diagnostic image so an available panic log can be captured. This image is for diagnosis and changes logging timing/RAM use; it is not a claimed fix.
+
+After an explicitly requested Actions build, flash only velvet_left_dongle_debug.uf2 to the left. Keep USB connected and capture the CDC log from startup, looking for init errors, stack assertions, Bluetooth advertising/connection/security and settings-load failures. Do not flash a settings_reset image or clear receiver bonds before the evidence is reviewed. The full-white theme waiting branch has separately been identified but its UI change is intentionally not included: restoring typing is the priority.

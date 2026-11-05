@@ -1,0 +1,88 @@
+name: Diagnose left startup (manual only)
+on:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: zmkfirmware/zmk-build-arm:stable
+    steps:
+      - uses: actions/checkout@v4
+      - run: west init -l config && west update --narrow && west zephyr-export
+      - name: Normalize public behavior names
+        run: python3 scripts/patch_behavior_names.py dependencies
+      - name: Bound Nano custom settings metadata RAM
+        run: python3 scripts/patch_nano_settings_ram.py dependencies/zmk-feature-custom-settings
+      - name: Install Nano Studio action hook
+        run: python3 scripts/patch_studio_binding_actions.py dependencies/zmk/app/src/keymap.c
+      - name: Install single-advertiser Nano scanner patch
+        run: python3 scripts/patch_nano_scanner_advertising.py dependencies/prospector-zmk-module/src/status_advertisement.c
+      - name: Test reset bootloader transition
+        run: python3 scripts/test_settings_reset_bootloader.py
+      - name: Make settings reset return to bootloader
+        run: python3 scripts/patch_settings_reset_bootloader.py dependencies/zmk/app/src/settings/reset_settings_on_start.c
+      - name: Test physical-half telemetry
+        run: |
+          cc -Wall -Wextra -Werror -Isrc scripts/test_half_telemetry.c -o /tmp/test-half
+          /tmp/test-half
+          cc -Wall -Wextra -Werror scripts/test_adv_layout.c -o /tmp/test-layout
+          /tmp/test-layout
+      - name: Test right display overlay loading order
+        run: python3 scripts/test_right_display_overlay.py dependencies/zephyr dependencies/mario-peripheral-animation
+      - name: Test memory LCD VCOM command encoding
+        run: python3 scripts/test_nice_view_vcom.py dependencies/zephyr/drivers/display/ls0xx.c
+      - name: Test cat renderer and layer relay state
+        run: |
+          cc -std=c11 -Wall -Wextra -Werror -Isrc/display/themes/cat src/display/themes/cat/tests/test_cat_display.c -o /tmp/test-cat
+          /tmp/test-cat
+      - name: Test Cube packet cadence
+        run: python3 scripts/test_scanner_payload.py
+      - name: Test display runtime diagnostic packets
+        run: |
+          cc -std=c11 -Wall -Wextra -Werror src/display/tests/test_dashboard_debug.c -o /tmp/test-dashboard-debug
+          /tmp/test-dashboard-debug
+      - name: Test display relay BLE framing
+        run: |
+          python3 scripts/test_dashboard_relay.py dependencies/zmk
+          python3 scripts/test_dashboard_theme_cache.py
+      - name: Install physical-half scanner status fields
+        run: python3 scripts/patch_dongle_status_fields.py dependencies/prospector-zmk-module/src/status_advertisement.c
+      - name: Select left peripheral and enable USB startup logs
+        shell: bash
+        run: |
+          python3 - <<'PYMATRIX'
+          from pathlib import Path
+          import yaml
+          path = Path('build.yaml')
+          matrix = yaml.safe_load(path.read_text())
+          entries = [x for x in matrix['include'] if x.get('artifact') == 'velvet_left_dongle']
+          assert len(entries) == 1, 'Expected exactly one left peripheral target'
+          entry = entries[0]
+          assert 'velvet_split_peripheral' in entry['shield']
+          entry['cmake-args'] = entry.get('cmake-args', '') + ' -DCONFIG_ZMK_USB_LOGGING=y -DCONFIG_LOG=y -DCONFIG_ZMK_LOG_LEVEL=4 -DCONFIG_LOG_BUFFER_SIZE=8192 -DCONFIG_LOG_PROCESS_THREAD_STACK_SIZE=2048 -DCONFIG_ASSERT=y -DCONFIG_STACK_SENTINEL=y -DCONFIG_RESET_ON_FATAL_ERROR=n'
+          matrix['include'] = entries
+          path.write_text(yaml.safe_dump(matrix, sort_keys=False))
+          PYMATRIX
+      - name: Build left startup diagnostic
+        shell: bash
+        run: |
+          set -o pipefail
+          west zmk-build -d ./build -q 2>&1 | tee left-build.log
+      - name: Collect left firmware and build diagnostics
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p left-startup
+          if test -s build/velvet_left_dongle/zephyr/zmk.uf2; then
+            cp build/velvet_left_dongle/zephyr/zmk.uf2 left-startup/velvet_left_dongle_debug.uf2
+          fi
+          cp left-build.log left-startup/ 2>/dev/null || true
+          for file in .config zephyr.dts zmk.elf zmk.map; do
+            if test -f "build/velvet_left_dongle/zephyr/$file"; then
+              cp "build/velvet_left_dongle/zephyr/$file" left-startup/
+            fi
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: left-startup
+          path: left-startup/
