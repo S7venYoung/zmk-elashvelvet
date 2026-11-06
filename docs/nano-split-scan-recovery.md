@@ -9,8 +9,10 @@ callbacks then take the "Scanning already running" branch forever. Restarting
 the Nano Dongle is the only recovery in that build.
 
 This was observed after a long idle period: the USB Dongle remained responsive,
-but both split peers were absent and no further scanning occurred. The Pad
-remained enumerated on USB, so the Pad MCU itself had not stopped.
+but the Pad was not rediscovered and no further scanning occurred. The Pad
+remained enumerated on USB, so the Pad MCU itself had not stopped. The other
+configured peripheral slots were intentionally not treated as evidence because
+only the Pad was connected for this diagnosis.
 
 ## Source change
 
@@ -41,7 +43,7 @@ transport disable, full connectivity, and stop.
 CI verifies the callback and work-item symbols in the linked ARM Dongle ELF and
 reports the resulting RAM use. The normal Nano memory budget is only
 2960 bytes free, so the build must retain the existing 4096-byte system
-workqueue stack and three-peer connection budget.
+workqueue stack and configured split connection budget.
 
 ## Device acceptance
 
