@@ -20,12 +20,17 @@ only the Pad was connected for this diagnosis.
 firmware builds. It:
 
 - clears `is_scanning` whenever the controller rejects a real scan start;
-- treats `-EALREADY` as an active controller scan;
+- treats `-EALREADY` as a scan already owned by the Zephyr host;
 - retries a rejected start every second on the existing system workqueue;
-- cancels the retry after success, stop, disable, or full peer connectivity.
+- stops and restarts an open scan every ten seconds, because Zephyr reports
+  `-EALREADY` from its host flag even when repeated start calls cannot prove
+  that the controller is still scanning;
+- waits while a split connection attempt is in progress;
+- cancels the guard after stop, disable, or full peer connectivity.
 
-The change uses one static delayable work item. It adds no thread, queue,
-buffer, settings migration, bond clearing, or forced re-pair operation.
+The change reuses one static delayable work item for both retry and health
+checks. It adds no thread, queue, buffer, settings migration, bond clearing, or
+forced re-pair operation.
 
 The Pad's existing five-minute disconnected advertising stop and physical-key
 wake remain in place. That policy is separate: the Pad may stop advertising

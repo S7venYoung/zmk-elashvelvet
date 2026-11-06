@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Compile and exercise the patched scan state machine with host mocks."""
 from pathlib import Path
-import os
 import subprocess
 import sys
 import tempfile
@@ -58,7 +57,15 @@ harness = r'''
 struct k_work { int unused; };
 struct k_work_delayable { int unused; };
 struct bt_conn { int unused; };
-struct peripheral_slot { struct bt_conn *conn; };
+enum peripheral_slot_state {
+    PERIPHERAL_SLOT_STATE_OPEN,
+    PERIPHERAL_SLOT_STATE_CONNECTING,
+    PERIPHERAL_SLOT_STATE_CONNECTED,
+};
+struct peripheral_slot {
+    enum peripheral_slot_state state;
+    struct bt_conn *conn;
+};
 
 static bool is_enabled = true;
 static bool is_scanning;
@@ -71,6 +78,7 @@ static int reschedules;
 static int cancels;
 static int retry_delay;
 #define SPLIT_CENTRAL_SCAN_RETRY_DELAY K_SECONDS(1)
+#define SPLIT_CENTRAL_SCAN_HEALTH_DELAY K_SECONDS(10)
 
 static void split_central_device_found(int unused) { ARG_UNUSED(unused); }
 static int start_scanning(void);
@@ -125,23 +133,45 @@ int main(void) {
     assert(scan_starts == 2);
     assert(!is_scanning && reschedules == 2);
 
-    /* Successful recovery cancels the retry and prevents duplicate scans. */
+    /* Successful recovery arms only the ten-second health guard. */
     scan_start_error = 0;
+    reschedules = 0;
     split_central_scan_retry_cb(NULL);
-    assert(scan_starts == 3 && is_scanning && cancels >= 1);
+    assert(scan_starts == 3 && is_scanning);
+    assert(reschedules == 1 && retry_delay == 10000);
     int starts = scan_starts;
     assert(start_scanning() == 0);
     assert(scan_starts == starts);
 
+    /* The health work refreshes controller scanning instead of trusting the
+     * host-side -EALREADY state. */
+    cancels = 0;
+    reschedules = 0;
+    split_central_scan_retry_cb(NULL);
+    assert(scan_stops == 1);
+    assert(scan_starts == starts + 1 && is_scanning);
+    assert(reschedules == 1 && retry_delay == 10000);
+
+    /* Do not collide with an in-flight connection attempt. */
+    peripherals[1].state = PERIPHERAL_SLOT_STATE_CONNECTING;
+    starts = scan_starts;
+    reschedules = 0;
+    split_central_scan_retry_cb(NULL);
+    assert(scan_starts == starts && is_scanning);
+    assert(reschedules == 1 && retry_delay == 10000);
+    peripherals[1].state = PERIPHERAL_SLOT_STATE_OPEN;
+
     /* Stop clears both software state and any pending retry. */
     assert(stop_scanning() == 0);
-    assert(!is_scanning && scan_stops == 1);
+    assert(!is_scanning && scan_stops == 2);
 
-    /* A controller that reports active scan is success, not a retry storm. */
+    /* A host that already owns a scan is success, not a retry storm. */
     scan_start_error = -EALREADY;
     reschedules = 0;
     assert(start_scanning() == 0);
-    assert(is_scanning && reschedules == 0);
+    assert(is_scanning && reschedules == 1 && retry_delay == 10000);
+    assert(start_scanning() == 0);
+    assert(reschedules == 2 && retry_delay == 10000);
     assert(stop_scanning() == 0);
 
     /* Disabled transport and a fully connected topology do not scan or retry. */
@@ -155,6 +185,7 @@ int main(void) {
     struct bt_conn connections[CONFIG_ZMK_SPLIT_BLE_CENTRAL_PERIPHERALS];
     for (int i = 0; i < CONFIG_ZMK_SPLIT_BLE_CENTRAL_PERIPHERALS; i++) {
         peripherals[i].conn = &connections[i];
+        peripherals[i].state = PERIPHERAL_SLOT_STATE_CONNECTED;
     }
     starts = scan_starts;
     assert(start_scanning() == 0);
@@ -174,4 +205,4 @@ with tempfile.TemporaryDirectory() as temp:
     )
     subprocess.run([str(executable)], check=True)
 
-print("Nano split scan recovery: failure, retry, success, EALREADY, stop and idle cases passed")
+print("Nano split scan recovery: failure, retry, health restart, connecting, EALREADY, stop and idle cases passed")

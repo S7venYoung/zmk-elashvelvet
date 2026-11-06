@@ -1,10 +1,16 @@
 #!/usr/bin/env python3
-"""Recover Nano split scanning after a transient controller failure.
+"""Keep Nano split scanning recoverable after controller failures.
 
-ZMK 0.2's split central sets is_scanning before bt_le_scan_start(). If start
-fails and no another connection callback arrives, the flag remains true while
-the controller is not scanning. This patch clears the false state and retries
-on the existing system workqueue. It does not touch bonds or settings.
+ZMK's split central sets is_scanning before bt_le_scan_start(). A rejected
+start can therefore leave the software flag true while the controller is not
+scanning. Zephyr also returns -EALREADY when the host still owns an explicit
+scan, so simply calling start again cannot detect a controller that silently
+stopped.
+
+This patch clears rejected starts, retries them every second, and periodically
+stops and restarts an open split scan. The low-frequency restart reuses one
+delayable work item on the system workqueue. It does not touch bonds or
+settings.
 """
 from pathlib import Path
 import sys
@@ -33,6 +39,7 @@ static void split_central_scan_retry_cb(struct k_work *work);
 static K_WORK_DELAYABLE_DEFINE(split_central_scan_retry_work,
                                split_central_scan_retry_cb);
 #define SPLIT_CENTRAL_SCAN_RETRY_DELAY K_SECONDS(1)
+#define SPLIT_CENTRAL_SCAN_HEALTH_DELAY K_SECONDS(10)
 """,
     )
 
@@ -54,6 +61,43 @@ static K_WORK_DELAYABLE_DEFINE(split_central_scan_retry_work,
         "static int start_scanning(void) {\n",
         """static void split_central_scan_retry_cb(struct k_work *work) {
     ARG_UNUSED(work);
+
+    if (!is_enabled) {
+        return;
+    }
+
+    bool has_unconnected = false;
+    bool has_connecting = false;
+    for (int i = 0; i < CONFIG_ZMK_SPLIT_BLE_CENTRAL_PERIPHERALS; i++) {
+        if (peripherals[i].conn == NULL) {
+            has_unconnected = true;
+        }
+        if (peripherals[i].state == PERIPHERAL_SLOT_STATE_CONNECTING) {
+            has_connecting = true;
+        }
+    }
+
+    if (!has_unconnected) {
+        LOG_DBG("All split peripheral slots are connected");
+        return;
+    }
+
+    if (has_connecting) {
+        k_work_reschedule(&split_central_scan_retry_work,
+                          SPLIT_CENTRAL_SCAN_HEALTH_DELAY);
+        return;
+    }
+
+    if (is_scanning) {
+        // Zephyr -EALREADY reflects its host flag, not whether the controller
+        // is still scanning. A stop/start cycle refreshes that controller state.
+        int stop_err = bt_le_scan_stop();
+        if (stop_err < 0) {
+            LOG_WRN("Split scan health stop failed (err %d)", stop_err);
+        }
+        is_scanning = false;
+        LOG_DBG("Restarting split scan health guard");
+    }
 
     int err = start_scanning();
     if (err < 0) {
@@ -87,7 +131,8 @@ static int start_scanning(void) {
     // No action is necessary if central is already scanning.
     if (is_scanning) {
         LOG_DBG("Scanning already running");
-        k_work_cancel_delayable(&split_central_scan_retry_work);
+        k_work_reschedule(&split_central_scan_retry_work,
+                          SPLIT_CENTRAL_SCAN_HEALTH_DELAY);
         return 0;
     }
 """,
@@ -124,7 +169,8 @@ static int start_scanning(void) {
     if (err < 0) {
         if (err == -EALREADY) {
             // The controller is already scanning even if our stale flag was not.
-            k_work_cancel_delayable(&split_central_scan_retry_work);
+            k_work_reschedule(&split_central_scan_retry_work,
+                              SPLIT_CENTRAL_SCAN_HEALTH_DELAY);
             LOG_DBG("Controller scan was already running");
             return 0;
         }
@@ -137,7 +183,8 @@ static int start_scanning(void) {
         return err;
     }
 
-    k_work_cancel_delayable(&split_central_scan_retry_work);
+    k_work_reschedule(&split_central_scan_retry_work,
+                      SPLIT_CENTRAL_SCAN_HEALTH_DELAY);
     LOG_DBG("Scanning successfully started");
     return 0;
 }
