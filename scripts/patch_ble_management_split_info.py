@@ -78,6 +78,17 @@ static int handle_get_split_info_request(
 """,
     )
 
+    source = replace_once(
+        source,
+        """    resp->which_response_type = zmk_ble_management_Response_get_split_info_tag;
+    resp->response_type.get_split_info = result;
+""",
+        """    resp->which_response_type = zmk_ble_management_Response_get_split_info_tag;
+    result.has_info = true;
+    resp->response_type.get_split_info = result;
+""",
+    )
+
     return source
 
 

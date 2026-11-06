@@ -36,6 +36,7 @@ with tempfile.TemporaryDirectory() as temp:
     assert "#include <zephyr/bluetooth/conn.h>" in first
     assert "bt_conn_foreach(BT_CONN_TYPE_LE" in first
     assert "info->peripheral_connected = connections.central_connections > 0;" in first
+    assert "result.has_info = true;" in first
     subprocess.run([sys.executable, str(patcher), str(source)], check=True)
     assert source.read_text() == first
 

@@ -36,7 +36,9 @@ advertising after five minutes and resumes it on a physical key press. The
 high-duty to low-duty directed advertising fallback does not renew that
 budget. Connected links cancel the timeout. Work is submitted to the existing
 system queue; no thread or receiver allocation is added. Stop errors permit
-retry. Transport disable still wins over key wake.
+retry. A physical key also starts advertising after any disconnected state,
+including when the controller omits Zephyr's `recycled` callback. Transport
+disable still wins over key wake.
 
 This preserves the observable connected-idle and disconnected-key-wake policy,
 not binary-identical internals: RMK is standalone HID; this Pad is a ZMK split
@@ -61,9 +63,10 @@ No settings/bond clearing or migration is performed.
 
 Host tests execute the actual patched advertising callbacks with Bluetooth
 and work mocks: connected guard, 300-second budget, fallback, release/press
-wake, repeated keys, stop failure and disabled transport. CI verifies the
-merged Pad `.config` and linked callback symbols, plus unchanged DYA receiver
-stack/buffer/batched-notification fixes. Review actual RAM in the new build.
+wake, disconnect without `recycled`, repeated keys, stop failure and disabled
+transport. CI verifies the merged Pad `.config` and linked callback symbols,
+plus unchanged DYA receiver stack/buffer/batched-notification fixes. Review
+actual RAM in the new build.
 
 Manual acceptance, without touching control Dongle .11101:
 - Upgrade only the Pad via application OTA; stable .11201 needs no reflash.

@@ -36,7 +36,6 @@ typedef int atomic_t;
 static int atomic_get(atomic_t *p) { return *p; }
 static void atomic_set(atomic_t *p,int n) { *p=n; }
 static void atomic_clear(atomic_t *p) { *p=0; }
-static bool atomic_cas(atomic_t *p,int old,int n) { if(*p!=old)return false;*p=n;return true; }
 struct k_work { void (*fn)(struct k_work *); };
 struct delayable { struct k_work work; int delay; };
 #define K_WORK_DEFINE(n,cb) struct k_work n={cb}
@@ -64,12 +63,15 @@ int main(void) {
     connected(0,0); assert(is_connected && !pad_advertising_timeout.delay);
     pad_advertising_timeout_cb(0); assert(!stops && !pad_advertising_asleep);
     advertising_cb(0); assert(starts==2); // connected link left alone
-    is_connected=false; advertising_cb(0); assert(starts==3);
+    zmk_event_t release={false},press={true};
+    is_connected=false; atomic_clear(&pad_advertising_active);
+    pad_key_wake_listener(&press); assert(starts==3 && !pad_advertising_asleep);
+    assert(pad_advertising_timeout.delay==300);
+    pad_key_wake_listener(&press); assert(starts==3); // active advertiser is not restarted
     pad_advertising_timeout.delay=0; pad_advertising_timeout_cb(0);
     assert(stops==1 && pad_advertising_asleep);
     recycled_unused: ;
     advertising_cb(0); assert(starts==3); // pending advertising can't defeat sleep
-    zmk_event_t release={false},press={true};
     pad_key_wake_listener(&release); assert(starts==3);
     pad_key_wake_listener(&press); assert(starts==4 && !pad_advertising_asleep);
     assert(!low_duty_advertising && pad_advertising_timeout.delay==300);

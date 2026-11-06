@@ -48,6 +48,7 @@ harness = r'''
 
 #define CONFIG_ZMK_SPLIT_BLE_CENTRAL_PERIPHERALS 3
 #define BT_LE_SCAN_PASSIVE 0
+#define BT_HCI_ERR_REMOTE_USER_TERM_CONN 19
 #define K_SECONDS(value) ((value) * 1000)
 #define ARG_UNUSED(value) ((void)(value))
 #define LOG_DBG(...) ((void)0)
@@ -65,6 +66,8 @@ enum peripheral_slot_state {
 struct peripheral_slot {
     enum peripheral_slot_state state;
     struct bt_conn *conn;
+    int64_t connecting_since;
+    bool connection_abort_requested;
 };
 
 static bool is_enabled = true;
@@ -77,8 +80,14 @@ static int scan_start_error;
 static int reschedules;
 static int cancels;
 static int retry_delay;
+static int64_t uptime_ms = 100000;
+static int disconnect_calls;
+static int release_calls;
+static int disconnect_error;
 #define SPLIT_CENTRAL_SCAN_RETRY_DELAY K_SECONDS(1)
 #define SPLIT_CENTRAL_SCAN_HEALTH_DELAY K_SECONDS(10)
+#define SPLIT_CENTRAL_CONNECT_TIMEOUT K_SECONDS(15)
+#define SPLIT_CENTRAL_CONNECT_ABORT_GRACE K_SECONDS(2)
 
 static void split_central_device_found(int unused) { ARG_UNUSED(unused); }
 static int start_scanning(void);
@@ -92,6 +101,24 @@ static int bt_le_scan_start(int options, void (*callback)(int)) {
 
 static int bt_le_scan_stop(void) {
     scan_stops++;
+    return 0;
+}
+
+static int64_t k_uptime_get(void) { return uptime_ms; }
+
+static int bt_conn_disconnect(struct bt_conn *conn, uint8_t reason) {
+    ARG_UNUSED(conn);
+    ARG_UNUSED(reason);
+    disconnect_calls++;
+    return disconnect_error;
+}
+
+static int release_peripheral_slot(int index) {
+    release_calls++;
+    peripherals[index].conn = NULL;
+    peripherals[index].state = PERIPHERAL_SLOT_STATE_OPEN;
+    peripherals[index].connecting_since = 0;
+    peripherals[index].connection_abort_requested = false;
     return 0;
 }
 
@@ -158,12 +185,35 @@ int main(void) {
     reschedules = 0;
     split_central_scan_retry_cb(NULL);
     assert(scan_starts == starts && is_scanning);
-    assert(reschedules == 1 && retry_delay == 10000);
+    assert(reschedules == 1 && retry_delay == 2000);
     peripherals[1].state = PERIPHERAL_SLOT_STATE_OPEN;
+
+    /* A stale CONNECTING slot is aborted, then force-released if the abort
+     * callback never arrives. */
+    struct bt_conn stuck_conn;
+    peripherals[1].conn = &stuck_conn;
+    peripherals[1].state = PERIPHERAL_SLOT_STATE_CONNECTING;
+    peripherals[1].connecting_since = uptime_ms - 16000;
+    peripherals[1].connection_abort_requested = false;
+    starts = scan_starts;
+    reschedules = 0;
+    split_central_scan_retry_cb(NULL);
+    assert(disconnect_calls == 1 && release_calls == 0);
+    assert(peripherals[1].state == PERIPHERAL_SLOT_STATE_CONNECTING);
+    assert(scan_starts == starts && reschedules == 1 && retry_delay == 2000);
+
+    uptime_ms += 2000;
+    reschedules = 0;
+    split_central_scan_retry_cb(NULL);
+    assert(release_calls == 1);
+    assert(peripherals[1].state == PERIPHERAL_SLOT_STATE_OPEN);
+    assert(peripherals[1].conn == NULL);
+    assert(scan_starts == starts + 1 && is_scanning);
+    assert(reschedules == 1 && retry_delay == 10000);
 
     /* Stop clears both software state and any pending retry. */
     assert(stop_scanning() == 0);
-    assert(!is_scanning && scan_stops == 2);
+    assert(!is_scanning && scan_stops == 3);
 
     /* A host that already owns a scan is success, not a retry storm. */
     scan_start_error = -EALREADY;
@@ -205,4 +255,4 @@ with tempfile.TemporaryDirectory() as temp:
     )
     subprocess.run([str(executable)], check=True)
 
-print("Nano split scan recovery: failure, retry, health restart, connecting, EALREADY, stop and idle cases passed")
+print("Nano split scan recovery: failure, retry, health restart, stale connecting, EALREADY, stop and idle cases passed")

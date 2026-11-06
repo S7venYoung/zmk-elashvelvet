@@ -25,7 +25,9 @@ firmware builds. It:
 - stops and restarts an open scan every ten seconds, because Zephyr reports
   `-EALREADY` from its host flag even when repeated start calls cannot prove
   that the controller is still scanning;
-- waits while a split connection attempt is in progress;
+- waits while a split connection attempt is making progress;
+- aborts a split connection attempt after 15 seconds and force-releases the
+  slot two seconds later if Zephyr never delivers the disconnect callback;
 - cancels the guard after stop, disable, or full peer connectivity.
 
 The change reuses one static delayable work item for both retry and health
@@ -44,6 +46,7 @@ patched `start_scanning()`, `stop_scanning()`, and retry callback, and compiles
 them with Bluetooth and workqueue mocks. It covers a failed start, repeated
 retry failure, successful recovery, duplicate-start suppression, `-EALREADY`,
 transport disable, full connectivity, and stop.
+It also covers a stale `CONNECTING` slot that ignores its first abort request.
 
 CI verifies the callback and work-item symbols in the linked ARM Dongle ELF and
 reports the resulting RAM use. The normal Nano memory budget is only

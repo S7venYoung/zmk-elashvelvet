@@ -40,6 +40,57 @@ static K_WORK_DELAYABLE_DEFINE(split_central_scan_retry_work,
                                split_central_scan_retry_cb);
 #define SPLIT_CENTRAL_SCAN_RETRY_DELAY K_SECONDS(1)
 #define SPLIT_CENTRAL_SCAN_HEALTH_DELAY K_SECONDS(10)
+#define SPLIT_CENTRAL_CONNECT_TIMEOUT K_SECONDS(15)
+#define SPLIT_CENTRAL_CONNECT_ABORT_GRACE K_SECONDS(2)
+""",
+    )
+
+    source = replace_once(
+        source,
+        """struct peripheral_slot {
+    enum peripheral_slot_state state;
+    struct bt_conn *conn;
+""",
+        """struct peripheral_slot {
+    enum peripheral_slot_state state;
+    struct bt_conn *conn;
+    int64_t connecting_since;
+    bool connection_abort_requested;
+""",
+    )
+
+    source = replace_once(
+        source,
+        """    slot->state = PERIPHERAL_SLOT_STATE_OPEN;
+""",
+        """    slot->state = PERIPHERAL_SLOT_STATE_OPEN;
+    slot->connecting_since = 0;
+    slot->connection_abort_requested = false;
+""",
+    )
+
+    source = replace_once(
+        source,
+        """            release_peripheral_slot(i);
+            peripherals[i].state = PERIPHERAL_SLOT_STATE_CONNECTING;
+            return i;
+""",
+        """            release_peripheral_slot(i);
+            peripherals[i].state = PERIPHERAL_SLOT_STATE_CONNECTING;
+            peripherals[i].connecting_since = k_uptime_get();
+            return i;
+""",
+    )
+
+    source = replace_once(
+        source,
+        """    peripherals[idx].state = PERIPHERAL_SLOT_STATE_CONNECTED;
+    return 0;
+""",
+        """    peripherals[idx].state = PERIPHERAL_SLOT_STATE_CONNECTED;
+    peripherals[idx].connecting_since = 0;
+    peripherals[idx].connection_abort_requested = false;
+    return 0;
 """,
     )
 
@@ -69,6 +120,30 @@ static K_WORK_DELAYABLE_DEFINE(split_central_scan_retry_work,
     bool has_unconnected = false;
     bool has_connecting = false;
     for (int i = 0; i < CONFIG_ZMK_SPLIT_BLE_CENTRAL_PERIPHERALS; i++) {
+        if (peripherals[i].state == PERIPHERAL_SLOT_STATE_CONNECTING) {
+            int64_t elapsed = k_uptime_get() - peripherals[i].connecting_since;
+            if (peripherals[i].connecting_since != 0 &&
+                elapsed >= SPLIT_CENTRAL_CONNECT_TIMEOUT) {
+                if (!peripherals[i].connection_abort_requested) {
+                    peripherals[i].connection_abort_requested = true;
+                    if (peripherals[i].conn == NULL) {
+                        release_peripheral_slot(i);
+                    } else {
+                        int err = bt_conn_disconnect(peripherals[i].conn,
+                                                     BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+                        if (err < 0) {
+                            LOG_WRN("Split connection abort failed (err %d); releasing slot %d",
+                                    err, i);
+                            release_peripheral_slot(i);
+                        }
+                    }
+                } else {
+                    LOG_WRN("Split connection abort did not complete; releasing slot %d", i);
+                    release_peripheral_slot(i);
+                }
+            }
+        }
+
         if (peripherals[i].conn == NULL) {
             has_unconnected = true;
         }
@@ -84,7 +159,7 @@ static K_WORK_DELAYABLE_DEFINE(split_central_scan_retry_work,
 
     if (has_connecting) {
         k_work_reschedule(&split_central_scan_retry_work,
-                          SPLIT_CENTRAL_SCAN_HEALTH_DELAY);
+                          SPLIT_CENTRAL_CONNECT_ABORT_GRACE);
         return;
     }
 
