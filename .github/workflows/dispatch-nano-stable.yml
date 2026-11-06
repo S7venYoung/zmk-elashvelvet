@@ -20,5 +20,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: >-
           gh workflow run build.yml
+          -R S7venYoung/zmk-elashvelvet
           --ref codex/nano-dongle-numpad
           -f variant=nano-stable
