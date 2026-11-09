@@ -40,7 +40,7 @@ static K_WORK_DELAYABLE_DEFINE(split_central_scan_retry_work,
                                split_central_scan_retry_cb);
 #define SPLIT_CENTRAL_SCAN_RETRY_DELAY K_SECONDS(1)
 #define SPLIT_CENTRAL_SCAN_HEALTH_DELAY K_SECONDS(10)
-#define SPLIT_CENTRAL_CONNECT_TIMEOUT K_SECONDS(15)
+#define SPLIT_CENTRAL_CONNECT_TIMEOUT_MS 15000
 #define SPLIT_CENTRAL_CONNECT_ABORT_GRACE K_SECONDS(2)
 """,
     )
@@ -123,7 +123,7 @@ static K_WORK_DELAYABLE_DEFINE(split_central_scan_retry_work,
         if (peripherals[i].state == PERIPHERAL_SLOT_STATE_CONNECTING) {
             int64_t elapsed = k_uptime_get() - peripherals[i].connecting_since;
             if (peripherals[i].connecting_since != 0 &&
-                elapsed >= SPLIT_CENTRAL_CONNECT_TIMEOUT) {
+                elapsed >= SPLIT_CENTRAL_CONNECT_TIMEOUT_MS) {
                 if (!peripherals[i].connection_abort_requested) {
                     peripherals[i].connection_abort_requested = true;
                     if (peripherals[i].conn == NULL) {

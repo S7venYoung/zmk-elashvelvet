@@ -49,7 +49,8 @@ harness = r'''
 #define CONFIG_ZMK_SPLIT_BLE_CENTRAL_PERIPHERALS 3
 #define BT_LE_SCAN_PASSIVE 0
 #define BT_HCI_ERR_REMOTE_USER_TERM_CONN 19
-#define K_SECONDS(value) ((value) * 1000)
+typedef struct { int milliseconds; } k_timeout_t;
+#define K_SECONDS(value) ((k_timeout_t){(value) * 1000})
 #define ARG_UNUSED(value) ((void)(value))
 #define LOG_DBG(...) ((void)0)
 #define LOG_ERR(...) ((void)0)
@@ -84,10 +85,6 @@ static int64_t uptime_ms = 100000;
 static int disconnect_calls;
 static int release_calls;
 static int disconnect_error;
-#define SPLIT_CENTRAL_SCAN_RETRY_DELAY K_SECONDS(1)
-#define SPLIT_CENTRAL_SCAN_HEALTH_DELAY K_SECONDS(10)
-#define SPLIT_CENTRAL_CONNECT_TIMEOUT K_SECONDS(15)
-#define SPLIT_CENTRAL_CONNECT_ABORT_GRACE K_SECONDS(2)
 
 static void split_central_device_found(int unused) { ARG_UNUSED(unused); }
 static int start_scanning(void);
@@ -122,10 +119,10 @@ static int release_peripheral_slot(int index) {
     return 0;
 }
 
-static int k_work_reschedule(struct k_work_delayable *work, int delay) {
+static int k_work_reschedule(struct k_work_delayable *work, k_timeout_t delay) {
     ARG_UNUSED(work);
     reschedules++;
-    retry_delay = delay;
+    retry_delay = delay.milliseconds;
     return 0;
 }
 
@@ -137,7 +134,9 @@ static int k_work_cancel_delayable(struct k_work_delayable *work) {
 }
 '''
 
-functions = "\n\n".join(
+defines = "\n".join(line for line in first.splitlines()
+                    if line.startswith("#define SPLIT_CENTRAL_"))
+functions = defines + "\n\n" + "\n\n".join(
     function(first, name)
     for name in (
         "stop_scanning",
