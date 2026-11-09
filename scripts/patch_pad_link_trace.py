@@ -19,11 +19,21 @@ def patch(text):
         ('    // Stop scanning so we can connect to the peripheral device.\n    int err = stop_scanning();', '    eyelash_diagnostic_stage(2, err);'),
         ('    err = bt_conn_le_create(addr, BT_CONN_LE_CREATE_CONN, param, &slot->conn);', '    eyelash_diagnostic_stage(3, err);'),
         ('    int err = bt_le_scan_start(BT_LE_SCAN_PASSIVE, split_central_device_found);', '    eyelash_diagnostic_stage(4, err);'),
+        ('        err = bt_gatt_discover(slot->conn, &slot->discover_params);',
+         '        eyelash_diagnostic_stage(12, err);'),
+        ('    LOG_DBG("Found split service");', '    eyelash_diagnostic_stage(13, 0);'),
+        ('    int err = bt_gatt_discover(conn, &slot->discover_params);',
+         '    eyelash_diagnostic_stage(14, err);'),
     ]
     for needle, inserted in hooks:
         if text.count(needle) != 1:
             raise ValueError(f'Expected one hook: {needle}')
         text = text.replace(needle, needle + '\n' + inserted)
+    subscribe = '            split_central_subscribe(conn, &slot->subscribe_params);'
+    if text.count(subscribe) != 1:
+        raise ValueError("Expected one split key notification subscription")
+    text = text.replace(subscribe, """            int subscribe_err = split_central_subscribe(conn, &slot->subscribe_params);
+            eyelash_diagnostic_stage(15, subscribe_err);""")
     declaration = f'/* {MARKER}: built only for the receiver diagnostic variant. */\nextern void eyelash_diagnostic_stage(unsigned stage, int result);\n'
     text = declaration + text
     text += '\nint eyelash_diagnostic_scan_state(void) {\n    return (is_enabled ? 1 : 0) | (is_scanning ? 2 : 0) | (settings_loaded ? 4 : 0) | (transport_status_cb ? 8 : 0);\n}\n'

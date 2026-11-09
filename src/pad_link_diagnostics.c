@@ -23,9 +23,9 @@ void eyelash_diagnostic_settings(const char *name, int phase, int result) {
 
 /* Stage 1: slot reservation; 2: stop scan; 3: create; 4: start scan. */
 void eyelash_diagnostic_stage(unsigned stage, int result) {
-    static int previous[12];
-    static int64_t last[12];
-    int64_t now = k_uptime_get();
+    static int previous[16];
+    static uint32_t last[16];
+    uint32_t now = k_uptime_get_32();
     if (stage >= ARRAY_SIZE(last)) { return; }
     if (last[stage] && previous[stage] == result && now - last[stage] < 1000) { return; }
     reached_stages |= BIT(stage);
@@ -34,18 +34,23 @@ void eyelash_diagnostic_stage(unsigned stage, int result) {
     LOG_INF("PAD_TRACE stage=%u result=%d", stage, result);
 }
 
-static void trace_connected(struct bt_conn *conn, uint8_t err) {
+static bool is_split_central_connection(struct bt_conn *conn) {
     struct bt_conn_info info;
-    if (bt_conn_get_info(conn, &info)) { return; }
-    LOG_INF("PAD_TRACE connected role=%u hci_error=%u slot=%d",
-            (unsigned)info.role, (unsigned)err, peripheral_slot_index_for_conn(conn));
+    return bt_conn_get_info(conn, &info) == 0 && info.type == BT_CONN_TYPE_LE &&
+           info.role == BT_CONN_ROLE_CENTRAL;
+}
+
+static void trace_connected(struct bt_conn *conn, uint8_t err) {
+    if (!is_split_central_connection(conn)) { return; }
+    LOG_INF("PAD_TRACE connected hci_error=%u slot=%d",
+            (unsigned)err, peripheral_slot_index_for_conn(conn));
 }
 static void trace_disconnected(struct bt_conn *conn, uint8_t reason) {
-    ARG_UNUSED(conn);
+    if (!is_split_central_connection(conn)) { return; }
     LOG_INF("PAD_TRACE disconnected hci_reason=%u", (unsigned)reason);
 }
 static void trace_security(struct bt_conn *conn, bt_security_t level, enum bt_security_err err) {
-    ARG_UNUSED(conn);
+    if (!is_split_central_connection(conn)) { return; }
     LOG_INF("PAD_TRACE security level=%u error=%u", (unsigned)level, (unsigned)err);
 }
 BT_CONN_CB_DEFINE(eyelash_diagnostic_callbacks) = {
