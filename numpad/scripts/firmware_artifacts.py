@@ -192,8 +192,12 @@ def release(application_path, bootloader_path, destination, nrfutil="adafruit-nr
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--application", type=Path, required=True)
-    parser.add_argument("--bootloader", type=Path, required=True)
+    parser.add_argument("--bootloader", type=Path, help="Include the bootloader and full SWD kit")
     parser.add_argument("--output", type=Path, default=ROOT / "dist/release")
     parser.add_argument("--nrfutil", default="adafruit-nrfutil")
     args = parser.parse_args()
-    release(args.application, args.bootloader, args.output, args.nrfutil)
+    if args.bootloader is None:
+        package_application(args.application, args.output / "eyelash-numpad-peripheral-ota.zip",
+                            args.nrfutil)
+    else:
+        release(args.application, args.bootloader, args.output, args.nrfutil)

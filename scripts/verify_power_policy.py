@@ -4,17 +4,17 @@ from pathlib import Path
 import sys
 
 root = Path(sys.argv[1] if len(sys.argv) > 1 else 'build')
-for target in ('velvet_nano_dongle', 'velvet_left_dongle', 'velvet_right_dongle',
-               'eyelash_numpad_peripheral'):
+targets = sys.argv[2:] or ('velvet_nano_dongle', 'velvet_left_dongle', 'velvet_right_dongle',
+                           'eyelash_numpad_peripheral')
+for target in targets:
     path = root / target / 'zephyr/.config'
     lines = set(path.read_text().splitlines())
-    if target == 'eyelash_numpad_peripheral':
+    if target in ('eyelash_numpad_peripheral', 'pad_local_dfu'):
         expected = ['# CONFIG_ZMK_SLEEP is not set', 'CONFIG_ZMK_IDLE_TIMEOUT=7200000',
                     '# CONFIG_ZMK_KSCAN_MATRIX_POLLING is not set']
         symbols = (path.parent / 'zmk.map').read_text()
-        assert 'pad_advertising_timeout' in symbols, target
-        assert 'pad_resume_advertising' in symbols, target
-        assert 'eyelash_advertising_wake' in symbols, target
+        assert 'pad_advertising_timeout' not in symbols, target
+        assert 'eyelash_advertising_wake' not in symbols, target
     else:
         expected = ['CONFIG_ZMK_SLEEP=y', 'CONFIG_ZMK_IDLE_SLEEP_TIMEOUT=7200000',
                     'CONFIG_ZMK_IDLE_TIMEOUT=15000']

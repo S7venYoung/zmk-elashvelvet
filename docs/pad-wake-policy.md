@@ -1,3 +1,8 @@
+> Current Pad recovery build: system-off is disabled and disconnected
+> advertising uses the stock ZMK split behavior without a five-minute cutoff.
+> The policy below describes the earlier RMK-style experiment. Use
+> `pad-local-dfu` for the current application-only OTA.
+
 # Pad RMK-compatible idle policy
 
 ## Owning source
