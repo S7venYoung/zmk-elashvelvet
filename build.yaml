@@ -16,7 +16,7 @@ include:
     artifact: velvet_right_dongle
   - board: nice_nano//zmk
     shield: velvet_right nice_view velvet_dual_host
-    cmake-args: -DCONFIG_LV_FONT_DEFAULT_MONTSERRAT_16=y -DCONFIG_ZMK_LV_FONT_DEFAULT_SMALL_MONTSERRAT_12=y -DCONFIG_LV_FONT_MONTSERRAT_26=n
+    cmake-args: -DCONFIG_LV_FONT_DEFAULT_MONTSERRAT_12=y -DCONFIG_ZMK_LV_FONT_DEFAULT_SMALL_MONTSERRAT_12=y -DCONFIG_LV_FONT_MONTSERRAT_16=n -DCONFIG_LV_FONT_MONTSERRAT_26=n
     artifact: velvet_right_host_slot
   - board: nice_nano_k/nrf52833
     shield: settings_reset
