@@ -508,6 +508,8 @@ jobs:
           cp docs/nano-dongle-numpad.md firmware/README.md
       - name: Package application-only Pad OTA
         run: |
+          apt-get update
+          apt-get install -y --no-install-recommends python3-venv
           python3 -m venv /tmp/pad-dfu-venv
           /tmp/pad-dfu-venv/bin/pip install -r numpad/requirements-dfu.txt
           python3 numpad/scripts/firmware_artifacts.py \
