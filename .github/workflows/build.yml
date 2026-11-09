@@ -204,6 +204,7 @@ jobs:
           for name in "${expected[@]}"; do
             test -s "firmware/$name" || { echo "Missing firmware: $name" >&2; exit 1; }
           done
+          python3 scripts/verify_uf2_addresses.py firmware
       - uses: actions/upload-artifact@v4
         with:
           name: firmware
