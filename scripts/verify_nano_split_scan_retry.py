@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Verify the scan recovery callback and state are present in the ARM ELF."""
 from pathlib import Path
+import re
 import struct
 import sys
 
@@ -29,7 +30,7 @@ def symbols(path):
 
 
 def verify(path):
-    found = symbols(path)
+    found = {re.sub(r"\.lto_priv\.\d+$", "", name) for name in symbols(path)}
     required = {
         "start_scanning",
         "split_central_scan_retry_cb",
