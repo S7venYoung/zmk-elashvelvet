@@ -115,6 +115,11 @@ def central(source):
             source[end:])
 
 
+def nice_view_fonts(source):
+    return replace(source, "    select LV_FONT_MONTSERRAT_26\n",
+                   "    select LV_FONT_MONTSERRAT_26 if !SHIELD_VELVET_DUAL_HOST\n")
+
+
 if __name__ == "__main__":
     app = Path(sys.argv[1])
     ble = app / "src/split/bluetooth"
@@ -124,3 +129,8 @@ if __name__ == "__main__":
     patch(app / "src/physical_layouts.c", local_matrix)
     patch(ble / "peripheral.c", peripheral)
     patch(ble / "central.c", central)
+    fonts = app / "boards/shields/nice_view/Kconfig.defconfig"
+    # Kconfig uses hash comments rather than the C hook marker.
+    source = fonts.read_text()
+    if "if !SHIELD_VELVET_DUAL_HOST" not in source:
+        fonts.write_text(nice_view_fonts(source))
