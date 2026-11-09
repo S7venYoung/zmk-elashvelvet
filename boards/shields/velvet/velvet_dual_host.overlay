@@ -1,0 +1,10 @@
+#include "../../../dual-mode/layout.h"
+
+&code_partition {
+    reg = <VELVET_HOST_IMAGE_START (VELVET_HOST_SETTINGS_START - VELVET_HOST_IMAGE_START)>;
+};
+
+/* Keep the existing Nano-mode bonds and right-host settings in separate NVS areas. */
+&storage_partition {
+    reg = <VELVET_HOST_SETTINGS_START (VELVET_MODE_START - VELVET_HOST_SETTINGS_START)>;
+};

@@ -8,12 +8,15 @@ include:
     artifact: velvet_nano_dongle
   - board: nice_nano//zmk
     shield: velvet_left nice_view_custom velvet_split_peripheral
-    cmake-args: -DCONFIG_ZMK_DISPLAY_STATUS_SCREEN_BUILT_IN=n -DCONFIG_ZMK_DISPLAY_STATUS_SCREEN_CUSTOM=y -DCONFIG_NICE_VIEW_WIDGET_STATUS=n -DCONFIG_VELVET_DASHBOARD_DISPLAY=y -DCONFIG_ZMK_SPLIT_RELAY_EVENT_DATA_LEN=256
+    cmake-args: -DCONFIG_ZMK_DISPLAY_STATUS_SCREEN_BUILT_IN=n -DCONFIG_ZMK_DISPLAY_STATUS_SCREEN_CUSTOM=y -DCONFIG_NICE_VIEW_WIDGET_STATUS=n -DCONFIG_VELVET_DASHBOARD_DISPLAY=y -DCONFIG_ZMK_SPLIT_RELAY_EVENT_DATA_LEN=256 -DCONFIG_VELVET_DUAL_LEFT=y -DCONFIG_BT_ID_MAX=2 -DCONFIG_BT_MAX_PAIRED=2 -DCONFIG_BT_OBSERVER=y -DCONFIG_BT_EXT_ADV=y -DCONFIG_BT_SCAN_WITH_IDENTITY=y
     artifact: velvet_left_dongle
   - board: nice_nano//zmk
-    shield: velvet_right nice_view_custom velvet_split_peripheral
+    shield: velvet_right nice_view_custom velvet_split_peripheral velvet_dual_nano
     cmake-args: -DCONFIG_ZMK_DISPLAY_STATUS_SCREEN_BUILT_IN=n -DCONFIG_ZMK_DISPLAY_STATUS_SCREEN_CUSTOM=y -DCONFIG_NICE_VIEW_WIDGET_STATUS=n -DCONFIG_VELVET_CAT_DISPLAY=n -DCONFIG_VELVET_DASHBOARD_DISPLAY=y -DCONFIG_ZMK_SPLIT_RELAY_EVENT_DATA_LEN=256
     artifact: velvet_right_dongle
+  - board: nice_nano//zmk
+    shield: velvet_right nice_view velvet_dual_host
+    artifact: velvet_right_host_slot
   - board: nice_nano_k/nrf52833
     shield: settings_reset
     artifact: settings_reset_nano

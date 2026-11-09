@@ -18,3 +18,9 @@ config ZMK_SPLIT_ROLE_CENTRAL
 
 config ZMK_BACKLIGHT
     default y if SHIELD_VELVET_LEFT || (SHIELD_VELVET_RIGHT && !SHIELD_VELVET_SPLIT_PERIPHERAL)
+
+config SHIELD_VELVET_DUAL_NANO
+    def_bool $(shields_list_contains,velvet_dual_nano)
+
+config SHIELD_VELVET_DUAL_HOST
+    def_bool $(shields_list_contains,velvet_dual_host)

@@ -19,3 +19,11 @@ config VELVET_DASHBOARD_DISPLAY
     depends on SHIELD_VELVET_SPLIT_PERIPHERAL && ZMK_DISPLAY && ZMK_SPLIT_RELAY_EVENT
     select LV_USE_IMAGE
     default n
+
+config VELVET_DUAL_RIGHT
+    bool "Right-half runtime chord to select the other application"
+    depends on SHIELD_VELVET_RIGHT && FLASH
+
+config VELVET_DUAL_LEFT
+    bool "Left-half target selection from the right-host beacon"
+    depends on SHIELD_VELVET_LEFT && ZMK_SPLIT_BLE && !ZMK_SPLIT_ROLE_CENTRAL && SETTINGS

@@ -109,6 +109,10 @@ static void refresh(lv_timer_t *timer){
  view.keyboard.output=fresh?output:DASH_OUTPUT_NONE;
  view.keyboard.profile=fresh?profile:0;
  memcpy(view.data,host,sizeof(host));k_spin_unlock(&lock,key);
+#if IS_ENABLED(CONFIG_VELVET_DUAL_LEFT)
+ extern bool velvet_dual_left_is_right_host(void);
+ if(velvet_dual_left_is_right_host()){known=true;selected=0;}
+#endif
  if(!fresh)view.data[1]=0;
  if(!(view.data[1]&DASH_CPU)){view.count=0;history_started=false;}
  else if(!history_started||history_sequence!=view.data[2]){

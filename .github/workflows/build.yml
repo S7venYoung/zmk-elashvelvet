@@ -20,6 +20,8 @@ jobs:
         run: python3 scripts/test_settings_reset_bootloader.py
       - name: Make settings reset return to bootloader
         run: python3 scripts/patch_settings_reset_bootloader.py dependencies/zmk/app/src/settings/reset_settings_on_start.c
+      - name: Install dual-mode keyboard hooks
+        run: python3 scripts/patch_dual_mode.py dependencies/zmk/app
       - name: Test physical-half telemetry
         run: |
           cc -Wall -Wextra -Werror -Isrc scripts/test_half_telemetry.c -o /tmp/test-half
@@ -47,6 +49,22 @@ jobs:
       - name: Install physical-half scanner status fields
         run: python3 scripts/patch_dongle_status_fields.py dependencies/prospector-zmk-module/src/status_advertisement.c
       - run: west zmk-build -d ./build -q
+      - name: Verify dual-mode roles and hooks
+        shell: bash
+        run: |
+          left=build/velvet_left_dongle/zephyr
+          nano=build/velvet_right_dongle/zephyr
+          host=build/velvet_right_host_slot/zephyr
+          grep -qx 'CONFIG_VELVET_DUAL_LEFT=y' "$left/.config"
+          grep -qx '# CONFIG_ZMK_SPLIT_ROLE_CENTRAL is not set' "$left/.config"
+          grep -q velvet_dual_left_select_identity "$left/zmk.map"
+          grep -qx '# CONFIG_ZMK_SPLIT_ROLE_CENTRAL is not set' "$nano/.config"
+          grep -qx 'CONFIG_ZMK_SPLIT_ROLE_CENTRAL=y' "$host/.config"
+          grep -qx 'CONFIG_ZMK_USB=y' "$host/.config"
+          for slot in "$nano" "$host"; do
+            grep -qx 'CONFIG_VELVET_DUAL_RIGHT=y' "$slot/.config"
+            grep -q velvet_dual_right_matrix "$slot/zmk.map"
+          done
       - name: Verify DYA central capabilities
         run: python3 scripts/verify_dya_features.py build
       - name: Test Codex and system dashboard renderers
@@ -192,7 +210,14 @@ jobs:
           while IFS= read -r -d '' image; do
             name=$(basename "$(dirname "$(dirname "$image")")")
             cp "$image" "firmware/${name}.uf2"
-          done < <(find build -type f -path '*/zephyr/zmk.uf2' -print0)
+          done < <(find build -type f -path '*/zephyr/zmk.uf2' ! -path 'build/velvet_right_host_slot/*' -print0)
+
+          sdk_bin="${ZEPHYR_SDK_INSTALL_DIR:-/opt/zephyr-sdk-0.16.9}/arm-zephyr-eabi/bin"
+          "$sdk_bin/arm-zephyr-eabi-gcc" -mcpu=cortex-m4 -mthumb -Os -nostdlib -ffreestanding \
+            -fno-unwind-tables -fno-asynchronous-unwind-tables -Wl,--build-id=none -T dual-mode/selector.ld \
+            dual-mode/selector.c -o build/velvet-right-selector.elf
+          "$sdk_bin/arm-zephyr-eabi-objcopy" -O binary build/velvet-right-selector.elf build/velvet-right-selector.bin
+          python3 scripts/package_dual_right.py build firmware/velvet_right_dongle.uf2
 
           expected=(
             velvet_nano_dongle.uf2

@@ -1,0 +1,5 @@
+#include "../../../dual-mode/layout.h"
+
+&code_partition {
+    reg = <VELVET_NANO_IMAGE_START (VELVET_HOST_IMAGE_START - VELVET_NANO_IMAGE_START)>;
+};
