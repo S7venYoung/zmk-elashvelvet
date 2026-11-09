@@ -1,5 +1,9 @@
 > Current Pad recovery build: system-off is disabled and disconnected
-> advertising uses the stock ZMK split behavior without a five-minute cutoff.
+> advertising stays available without a five-minute cutoff. The Pad keeps the
+> initial fast directed attempt for a bonded receiver, then uses a 2–2.5 s
+> interval for slow directed advertising. Unpaired advertising uses the same
+> slow interval. Connected BLE and the GPIO interrupt driven matrix retain
+> their existing idle behavior.
 > The policy below describes the earlier RMK-style experiment. Use
 > `pad-local-dfu` for the current application-only OTA.
 
