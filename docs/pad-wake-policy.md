@@ -3,7 +3,11 @@
 > initial fast directed attempt for a bonded receiver, then uses a 2–2.5 s
 > interval for slow directed advertising. Unpaired advertising uses the same
 > slow interval. Connected BLE and the GPIO interrupt driven matrix retain
-> their existing idle behavior.
+> their existing idle behavior. After a disconnect, the Pad retries advertising
+> after one second independently of the BLE connection recycle callback.
+> While disconnected it refreshes the low duty advertiser every 30 seconds.
+> Test by unplugging only the receiver for about two minutes, reconnecting it,
+> and checking Pad key input without cycling Pad power.
 > The policy below describes the earlier RMK-style experiment. Use
 > `pad-local-dfu` for the current application-only OTA.
 

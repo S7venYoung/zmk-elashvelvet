@@ -13,6 +13,7 @@ for target in targets:
         expected = ['# CONFIG_ZMK_SLEEP is not set', 'CONFIG_ZMK_IDLE_TIMEOUT=7200000',
                     '# CONFIG_ZMK_KSCAN_MATRIX_POLLING is not set']
         symbols = (path.parent / 'zmk.map').read_text()
+        assert 'pad_advertising_recovery_cb' in symbols, target
         assert 'pad_advertising_timeout' not in symbols, target
         assert 'eyelash_advertising_wake' not in symbols, target
     else:

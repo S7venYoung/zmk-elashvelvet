@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Slow continuous Eyelash Pad advertising while disconnected."""
+"""Keep Eyelash Pad advertising slowly and recover stalled reconnects."""
 from pathlib import Path
 import sys
 
@@ -33,6 +33,90 @@ static int start_advertising(bool low_duty) {""",
 #else
         return bt_le_adv_start(BT_LE_ADV_CONN_FAST_2, zmk_ble_ad, ARRAY_SIZE(zmk_ble_ad), NULL, 0);
 #endif""",
+    "static void advertising_cb(struct k_work *work) {": """#if IS_ENABLED(CONFIG_SHIELD_EYELASH_NUMPAD)
+static void pad_advertising_recovery_cb(struct k_work *work);
+static K_WORK_DELAYABLE_DEFINE(pad_advertising_recovery, pad_advertising_recovery_cb);
+#endif
+
+static void advertising_cb(struct k_work *work) {
+#if IS_ENABLED(CONFIG_SHIELD_EYELASH_NUMPAD)
+    if (!enabled || is_connected) {
+        return;
+    }
+#endif""",
+    '        LOG_ERR("Failed to start advertising (%d)", err);\n    }\n}': """        LOG_ERR("Failed to start advertising (%d)", err);
+    }
+#if IS_ENABLED(CONFIG_SHIELD_EYELASH_NUMPAD)
+    if (enabled && !is_connected) {
+        /* Retry failures promptly; refresh a possibly stalled advertiser at low duty. */
+        k_work_reschedule(&pad_advertising_recovery,
+                          (err == 0 || err == -EALREADY) ? K_SECONDS(30) : K_SECONDS(1));
+    }
+#endif
+}""",
+    "K_WORK_DEFINE(advertising_work, advertising_cb);": """K_WORK_DEFINE(advertising_work, advertising_cb);
+
+#if IS_ENABLED(CONFIG_SHIELD_EYELASH_NUMPAD)
+static void pad_advertising_recovery_cb(struct k_work *work) {
+    if (!enabled || is_connected) {
+        return;
+    }
+    int err = bt_le_adv_stop();
+    if (err && err != -EALREADY) {
+        if (enabled && !is_connected) {
+            k_work_reschedule(&pad_advertising_recovery, K_SECONDS(1));
+        }
+        return;
+    }
+    low_duty_advertising = true;
+    advertising_cb(work);
+}
+#endif""",
+    "    is_connected = (err == 0);": """    is_connected = (err == 0);
+#if IS_ENABLED(CONFIG_SHIELD_EYELASH_NUMPAD)
+    if (is_connected) {
+        k_work_cancel_delayable(&pad_advertising_recovery);
+    }
+#endif""",
+    """static void recycled(void) {
+    if (enabled) {
+        low_duty_advertising = false;
+        k_work_submit(&advertising_work);
+    }
+}""": """static void recycled(void) {
+    if (enabled) {
+#if IS_ENABLED(CONFIG_SHIELD_EYELASH_NUMPAD)
+        /* Stopping the advertiser can itself recycle a connection object. */
+        if (!is_connected) {
+            k_work_schedule(&pad_advertising_recovery, K_SECONDS(30));
+        }
+#else
+        low_duty_advertising = false;
+        k_work_submit(&advertising_work);
+#endif
+    }
+}""",
+    "    is_connected = false;\n\n    raise_zmk_split_peripheral_status_changed(": """    is_connected = false;
+#if IS_ENABLED(CONFIG_SHIELD_EYELASH_NUMPAD)
+    if (enabled) {
+        k_work_reschedule(&pad_advertising_recovery, K_SECONDS(1));
+    }
+#endif
+
+    raise_zmk_split_peripheral_status_changed(""",
+    "    enabled = en;\n    if (en) {": """    enabled = en;
+#if IS_ENABLED(CONFIG_SHIELD_EYELASH_NUMPAD)
+    if (!en) {
+        k_work_cancel_delayable(&pad_advertising_recovery);
+    } else {
+        low_duty_advertising = false;
+    }
+#endif
+    if (en) {""",
+    "static bool is_connected = false;": """#include <errno.h>
+
+static bool is_connected = false;""",
+
 }
 
 for old, new in replacements.items():
