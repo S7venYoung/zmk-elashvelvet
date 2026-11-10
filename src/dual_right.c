@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <zephyr/drivers/flash.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
@@ -48,6 +49,13 @@ static void switch_image(struct k_work *work) {
     }
     err = flash_write(flash, offset, &mode, sizeof(mode));
     if (err) {
+        goto failed;
+    }
+
+    uint32_t stored;
+    err = flash_read(flash, offset, &stored, sizeof(stored));
+    if (err || stored != mode) {
+        err = err ? err : -EIO;
         goto failed;
     }
 
