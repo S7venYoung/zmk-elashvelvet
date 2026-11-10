@@ -32,4 +32,5 @@ target_sources_ifdef(CONFIG_VELVET_PAD_LINK_DIAGNOSTICS app PRIVATE src/pad_link
 # Local recovery must run on the Pad, even without a split connection.
 if(CONFIG_SHIELD_EYELASH_NUMPAD AND CONFIG_SOC_NRF52832_QFAA)
   target_sources(app PRIVATE src/eyelash_local_dfu.c)
+  target_sources_ifdef(CONFIG_LOG_BACKEND_RTT app PRIVATE src/eyelash_pad_rtt_diagnostics.c)
 endif()

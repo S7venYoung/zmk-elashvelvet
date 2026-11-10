@@ -12,6 +12,7 @@ on:
           - pad-diagnostic
           - pad-clear-bonds
           - pad-local-dfu
+          - pad-rtt-diagnostic
 jobs:
   build:
     if: ${{ inputs.variant == 'normal' }}
@@ -475,7 +476,7 @@ jobs:
             build/pad_clear_bonds/zephyr/zmk.map
 
   pad-local-dfu:
-    if: ${{ inputs.variant == 'pad-local-dfu' }}
+    if: ${{ inputs.variant == 'pad-local-dfu' || inputs.variant == 'pad-rtt-diagnostic' }}
     runs-on: ubuntu-latest
     container: zmkfirmware/zmk-build-arm:stable
     steps:
@@ -484,15 +485,22 @@ jobs:
       - run: python3 scripts/patch_behavior_names.py dependencies
       - name: Set low duty Pad reconnect advertising
         run: python3 scripts/patch_pad_advertising_interval.py dependencies/zmk/app/src/split/bluetooth/peripheral.c
-      - name: Build normal Pad with local DFU shortcut
-        run: >-
-          west build -s dependencies/zmk/app -d build/pad_local_dfu
-          -b eyelash_numpad/nrf52832 --
-          -DZMK_CONFIG=$PWD/config
-          -DZMK_EXTRA_MODULES=$PWD
-          -DSHIELD=eyelash_numpad
-          -DCONFIG_ZMK_BLE_CLEAR_BONDS_ON_START=n
+      - name: Build Pad with local DFU shortcut
+        env:
+          PAD_VARIANT: ${{ inputs.variant }}
+        run: |
+          set --
+          if [ "$PAD_VARIANT" = pad-rtt-diagnostic ]; then
+            python3 scripts/patch_pad_rtt_trace.py dependencies/zmk/app/src/split/bluetooth/peripheral.c
+            set -- "-DEXTRA_CONF_FILE=$PWD/config/pad_rtt_diagnostic.conf"
+          fi
+          west build -s dependencies/zmk/app -d build/pad_local_dfu \
+            -b eyelash_numpad/nrf52832 -- \
+            -DZMK_CONFIG="$PWD/config" -DZMK_EXTRA_MODULES="$PWD" \
+            -DSHIELD=eyelash_numpad -DCONFIG_ZMK_BLE_CLEAR_BONDS_ON_START=n "$@"
       - name: Verify target and restricted reset policy
+        env:
+          PAD_VARIANT: ${{ inputs.variant }}
         run: |
           cfg=build/pad_local_dfu/zephyr/.config
           python3 scripts/verify_power_policy.py build pad_local_dfu
@@ -503,10 +511,17 @@ jobs:
           find build/pad_local_dfu -name eyelash_local_dfu.c.obj | grep -q .
           cc -std=c11 -Wall -Wextra -Werror -Isrc scripts/test_eyelash_local_dfu.c -o /tmp/test-local-dfu
           /tmp/test-local-dfu
+          if [ "$PAD_VARIANT" = pad-rtt-diagnostic ]; then
+            grep -qx 'CONFIG_LOG_BACKEND_RTT=y' "$cfg"
+            grep -qx 'CONFIG_LOG_BACKEND_RTT_MODE_DROP=y' "$cfg"
+            grep -q 'pad_rtt_heartbeat' build/pad_local_dfu/zephyr/zmk.map
+          fi
           mkdir -p firmware
           cp build/pad_local_dfu/zephyr/zmk.hex firmware/eyelash_numpad_peripheral_local_dfu.hex
           cp docs/nano-dongle-numpad.md firmware/README.md
       - name: Package application-only Pad OTA
+        env:
+          PAD_VARIANT: ${{ inputs.variant }}
         run: |
           apt-get update
           apt-get install -y --no-install-recommends python3-venv
@@ -515,18 +530,23 @@ jobs:
           python3 numpad/scripts/firmware_artifacts.py \
             --application firmware/eyelash_numpad_peripheral_local_dfu.hex \
             --output firmware --nrfutil /tmp/pad-dfu-venv/bin/adafruit-nrfutil
+          if [ "$PAD_VARIANT" = pad-rtt-diagnostic ]; then
+            mv firmware/eyelash-numpad-peripheral-ota.zip firmware/eyelash-pad-rtt-diagnostic-ota.zip
+            cp docs/pad-rtt-diagnostic.md firmware/README.md
+          fi
           sha256sum firmware/*.hex firmware/*.zip > firmware/SHA256SUMS
       - uses: actions/upload-artifact@v4
         with:
-          name: eyelash-pad-local-dfu
+          name: eyelash-${{ inputs.variant }}
           path: firmware/
           if-no-files-found: error
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: eyelash-pad-local-dfu-evidence
+          name: eyelash-${{ inputs.variant }}-evidence
           include-hidden-files: true
           path: |
             build/pad_local_dfu/zephyr/.config
             build/pad_local_dfu/zephyr/zephyr.dts
             build/pad_local_dfu/zephyr/zmk.map
+            build/pad_local_dfu/zephyr/zmk.elf
