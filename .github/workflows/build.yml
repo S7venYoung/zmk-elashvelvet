@@ -1,8 +1,17 @@
 name: Build ZMK firmware
 on:
   workflow_dispatch:
+    inputs:
+      variant:
+        description: Firmware target
+        type: choice
+        options:
+          - normal
+          - right-host-diagnostic
+        default: normal
 jobs:
   build:
+    if: inputs.variant != 'right-host-diagnostic'
     runs-on: ubuntu-latest
     container: zmkfirmware/zmk-build-arm:stable
     steps:
@@ -234,3 +243,27 @@ jobs:
         with:
           name: firmware
           path: firmware/*.uf2
+  right-host-diagnostic:
+    if: inputs.variant == 'right-host-diagnostic'
+    runs-on: ubuntu-latest
+    container: zmkfirmware/zmk-build-arm:stable
+    steps:
+      - uses: actions/checkout@v4
+      - run: west init -l config && west update --narrow && west zephyr-export
+      - run: python3 scripts/patch_behavior_names.py dependencies
+      - run: python3 scripts/patch_dual_mode.py dependencies/zmk/app
+      - run: west zmk-build --build-yaml dual-mode/build-right-host-diagnostic.yaml -d ./build -q
+      - name: Verify and collect right-host diagnostic
+        shell: bash
+        run: |
+          app=build/velvet_right_host_diagnostic/zephyr
+          for key in SHIELD_VELVET_HOST_DIAGNOSTIC ZMK_SPLIT_ROLE_CENTRAL ZMK_USB ZMK_USB_LOGGING; do
+            grep -qx "CONFIG_${key}=y" "$app/.config"
+          done
+          PYTHONPATH=scripts python3 -c 'import sys; from pathlib import Path; from verify_uf2_addresses import verify; verify(Path(sys.argv[1]), 0xADA52840, 0x26000, 0xe7000)' "$app/zmk.uf2"
+          mkdir -p firmware
+          cp "$app/zmk.uf2" firmware/velvet_right_host_diagnostic.uf2
+      - uses: actions/upload-artifact@v4
+        with:
+          name: right-host-diagnostic
+          path: firmware/velvet_right_host_diagnostic.uf2

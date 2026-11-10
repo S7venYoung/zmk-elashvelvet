@@ -24,3 +24,6 @@ config SHIELD_VELVET_DUAL_NANO
 
 config SHIELD_VELVET_DUAL_HOST
     def_bool $(shields_list_contains,velvet_dual_host)
+
+config SHIELD_VELVET_HOST_DIAGNOSTIC
+    def_bool $(shields_list_contains,velvet_host_diagnostic)

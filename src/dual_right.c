@@ -16,6 +16,9 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
 static void switch_image(struct k_work *work) {
     ARG_UNUSED(work);
+    if (IS_ENABLED(CONFIG_SHIELD_VELVET_HOST_DIAGNOSTIC)) {
+        return;
+    }
     const struct device *flash = FIXED_PARTITION_DEVICE(code_partition);
     const uint32_t mode = IS_ENABLED(CONFIG_SHIELD_VELVET_DUAL_HOST)
                               ? VELVET_MODE_NANO : VELVET_MODE_HOST;

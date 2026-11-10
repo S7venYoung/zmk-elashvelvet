@@ -1,0 +1,7 @@
+#include "../../../dual-mode/layout.h"
+
+/* Keep host NVS, but let the standard nice!nano bootloader launch the host
+ * application directly so we can isolate the dual-image handoff. */
+&code_partition {
+    reg = <VELVET_SELECTOR_START (VELVET_HOST_SETTINGS_START - VELVET_SELECTOR_START)>;
+};

@@ -18,12 +18,21 @@ def patch(path, transform):
 
 
 def startup(source):
-    return replace(source, "    settings_load();\n#endif", """    settings_load();
+    return replace(source, "    settings_load();\n#endif", """#if IS_ENABLED(CONFIG_SHIELD_VELVET_HOST_DIAGNOSTIC)
+    LOG_INF("RIGHT HOST: main reached, loading settings");
+#endif
+    settings_load();
+#if IS_ENABLED(CONFIG_SHIELD_VELVET_HOST_DIAGNOSTIC)
+    LOG_INF("RIGHT HOST: settings loaded");
+#endif
 #endif
 
 #if IS_ENABLED(CONFIG_VELVET_DUAL_LEFT) || IS_ENABLED(CONFIG_SHIELD_VELVET_DUAL_HOST)
     extern void velvet_dual_link_start(void);
     velvet_dual_link_start();
+#if IS_ENABLED(CONFIG_SHIELD_VELVET_HOST_DIAGNOSTIC)
+    LOG_INF("RIGHT HOST: link startup returned; entering display initialization");
+#endif
 #endif""")
 
 
