@@ -10,6 +10,7 @@ on:
           - normal
           - nano-stable
           - pad-diagnostic
+          - pad-diagnostic-upstream-3538
           - pad-clear-bonds
           - pad-local-dfu
           - pad-rtt-diagnostic
@@ -378,16 +379,22 @@ jobs:
           include-hidden-files: true
 
   pad-dongle-diagnostic:
-    if: ${{ inputs.variant == 'pad-diagnostic' }}
+    if: ${{ inputs.variant == 'pad-diagnostic' || inputs.variant == 'pad-diagnostic-upstream-3538' }}
     runs-on: ubuntu-latest
     container: zmkfirmware/zmk-build-arm:stable
     steps:
       - uses: actions/checkout@v4
       - run: west init -l config && west update --narrow && west zephyr-export
-      - name: Apply normal Nano source preparation
+      - name: Prepare Nano diagnostic sources
+        env:
+          PAD_VARIANT: ${{ inputs.variant }}
         run: |
-          python3 scripts/test_nano_split_scan_retry.py dependencies/zmk/app/src/split/bluetooth/central.c
-          python3 scripts/patch_nano_split_scan_retry.py dependencies/zmk/app/src/split/bluetooth/central.c
+          if [ "$PAD_VARIANT" = pad-diagnostic-upstream-3538 ]; then
+            python3 scripts/patch_nano_upstream_3538.py dependencies/zmk/app/src/split/bluetooth/central.c
+          else
+            python3 scripts/test_nano_split_scan_retry.py dependencies/zmk/app/src/split/bluetooth/central.c
+            python3 scripts/patch_nano_split_scan_retry.py dependencies/zmk/app/src/split/bluetooth/central.c
+          fi
           python3 scripts/test_ble_management_split_info.py dependencies/zmk-module-ble-management/src/studio/ble_management_handler.c
           python3 scripts/patch_ble_management_split_info.py dependencies/zmk-module-ble-management/src/studio/ble_management_handler.c
           python3 scripts/patch_behavior_names.py dependencies
@@ -400,9 +407,15 @@ jobs:
       - name: Build only the three-peer receiver diagnostic variant
         run: python3 scripts/build_pad_diagnostic.py --build
       - name: Verify compiled diagnostics and preserved bonds policy
+        env:
+          PAD_VARIANT: ${{ inputs.variant }}
         run: |
           python3 scripts/verify_nano_split_init.py build/pad_dongle_diagnostic/zephyr/zmk.elf
-          python3 scripts/verify_nano_split_scan_retry.py build/pad_dongle_diagnostic/zephyr/zmk.elf
+          if [ "$PAD_VARIANT" = pad-diagnostic-upstream-3538 ]; then
+            PYTHONPATH=scripts python3 -c 'from verify_nano_split_scan_retry import symbols; s = symbols("build/pad_dongle_diagnostic/zephyr/zmk.elf"); assert any(n.startswith("start_scanning_retry_fn") for n in s); assert not any(n.startswith("split_central_scan_retry") for n in s)'
+          else
+            python3 scripts/verify_nano_split_scan_retry.py build/pad_dongle_diagnostic/zephyr/zmk.elf
+          fi
           python3 scripts/verify_dya_features.py build
           cfg=build/pad_dongle_diagnostic/zephyr/.config
           grep -qx 'CONFIG_VELVET_PAD_LINK_DIAGNOSTICS=y' "$cfg"
@@ -412,19 +425,25 @@ jobs:
           ! grep -qx 'CONFIG_ZMK_SETTINGS_RESET_ON_START=y' "$cfg"
           find build/pad_dongle_diagnostic -name pad_link_diagnostics.c.obj | grep -q .
       - name: Collect clearly named diagnostic image
+        env:
+          PAD_VARIANT: ${{ inputs.variant }}
         run: |
           mkdir -p firmware
-          cp build/pad_dongle_diagnostic/zephyr/zmk.uf2 firmware/velvet_nano_dongle_pad_diagnostic.uf2
+          name=velvet_nano_dongle_pad_diagnostic
+          if [ "$PAD_VARIANT" = pad-diagnostic-upstream-3538 ]; then
+            name="${name}_upstream_3538"
+          fi
+          cp build/pad_dongle_diagnostic/zephyr/zmk.uf2 "firmware/$name.uf2"
           cp docs/pad-link-diagnostic.md firmware/README.md
       - uses: actions/upload-artifact@v4
         with:
-          name: pad-dongle-diagnostic
+          name: ${{ inputs.variant == 'pad-diagnostic-upstream-3538' && 'pad-dongle-diagnostic-upstream-3538' || 'pad-dongle-diagnostic' }}
           path: firmware/
           if-no-files-found: error
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: pad-dongle-diagnostic-evidence
+          name: ${{ inputs.variant == 'pad-diagnostic-upstream-3538' && 'pad-dongle-diagnostic-upstream-3538-evidence' || 'pad-dongle-diagnostic-evidence' }}
           path: |
             build/pad_dongle_diagnostic/zephyr/.config
             build/pad_dongle_diagnostic/zephyr/zephyr.dts
