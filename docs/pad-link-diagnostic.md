@@ -45,23 +45,3 @@ previously registered ble_central dynamic commit handler. The Nano-only patch
 moves split BLE initialization to UTIL_INC(CONFIG_ZMK_BLE_INIT_PRIORITY), so
 Bluetooth/settings initialization precedes registration even with LTO. Verify
 this order in the final ELF; physical reconnection remains a separate check.
-
-## Radio prepare overflow containment
-
-The #3538 comparison build recorded a fatal event at uptime 3636 s.
-Its PC 0x39036 follows the `LL_ASSERT(next)` failure in Nordic
-`lll_prepare_resolve` (lll.c:891). `ull_prepare_enqueue` returns NULL
-when the prepare FIFO is full.
-
-`patch_nano_lll_overflow.py` cancels only a new, non-resumed prepare through
-its role's abort callback when the FIFO is full. Resume and dequeue
-invariants and the low latency mode retain their existing checks.
-The callback must perform the same clock and event-done cleanup as a
-cancelled queued event. The current receiver uses the non-low-latency mode.
-The diagnostic snapshot reports `PAD_RADIO prepare_overflows=N` when the
-counter changes, without logging from the radio interrupt context.
-
-This is local overflow containment, not an upstream scheduler fix.
-It can skip a radio event, and repeated overflow can still cause link loss.
-Validate repeated unplug/replug and continuous use beyond the previous
-60-minute crash interval, checking watchdog records and overflow counts.
