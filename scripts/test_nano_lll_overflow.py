@@ -63,7 +63,8 @@ int main(void) {
     for low_lat in (0, 1):
         binary = root / f"test-{low_lat}"
         subprocess.run(["cc", "-std=c11", "-Wall", "-Wextra", "-Werror",
-                        f"-DCONFIG_BT_CTLR_LOW_LAT={low_lat}", str(c), "-o", str(binary)],
+                        f"-DCONFIG_BT_CTLR_LOW_LAT={low_lat}",
+                        "-DCONFIG_SHIELD_VELVET_NANO_DONGLE=1", str(c), "-o", str(binary)],
                        check=True)
         subprocess.run([str(binary)], check=True)
 print("Fresh overflow cleanup, resumed/dequeued events and low latency guards passed")

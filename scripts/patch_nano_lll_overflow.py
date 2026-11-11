@@ -19,6 +19,7 @@ volatile uint32_t velvet_lll_prepare_overflows;
 
 int lll_prepare_resolve(lll_is_abort_cb_t""", 1)
 source = source.replace(anchor, anchor.replace("		LL_ASSERT(next);", """		if (!next && !is_resume && !is_dequeue &&
+		    IS_ENABLED(CONFIG_SHIELD_VELVET_NANO_DONGLE) &&
 		    !IS_ENABLED(CONFIG_BT_CTLR_LOW_LAT)) {
 			/* Cancel a fresh prepare using the role's normal cleanup.
 			 * This releases its clock/ref via lll_done, so a full
