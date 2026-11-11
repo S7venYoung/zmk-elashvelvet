@@ -10,6 +10,7 @@ LOG_MODULE_REGISTER(pad_link_diagnostics, LOG_LEVEL_INF);
 extern int peripheral_slot_index_for_conn(struct bt_conn *conn);
 
 extern int eyelash_diagnostic_scan_state(void);
+extern volatile uint32_t velvet_lll_prepare_overflows;
 
 static uint32_t reached_stages;
 static const char *settings_handler = "none";
@@ -84,6 +85,12 @@ K_WORK_DELAYABLE_DEFINE(snapshot_work, snapshot);
 static void snapshot(struct k_work *work) {
     ARG_UNUSED(work);
     uint32_t mask = 0;
+    static uint32_t previous_overflows;
+    uint32_t overflows = velvet_lll_prepare_overflows;
+    if (overflows != previous_overflows) {
+        LOG_INF("PAD_RADIO prepare_overflows=%u", (unsigned)overflows);
+        previous_overflows = overflows;
+    }
     LOG_INF("PAD_TRACE scan_flags=%d (enabled=1 scan=2 loaded=4 callback=8)",
             eyelash_diagnostic_scan_state());
     LOG_INF("PAD_INIT stages=0x%x handler=%s phase=%d result=%d",

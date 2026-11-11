@@ -25,6 +25,10 @@ jobs:
         run: python3 scripts/test_numpad_dongle.py
 
       - run: west init -l config && west update --narrow && west zephyr-export
+      - name: Contain Nano radio prepare queue overflow
+        run: |
+          python3 scripts/test_nano_lll_overflow.py dependencies/zephyr/subsys/bluetooth/controller/ll_sw/nordic/lll/lll.c
+          python3 scripts/patch_nano_lll_overflow.py dependencies/zephyr/subsys/bluetooth/controller/ll_sw/nordic/lll/lll.c
       - name: Set low duty Pad reconnect advertising
         run: python3 scripts/patch_pad_advertising_interval.py dependencies/zmk/app/src/split/bluetooth/peripheral.c
       - name: Test and install Nano split scan failure recovery
@@ -329,6 +333,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: west init -l config && west update --narrow && west zephyr-export
+      - name: Contain Nano radio prepare queue overflow
+        run: |
+          python3 scripts/test_nano_lll_overflow.py dependencies/zephyr/subsys/bluetooth/controller/ll_sw/nordic/lll/lll.c
+          python3 scripts/patch_nano_lll_overflow.py dependencies/zephyr/subsys/bluetooth/controller/ll_sw/nordic/lll/lll.c
       - name: Apply normal Nano source preparation
         run: |
           python3 scripts/test_nano_split_scan_retry.py dependencies/zmk/app/src/split/bluetooth/central.c
@@ -385,6 +393,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: west init -l config && west update --narrow && west zephyr-export
+      - name: Contain Nano radio prepare queue overflow
+        run: |
+          python3 scripts/test_nano_lll_overflow.py dependencies/zephyr/subsys/bluetooth/controller/ll_sw/nordic/lll/lll.c
+          python3 scripts/patch_nano_lll_overflow.py dependencies/zephyr/subsys/bluetooth/controller/ll_sw/nordic/lll/lll.c
       - name: Prepare Nano diagnostic sources
         env:
           PAD_VARIANT: ${{ inputs.variant }}
