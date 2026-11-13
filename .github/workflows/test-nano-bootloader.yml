@@ -33,6 +33,9 @@ jobs:
           cc -Wall -Wextra -Werror config/bootloader-test/test_journal.c -o /tmp/test-journal
           /tmp/test-journal
       - name: Prepare pinned source
+        # Test against pristine source before applying the completion patch.
+        run: python3 config/bootloader-test/test_uf2_finish.py bootloader
+      - name: Apply pinned source patches
         run: python3 config/bootloader-test/prepare.py bootloader ${{ matrix.mode }}
       - name: Test actual USB timeout callback
         if: matrix.mode == 'replug'
