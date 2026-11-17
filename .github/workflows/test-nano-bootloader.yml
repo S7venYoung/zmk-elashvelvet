@@ -32,6 +32,8 @@ jobs:
           /tmp/test-policy
           cc -Wall -Wextra -Werror config/bootloader-test/test_journal.c -o /tmp/test-journal
           /tmp/test-journal
+      - name: Test UF2 idle completion
+        run: python3 config/bootloader-test/test_uf2_finish.py bootloader
       - name: Prepare pinned source
         run: python3 config/bootloader-test/prepare.py bootloader ${{ matrix.mode }}
       - name: Test actual USB timeout callback

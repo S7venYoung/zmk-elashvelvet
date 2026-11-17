@@ -36,6 +36,8 @@ if mode=="replug":
             "  bool const valid_app = bootloader_app_is_valid();\n  if (valid_app && !dfu_start && nano_replug_boot(nano_reset_reason)) dfu_start = true;")
     from patch_usb_timeout import patch as patch_usb_timeout
     patch_usb_timeout(root/"lib/sdk11/components/libraries/bootloader_dfu/bootloader.c")
+    from patch_uf2_finish import patch as patch_uf2_finish
+    patch_uf2_finish(root)
     for name in ["replug_policy.h","nano_replug.h"]:
         (root/"src"/name).write_text((here/name).read_text())
 elif mode!="baseline":
