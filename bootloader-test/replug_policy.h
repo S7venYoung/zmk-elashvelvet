@@ -2,7 +2,9 @@
 #pragma once
 #include <stdbool.h>
 #include <stdint.h>
+#ifndef NANO_JOURNAL_ADDR
 #define NANO_JOURNAL_ADDR 0x65000u
+#endif
 #define NANO_RECORD_MAGIC 0x4e330000u
 #define NANO_RECORD_MASK 0xffffff00u
 #define NANO_ERASED 0xffffffffu

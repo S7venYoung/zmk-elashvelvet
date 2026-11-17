@@ -6,14 +6,15 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/mman.h>
+#include "replug_policy.h"
 static bool cut;
 static unsigned int erases;
 static jmp_buf powered_off;
 static void nrfx_nvmc_page_erase(uint32_t addr) {
-  assert(addr==0x65000);erases++;memset((void *)(uintptr_t)addr,255,4096);
+  assert(addr==NANO_JOURNAL_ADDR);erases++;memset((void *)(uintptr_t)addr,255,4096);
 }
 static void nrfx_nvmc_words_write(uint32_t addr,const uint32_t *src,uint32_t count) {
-  assert(count==1 && addr>=0x65000 && addr<0x66000);
+  assert(count==1 && addr>=NANO_JOURNAL_ADDR && addr<(NANO_JOURNAL_ADDR+4096));
   uint32_t *dst=(uint32_t *)(uintptr_t)addr;
   assert((*dst & *src)==*src);*dst &= *src;
 }
@@ -33,9 +34,9 @@ static uint8_t stage(void) {
   assert(nano_journal_read(&value,&slot));return value;
 }
 int main(void) {
-  void *p=mmap((void *)0x65000,4096,PROT_READ|PROT_WRITE,
+  void *p=mmap((void *)NANO_JOURNAL_ADDR,4096,PROT_READ|PROT_WRITE,
                MAP_PRIVATE|MAP_ANONYMOUS|MAP_FIXED,-1,0);
-  assert(p==(void *)0x65000);memset(p,255,4096);
+  assert(p==(void *)NANO_JOURNAL_ADDR);memset(p,255,4096);
   short_power();assert(stage()==1);
   short_power();assert(stage()==2);
   assert(nano_replug_boot(0));assert(stage()==0);

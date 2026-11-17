@@ -1,8 +1,14 @@
 name: Build standalone Pad16 nRF52840
 on:
   workflow_dispatch:
+    inputs:
+      bootloader:
+        description: Build Pad Rasi bootloader instead of application
+        type: boolean
+        default: false
 jobs:
   pad:
+    if: ${{ !inputs.bootloader }}
     runs-on: ubuntu-latest
     container: zmkfirmware/zmk-build-arm:stable
     steps:
@@ -16,3 +22,6 @@ jobs:
         with:
           name: pad52840-standalone
           path: firmware/pad52840_standalone.uf2
+  pad-bootloader:
+    if: ${{ inputs.bootloader }}
+    uses: ./.github/workflows/build-pad-bootloader.yml

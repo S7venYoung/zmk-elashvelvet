@@ -93,3 +93,15 @@
         };
     };
 };
+
+/* Match the BL USER_FLASH_END and keep its power-cycle journal outside NVS. */
+&code_partition { reg = <0x26000 0xc4000>; };
+&flash0 {
+    partitions {
+        pad_replug_journal: partition@ea000 {
+            label = "boot-power-journal";
+            reg = <0xea000 0x1000>;
+            read-only;
+        };
+    };
+};

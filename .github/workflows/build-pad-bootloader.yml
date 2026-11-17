@@ -1,0 +1,47 @@
+name: Build Pad Rasi nRF52840 Bootloader
+on:
+  workflow_dispatch:
+  workflow_call:
+permissions:
+  contents: read
+jobs:
+  bootloader:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: config
+      - uses: actions/checkout@v4
+        with:
+          repository: kbladewht/Adafruit_nRF52_Bootloader
+          ref: b1d9a09665e9766b6fcd656e9788562c2cc72bac
+          submodules: true
+          path: bootloader
+      - uses: carlosperate/arm-none-eabi-gcc-action@v1
+        with:
+          release: '12.3.Rel1'
+      - run: pip install intelhex
+      - name: Test shared power-cycle policy and both journal addresses
+        run: |
+          cc -Wall -Wextra -Werror config/bootloader-test/test_policy.c -o /tmp/policy
+          /tmp/policy
+          cc -Wall -Wextra -Werror config/bootloader-test/test_journal.c -o /tmp/journal-nano
+          /tmp/journal-nano
+          cc -Wall -Wextra -Werror -DNANO_JOURNAL_ADDR=0xea000u config/bootloader-test/test_journal.c -o /tmp/journal-pad
+          /tmp/journal-pad
+      - name: Test and patch pinned Rasi source
+        run: |
+          python3 config/bootloader-test/test_uf2_finish.py bootloader
+          python3 config/bootloader-test/prepare_pad.py bootloader
+          python3 config/bootloader-test/test_usb_timeout.py bootloader/lib/sdk11/components/libraries/bootloader_dfu/bootloader.c
+      - name: Build Rasi bootloader and self-update UF2
+        working-directory: bootloader
+        run: |
+          make -j2 BOARD=feather_nrf52840_rasi GIT_VERSION=0.9.2-pad-replug _build/build-feather_nrf52840_rasi/update-feather_nrf52840_rasi_bootloader-0.9.2-pad-replug_nosd.uf2
+      - name: Verify and export bootloader only
+        run: python3 config/bootloader-test/verify_pad.py bootloader
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pad52840-bootloader
+          path: artifacts/
+          if-no-files-found: error
