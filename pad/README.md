@@ -1,7 +1,7 @@
 # Standalone nRF52840 Pad16
 
 Experimental standalone USB/BLE configuration on the repository's nice_nano//zmk
-board, using ZMK v0.4.0. Build manually with the
+board, using the repository’s ZMK 0.4 / Zephyr 4.1 DYA fork. Build manually with the
 "Build standalone Pad16 nRF52840" Actions workflow on this branch.
 
 Hardware interpretation:
@@ -32,3 +32,13 @@ The workflow produces pad52840_standalone.uf2 only.
 Battery sensing and charging circuitry have not been identified, so battery
 reporting is not configured. GPIO numbering, power-enable polarity, LED type,
 and bootloader compatibility remain hardware assumptions to validate.
+
+DYA connects over the USB CDC Studio channel. Devtool → Bootloader uses the
+native devtool RPC. Studio is unlocked by default on this standalone Pad.
+
+The UF2 completion optimization from commit 1ffe99d is a bootloader change.
+Its patch and tests are retained under bootloader-test in this branch. It is
+not incorporated into the application UF2. A Pad-specific bootloader update
+requires identification of the installed bootloader/board first, to preserve
+USB IDs, recovery pins, flash partitions and board identity. The Nano33 BL
+HEX must never be flashed to this nRF52840 Pad.

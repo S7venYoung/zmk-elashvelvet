@@ -5,8 +5,16 @@
     chosen {
         zmk,kscan = &pad_matrix;
         zmk,matrix-transform = &pad_transform;
+        zmk,physical-layout = &pad_layout;
         zmk,underglow = &pad_rgb;
         zmk,ext-power = &pad_power;
+    };
+
+    pad_layout: physical_layout {
+        compatible = "zmk,physical-layout";
+        display-name = "Pad16";
+        kscan = <&pad_matrix>;
+        transform = <&pad_transform>;
     };
 
     pad_transform: matrix_transform {
