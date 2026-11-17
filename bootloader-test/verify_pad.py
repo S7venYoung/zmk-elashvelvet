@@ -46,7 +46,8 @@ assert struct.pack('<II', 208, 0x239a0029) in bl.tobinstr(start=0xfd800, end=0xf
 (out / 'validation.json').write_text(json.dumps({
     'source_commit': 'b1d9a09665e9766b6fcd656e9788562c2cc72bac',
     'board': 'feather_nrf52840_rasi', 'bootloader_start': '0xf4000',
-    'journal': '0xea000-0xeafff', 'application_end_exclusive': '0xea000',
+    'journal': '0xea000-0xeafff', 'application_start': '0x27000',
+    'application_end_exclusive': '0xea000',
     'hardware_tested': False,
     'uicr_metadata_only': {'bootloader': '0xf4000', 'mbr_params': '0xfe000'},
     'warning': 'Keep existing S140 7.3.0. HEX is BL-only; no mass erase. '

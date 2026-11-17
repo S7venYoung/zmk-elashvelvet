@@ -10,8 +10,8 @@ Hardware interpretation:
 - 16 WS2812-compatible RGB LEDs, assumed GRB order, data P0.11.
 - powerpin 109 is provisionally interpreted as P1.09, active high.
 - Matrix diodes are col2row, confirmed by the user.
-- The nice!nano-compatible UF2 bootloader and 0x26000 application base
-  must match the actual device before flashing.
+- The nice!nano-compatible UF2 bootloader and 0x27000 application base
+  matches the S140 size read from this device at 0x3008.
 
 Default numeric layout:
 7 8 9 +
@@ -54,7 +54,7 @@ cannot be identified from INFO_UF2 alone.
 `bootloader-test/prepare_pad.py` reuses the Nano journal and power-cycle logic,
 USB timeout fix and 1-second UF2 completion grace period. It keeps the Rasi
 USB identifiers, board GPIOs, S140 version and 0xf4000 BL start. The journal
-is moved to 0xea000–0xeafff; the Pad application ends before 0xea000 and NVS
+is moved to 0xea000–0xeafff; the Pad application starts at 0x27000 and ends before 0xea000 and NVS
 remains at 0xec000. This is separate from Nano's 0x65000 journal.
 
 Turn battery power **off** first. Plug in USB and unplug within 1 second,
@@ -82,3 +82,10 @@ UICR verification block (bootloader=0xf4000, MBR params=0xfe000), with family
 application payloads are excluded. The initial flash-only UF2 from run
 44039479519 was rejected by the old BL because this metadata was missing;
 use the corrected 161-block updater instead.
+
+Readback on 2026-11-17 confirmed application bytes were written correctly,
+but S140 at 0x3008 reports application start 0x27000. Earlier Pad application
+and reset artifacts linked at 0x26000 are incompatible with this device and
+must not be reused. They overwrite the last S140 page (0x26000–0x26fff).
+Restore that page from the matching original S140 7.3.0 before loading the
+corrected 0x27000 application/reset. Keep the Rasi BL at 0xf4000.

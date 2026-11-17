@@ -1,1 +1,1 @@
-&code_partition { reg = <0x26000 0xc4000>; };
+&code_partition { reg = <0x27000 0xc3000>; };

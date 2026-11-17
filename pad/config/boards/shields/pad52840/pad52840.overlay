@@ -95,7 +95,8 @@
 };
 
 /* Match the BL USER_FLASH_END and keep its power-cycle journal outside NVS. */
-&code_partition { reg = <0x26000 0xc4000>; };
+/* Rasi S140 7.3.0 reports SD_SIZE_GET = 0x27000. */
+&code_partition { reg = <0x27000 0xc3000>; };
 &flash0 {
     partitions {
         pad_replug_journal: partition@ea000 {
