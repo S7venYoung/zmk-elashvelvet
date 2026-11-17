@@ -1,7 +1,6 @@
 """Export only the Rasi BL and the matching self-update image, never full-chip HEX."""
 from pathlib import Path
 import json
-import shutil
 import struct
 import sys
 from intelhex import IntelHex
@@ -20,18 +19,18 @@ for address in h.addresses():
     if 0xf4000 <= address < 0xfe000:
         bl[address] = h[address]
 bl.write_hex_file(str(out / 'pad52840_BL_ONLY.hex'))
-uf2 = build / ('update-' + name + '_nosd.uf2')
-data = uf2.read_bytes()
-assert len(data) % 512 == 0
-for offset in range(0, len(data), 512):
-    magic0, magic1, flags, address, size, _, _, family = struct.unpack_from('<8I', data, offset)
-    assert (magic0, magic1) == (0x0a324655, 0x9e5d5157)
-    assert flags & 0x2000 and family == 0xd663823c
-    assert 0 < size <= 476
-    assert (address < 0x1000 and address + size <= 0x1000) or (
-        0xf4000 <= address and address + size <= 0xfe000) or (
-        0x10001014 <= address and address + size <= 0x1000101c)
-shutil.copyfile(uf2, out / 'pad52840_BL_UPDATE.uf2')
+# Emit BL flash only: upstream's generic converter also emits padded UICR
+# blocks. A BL self-update must not carry MBR/UICR or application payloads.
+blocks = []
+count = (0xfe000 - 0xf4000) // 256
+for index, address in enumerate(range(0xf4000, 0xfe000, 256)):
+    payload = bytes(bl[a] for a in range(address, address + 256))
+    header = struct.pack('<8I', 0x0a324655, 0x9e5d5157, 0x2000,
+                         address, 256, index, count, 0xd663823c)
+    blocks.append(header + payload + bytes(220) + struct.pack('<I', 0x0ab16f30))
+data = b''.join(blocks)
+assert len(data) == count * 512
+(out / 'pad52840_BL_UPDATE.uf2').write_bytes(data)
 (out / 'validation.json').write_text(json.dumps({
     'source_commit': 'b1d9a09665e9766b6fcd656e9788562c2cc72bac',
     'board': 'feather_nrf52840_rasi', 'bootloader_start': '0xf4000',

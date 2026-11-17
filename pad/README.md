@@ -70,3 +70,10 @@ and `pad52840_BL_UPDATE.uf2` (bootloader self-update). Keep the installed S140;
 neither file is a replacement application. Do not use Nano33 BL images here.
 Source patch/USB host tests have passed; the Pad BL has not yet been compiled
 or tested on hardware. Building and flashing require separate authorization.
+
+The BL build also exports `settings_reset_pad.uf2`. It erases the Pad settings
+and Bluetooth bonds, then requests BL after a 1-second USB settling delay.
+After reset, flash `pad52840_standalone.uf2` again. Reset is for first-install
+pairing cleanup or recovery, not required for routine firmware updates.
+The BL self-update UF2 contains only 0xf4000–0xfdfff flash, with family
+0xd663823c; MBR and UICR are excluded.
