@@ -95,3 +95,11 @@ rebooted. The SDK stops RTC1 when no timers are active; zero-timeout DFU thus
 cannot advance the UF2 quiet-window clock. `patch_pad_clock.py` keeps a 100-ms
 repeating SDK timer running during USB DFU, without performing flash writes
 inside timer callbacks. This fix is Pad-only pending a separate Nano review.
+
+After the RTC-fixed BL was installed, reset and S140 both read back exactly,
+and UF2 transfers exited BL, but neither ZMK image enumerated over USB. Rasi
+BL explicitly uses internal RC LFCLK; Zephyr defaults to external LFXO.
+The Pad app/reset now select calibrated internal RC with 500-ppm BLE timing.
+This removes the external low-frequency crystal dependency; absence of that
+crystal on the actual Pad and resolution of the startup issue are still
+unverified. Builds export the merged config and DTS for inspection.

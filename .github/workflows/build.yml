@@ -17,11 +17,15 @@ jobs:
       - name: Build Pad16
         run: cd pad && west build -s zmk/app -d build/pad52840 -b nice_nano//zmk -S studio-rpc-usb-uart -- -DZMK_CONFIG="$GITHUB_WORKSPACE/pad/config" -DSHIELD=pad52840
       - name: Collect Pad16 UF2
-        run: mkdir -p firmware && cp pad/build/pad52840/zephyr/zmk.uf2 firmware/pad52840_standalone.uf2
+        run: |
+          mkdir -p firmware
+          cp pad/build/pad52840/zephyr/zmk.uf2 firmware/pad52840_standalone.uf2
+          cp pad/build/pad52840/zephyr/.config firmware/pad52840_app_config.txt
+          cp pad/build/pad52840/zephyr/zephyr.dts firmware/pad52840_app.dts
       - uses: actions/upload-artifact@v4
         with:
           name: pad52840-standalone
-          path: firmware/pad52840_standalone.uf2
+          path: firmware/
   pad-bootloader:
     if: ${{ inputs.bootloader }}
     uses: ./.github/workflows/build-pad-bootloader.yml

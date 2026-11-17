@@ -59,9 +59,13 @@ jobs:
       - name: Build Pad settings reset
         run: cd pad && west build -s zmk/app -d build/reset -b nice_nano//zmk -- -DZMK_CONFIG="$GITHUB_WORKSPACE/pad/config" -DSHIELD=settings_reset -DEXTRA_CONF_FILE="$GITHUB_WORKSPACE/pad/reset.conf" -DDTC_OVERLAY_FILE="$GITHUB_WORKSPACE/pad/reset.overlay"
       - name: Collect Pad reset UF2
-        run: mkdir -p firmware && cp pad/build/reset/zephyr/zmk.uf2 firmware/settings_reset_pad.uf2
+        run: |
+          mkdir -p firmware
+          cp pad/build/reset/zephyr/zmk.uf2 firmware/settings_reset_pad.uf2
+          cp pad/build/reset/zephyr/.config firmware/pad52840_reset_config.txt
+          cp pad/build/reset/zephyr/zephyr.dts firmware/pad52840_reset.dts
       - uses: actions/upload-artifact@v4
         with:
           name: pad52840-settings-reset
-          path: firmware/settings_reset_pad.uf2
+          path: firmware/
           if-no-files-found: error
