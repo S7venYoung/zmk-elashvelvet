@@ -1,1 +1,5 @@
 &code_partition { reg = <0x27000 0xc3000>; };
+
+/* Match working Rasi BL defaults: neither DC/DC converter is enabled. */
+&reg1 { regulator-initial-mode = <NRF5X_REG_MODE_LDO>; };
+&reg0 { status = "disabled"; };

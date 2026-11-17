@@ -103,3 +103,11 @@ The Pad app/reset now select calibrated internal RC with 500-ppm BLE timing.
 This removes the external low-frequency crystal dependency; absence of that
 crystal on the actual Pad and resolution of the startup issue are still
 unverified. Builds export the merged config and DTS for inspection.
+
+The RC reset still did not return to BL. Merged DTS showed nice!nano REG1
+mode DCDC and REG0 enabled. Zephyr nrf52 soc.c enables both converters at
+PRE_KERNEL_1 priority 0 from these DT values, even with CONFIG_REGULATOR off.
+Rasi BL defaults ENABLE_DCDC_0 and ENABLE_DCDC_1 to 0. Both Pad overlays now
+select REG1 LDO and disable REG0, matching that working BL configuration.
+This removes a real board-default mismatch; hardware cause/resolution remain
+to be verified. The app and reset must both use these overrides.
