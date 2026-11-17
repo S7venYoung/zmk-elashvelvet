@@ -6,7 +6,7 @@ import sys
 from intelhex import IntelHex
 
 build = Path(sys.argv[1]) / '_build/build-feather_nrf52840_rasi'
-name = 'feather_nrf52840_rasi_bootloader-0.9.2-pad-replug'
+name = 'feather_nrf52840_rasi_bootloader-0.9.2-pad-replug-rtc1'
 h = IntelHex(str(build / (name + '.hex')))
 assert all(0xf4000 <= a < 0xfe000 or 0x10001014 <= a < 0x1000101c
            for a in h.addresses()), h.segments()

@@ -38,7 +38,7 @@ jobs:
       - name: Build Rasi bootloader
         working-directory: bootloader
         run: |
-          make -j2 BOARD=feather_nrf52840_rasi GIT_VERSION=0.9.2-pad-replug _build/build-feather_nrf52840_rasi/feather_nrf52840_rasi_bootloader-0.9.2-pad-replug.hex
+          make -j2 BOARD=feather_nrf52840_rasi GIT_VERSION=0.9.2-pad-replug-rtc1 _build/build-feather_nrf52840_rasi/feather_nrf52840_rasi_bootloader-0.9.2-pad-replug-rtc1.hex
       - name: Verify and export bootloader only
         run: python3 config/bootloader-test/verify_pad.py bootloader
       - uses: actions/upload-artifact@v4
