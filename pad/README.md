@@ -68,8 +68,9 @@ The manual Pad workflow has a `bootloader` checkbox, default off. When checked,
 it builds only the Pad BL and exports `pad52840_BL_ONLY.hex` (SWD, no mass erase)
 and `pad52840_BL_UPDATE.uf2` (bootloader self-update). Keep the installed S140;
 neither file is a replacement application. Do not use Nano33 BL images here.
-Source patch/USB host tests have passed; the Pad BL has not yet been compiled
-or tested on hardware. Building and flashing require separate authorization.
+Source patch/USB host tests and the Pad BL/reset Actions build passed in
+run 44039479519 (commit a7f62c4). Downloaded UF2 address/family checks passed.
+Pad BL and reset behavior still require hardware validation; no device was flashed.
 
 The BL build also exports `settings_reset_pad.uf2`. It erases the Pad settings
 and Bluetooth bonds, then requests BL after a 1-second USB settling delay.
