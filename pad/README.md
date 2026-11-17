@@ -76,5 +76,9 @@ The BL build also exports `settings_reset_pad.uf2`. It erases the Pad settings
 and Bluetooth bonds, then requests BL after a 1-second USB settling delay.
 After reset, flash `pad52840_standalone.uf2` again. Reset is for first-install
 pairing cleanup or recovery, not required for routine firmware updates.
-The BL self-update UF2 contains only 0xf4000–0xfdfff flash, with family
-0xd663823c; MBR and UICR are excluded.
+The BL self-update UF2 contains 0xf4000–0xfdfff BL flash plus one required
+UICR verification block (bootloader=0xf4000, MBR params=0xfe000), with family
+0xd663823c. The old BL validates this metadata without writing UICR. MBR and
+application payloads are excluded. The initial flash-only UF2 from run
+44039479519 was rejected by the old BL because this metadata was missing;
+use the corrected 161-block updater instead.
