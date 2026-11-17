@@ -7,11 +7,11 @@ jobs:
     container: zmkfirmware/zmk-build-arm:stable
     steps:
       - uses: actions/checkout@v4
-      - run: west init -l pad/config && west update --narrow && west zephyr-export
+      - run: west init -l pad/config && cd pad && west update --narrow && west zephyr-export
       - name: Build Pad16
-        run: west build -s zmk/app -d build/pad52840 -b nice_nano//zmk -S studio-rpc-usb-uart -- -DZMK_CONFIG="$GITHUB_WORKSPACE/pad/config" -DSHIELD=pad52840
+        run: cd pad && west build -s zmk/app -d build/pad52840 -b nice_nano//zmk -S studio-rpc-usb-uart -- -DZMK_CONFIG="$GITHUB_WORKSPACE/pad/config" -DSHIELD=pad52840
       - name: Collect Pad16 UF2
-        run: mkdir -p firmware && cp build/pad52840/zephyr/zmk.uf2 firmware/pad52840_standalone.uf2
+        run: mkdir -p firmware && cp pad/build/pad52840/zephyr/zmk.uf2 firmware/pad52840_standalone.uf2
       - uses: actions/upload-artifact@v4
         with:
           name: pad52840-standalone
