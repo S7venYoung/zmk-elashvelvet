@@ -89,3 +89,9 @@ and reset artifacts linked at 0x26000 are incompatible with this device and
 must not be reused. They overwrite the last S140 page (0x26000–0x26fff).
 Restore that page from the matching original S140 7.3.0 before loading the
 corrected 0x27000 application/reset. Keep the Rasi BL at 0xf4000.
+
+A fresh BL session read back all 234,752 application bytes correctly but never
+rebooted. The SDK stops RTC1 when no timers are active; zero-timeout DFU thus
+cannot advance the UF2 quiet-window clock. `patch_pad_clock.py` keeps a 100-ms
+repeating SDK timer running during USB DFU, without performing flash writes
+inside timer callbacks. This fix is Pad-only pending a separate Nano review.

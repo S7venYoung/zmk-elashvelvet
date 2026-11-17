@@ -32,6 +32,7 @@ jobs:
       - name: Test and patch pinned Rasi source
         run: |
           python3 config/bootloader-test/test_uf2_finish.py bootloader
+          python3 config/bootloader-test/test_pad_clock.py
           python3 config/bootloader-test/prepare_pad.py bootloader
           python3 config/bootloader-test/test_usb_timeout.py bootloader/lib/sdk11/components/libraries/bootloader_dfu/bootloader.c
       - name: Build Rasi bootloader

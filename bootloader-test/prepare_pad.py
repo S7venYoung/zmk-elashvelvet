@@ -35,3 +35,6 @@ for name in ['nano_replug.h', 'replug_policy.h']:
     (root / 'src' / name).write_text((here / name).read_text())
 patch_usb_timeout(root / 'lib/sdk11/components/libraries/bootloader_dfu/bootloader.c')
 patch_uf2_finish(root)
+
+from patch_pad_clock import patch as patch_pad_clock
+patch_pad_clock(root)
