@@ -111,3 +111,13 @@ Rasi BL defaults ENABLE_DCDC_0 and ENABLE_DCDC_1 to 0. Both Pad overlays now
 select REG1 LDO and disable REG0, matching that working BL configuration.
 This removes a real board-default mismatch; hardware cause/resolution remain
 to be verified. The app and reset must both use these overrides.
+
+## Matrix verification
+
+USB currently enumerates as Pad16. Read-only Studio RPC confirmed both stored
+layers exactly match pad52840.keymap. Physical row/column orientation is not
+yet verified. Enable Devtool layer-state and event-tap diagnostics to inspect
+active layers and position transitions; no key injection is enabled. During
+matrix tests subscribe only to position/layer events, then unsubscribe after
+the test. Do not reset stored keymaps or change pin order based only on typed
+characters: Fn actions can be non-printing and may change the host output.
