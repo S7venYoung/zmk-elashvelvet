@@ -1,0 +1,18 @@
+/* SPDX-License-Identifier: MIT */
+#pragma once
+#define PAD_SELECTOR_START 0x27000u
+#define PAD_SELECTOR_META 0x27f00u
+#define PAD_SLOT_A_START 0x28000u
+#define PAD_SLOT_A_LIMIT 0x84000u
+#define PAD_SLOT_B_START 0x84000u
+#define PAD_SLOT_B_LIMIT 0xd8000u
+#define PAD_SLOT_B_NVS 0xd8000u
+#define PAD_BL_STAGING 0xe0000u
+#define PAD_REPLUG_JOURNAL 0xea000u
+#define PAD_MODE_JOURNAL 0xeb000u
+#define PAD_SLOT_A_NVS 0xec000u
+#define PAD_BL_START 0xf4000u
+#define PAD_PAGE_SIZE 0x1000u
+#define PAD_META_MAGIC 0x50414432u
+#define PAD_MODE_MAGIC 0x504144a0u
+#define PAD_RECEIVER_OFFSET 61u

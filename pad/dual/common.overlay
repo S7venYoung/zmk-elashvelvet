@@ -1,0 +1,9 @@
+&sd_partition { reg = <0 0x27000>; };
+&flash0 {
+    partitions {
+        pad_dual_mode: partition@eb000 {
+            label = "pad-dual-mode";
+            reg = <0xeb000 0x1000>;
+        };
+    };
+};

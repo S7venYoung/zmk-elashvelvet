@@ -1,3 +1,5 @@
+#include <dt-bindings/zmk/outputs.h>
+/* PAD_DUAL_RECEIVER_EXTENSION */
 #define BASE 0
 #define LOWER 1
 
@@ -63,7 +65,12 @@
 &kp LCMD   &kp A         &kp S             &kp D         &kp F   &kp G      &trans     &kp H         &kp J   &kp K       &kp L      &kp SEMI   &kp ENTER
 &kp LSHFT  &kp Z         &kp X             &kp C         &kp V   &kp B      &trans     &kp N         &kp M   &kp COMMA   &kp DOT    &kp SLASH  &kp RIGHT_SHIFT
            &kp CAPSLOCK  &kp LEFT_CONTROL  &kp LEFT_ALT  &mo 2   &kp SPACE             &kp SPACE     &mo 1   &kp DELETE  &kp MINUS  &kp EQUAL
-            >;
+
+&kp KP_N7 &kp KP_N8 &kp KP_N9 &kp KP_PLUS
+&kp KP_N4 &kp KP_N5 &kp KP_N6 &kp KP_MINUS
+&kp KP_N1 &kp KP_N2 &kp KP_N3 &kp KP_ENTER
+&mo 3 &kp KP_N0 &kp KP_DOT &kp BSPC
+>;
 
             label = "BASE";
         };
@@ -75,7 +82,12 @@
 &kp F12    &kp N1  &kp N2  &kp N3        &kp N4           &kp N5  &trans  &kp C_VOLUME_DOWN  &kp PAGE_UP       &kp PAGE_DOWN      &kp HOME        &kp END          &kp INSERT
 &trans     &trans  &trans  &trans        &trans           &trans  &trans  &kp C_MUTE         &trans            &trans             &trans          &trans           &trans
            &trans  &trans  &trans        &trans           &trans          &trans             &trans            &trans             &trans          &trans
-            >;
+
+&kp KP_N7 &kp KP_N8 &kp KP_N9 &kp KP_PLUS
+&kp KP_N4 &kp KP_N5 &kp KP_N6 &kp KP_MINUS
+&kp KP_N1 &kp KP_N2 &kp KP_N3 &kp KP_ENTER
+&mo 3 &kp KP_N0 &kp KP_DOT &kp BSPC
+>;
 
         };
 
@@ -86,8 +98,81 @@
 &trans     &trans  &trans  &trans  &trans  &trans  &trans  &trans        &kp LEFT      &kp DOWN      &kp RIGHT     &trans          &trans
 &trans     &trans  &trans  &trans  &trans  &trans  &trans  &bt BT_SEL 0  &bt BT_SEL 1  &bt BT_SEL 2  &bt BT_SEL 3  &bt BT_SEL 4    &trans
            &trans  &trans  &trans  &trans  &trans          &trans        &trans        &trans        &bt BT_CLR    &bt BT_CLR_ALL
-            >;
+
+&kp KP_N7 &kp KP_N8 &kp KP_N9 &kp KP_PLUS
+&kp KP_N4 &kp KP_N5 &kp KP_N6 &kp KP_MINUS
+&kp KP_N1 &kp KP_N2 &kp KP_N3 &kp KP_ENTER
+&mo 3 &kp KP_N0 &kp KP_DOT &kp BSPC
+>;
 
         };
-    };
+
+        pad_fn { bindings = <
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&trans
+&bt BT_SEL 0 &bt BT_SEL 1 &bt BT_SEL 2 &bt BT_CLR
+&out OUT_USB &out OUT_BLE &none &none
+&none &none &none &none
+&trans &kp KP_NUMLOCK &kp KP_DIVIDE &kp KP_MULTIPLY
+>; };
+};
 };

@@ -1,0 +1,3 @@
+#include "common.overlay"
+&code_partition { reg = <0x84000 0x54000>; };
+&storage_partition { reg = <0xd8000 0x8000>; };

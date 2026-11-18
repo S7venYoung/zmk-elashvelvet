@@ -1,43 +1,123 @@
-name: Build standalone Pad16 nRF52840
+name: Build Pad dual-image test and shared Nano
 on:
   workflow_dispatch:
-    inputs:
-      bootloader:
-        description: Build Pad Rasi bootloader instead of application
-        type: boolean
-        default: false
-      reverse_matrix:
-        description: Diagnostic only - test row2col with the same GPIOs
-        type: boolean
-        default: false
+permissions:
+  contents: read
+  actions: read
 jobs:
   pad:
-    if: ${{ !inputs.bootloader }}
+    runs-on: ubuntu-latest
+    container: zmkfirmware/zmk-build-arm:stable
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [standalone, dongle]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Host policy and packaging checks
+        run: |
+          cc -std=c11 -Wall -Wextra -Werror pad/dual/tests/test_policy.c -o /tmp/pad-policy
+          /tmp/pad-policy
+          python3 pad/dual/tests/test_package.py
+          python3 pad/dual/tests/test_integration.py
+      - run: west init -l pad/config && cd pad && west update --narrow && west zephyr-export
+      - name: Verify and install Pad-only hooks
+        run: |
+          python3 pad/dual/tests/test_integration.py pad/zmk/app
+          python3 pad/dual/patch_zmk.py pad/zmk/app
+      - name: Build image in its linked slot
+        run: |
+          cd pad
+          west build -s zmk/app -d build/${{ matrix.mode }} -b nice_nano//zmk -S studio-rpc-usb-uart -- -DZMK_CONFIG="$GITHUB_WORKSPACE/pad/config" -DSHIELD=pad52840 -DZMK_EXTRA_MODULES="$GITHUB_WORKSPACE/pad/diagnostics;$GITHUB_WORKSPACE/pad/dual" -DEXTRA_CONF_FILE="$GITHUB_WORKSPACE/pad/dual/${{ matrix.mode }}.conf" -DEXTRA_DTC_OVERLAY_FILE="$GITHUB_WORKSPACE/pad/dual/${{ matrix.mode }}.overlay"
+      - name: Collect internal image and build evidence
+        run: |
+          mkdir -p internal
+          cp pad/build/${{ matrix.mode }}/zephyr/zmk.uf2 internal/image.uf2
+          cp pad/build/${{ matrix.mode }}/zephyr/.config internal/config.txt
+          cp pad/build/${{ matrix.mode }}/zephyr/zephyr.dts internal/zephyr.dts
+          cp pad/build/${{ matrix.mode }}/zephyr/zmk.map internal/zmk.map
+      - uses: actions/upload-artifact@v4
+        with:
+          name: internal-pad-slot-${{ matrix.mode }}-DO-NOT-FLASH
+          path: internal/
+          if-no-files-found: error
+  selector:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: carlosperate/arm-none-eabi-gcc-action@v1
+        with:
+          release: '12.3.Rel1'
+      - name: Build selector at Rasi entry 0x27000
+        run: |
+          mkdir -p internal
+          arm-none-eabi-gcc -std=c11 -Os -mcpu=cortex-m4 -mthumb -mfloat-abi=soft -ffreestanding -fno-builtin -fno-stack-protector -ffunction-sections -fdata-sections -nostdlib -Wall -Wextra -Werror -Wl,--gc-sections -Wl,-Map,internal/selector.map -T pad/dual/selector.ld pad/dual/selector.c -o internal/selector.elf
+          arm-none-eabi-objcopy -O binary internal/selector.elf internal/selector.bin
+      - uses: actions/upload-artifact@v4
+        with:
+          name: internal-pad-selector-DO-NOT-FLASH
+          path: internal/
+  package:
+    needs: [pad, selector]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: internal-pad-*
+          path: internal
+      - uses: actions/download-artifact@v4
+        with:
+          name: pad52840-standalone
+          run-id: 44223413394
+          github-token: ${{ github.token }}
+          path: rollback
+      - name: Package dual images and keep proven single-image rollback
+        run: |
+          mkdir -p firmware
+          python3 pad/dual/package.py internal/internal-pad-selector-DO-NOT-FLASH/selector.bin internal/internal-pad-slot-standalone-DO-NOT-FLASH/image.uf2 internal/internal-pad-slot-dongle-DO-NOT-FLASH/image.uf2 firmware/pad52840_dual.uf2
+          cp rollback/pad52840_standalone.uf2 firmware/pad52840_standalone_recovery.uf2
+          cp pad/dual/README.md firmware/双镜像说明.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pad52840-dual-firmware
+          path: firmware/
+          if-no-files-found: error
+  nano:
     runs-on: ubuntu-latest
     container: zmkfirmware/zmk-build-arm:stable
     steps:
       - uses: actions/checkout@v4
-      - run: west init -l pad/config && cd pad && west update --narrow && west zephyr-export
-      - name: Build Pad16
-        shell: bash
+        with:
+          fetch-depth: 0
+      - run: python3 pad/dual/tests/test_integration.py
+      - run: west init -l config && west update --narrow && west zephyr-export
+      - name: Preserve established Nano fixes
         run: |
-          extra=()
-          if [ "${{ inputs.reverse_matrix }}" = "true" ]; then
-            extra+=("-DEXTRA_DTC_OVERLAY_FILE=$GITHUB_WORKSPACE/pad/row2col-test.overlay")
-            extra+=("-DEXTRA_CONF_FILE=$GITHUB_WORKSPACE/pad/row2col-test.conf")
-          fi
-          cd pad
-          west build -s zmk/app -d build/pad52840 -b nice_nano//zmk -S studio-rpc-usb-uart -- -DZMK_CONFIG="$GITHUB_WORKSPACE/pad/config" -DSHIELD=pad52840 -DZMK_EXTRA_MODULES="$GITHUB_WORKSPACE/pad/diagnostics" "${extra[@]}"
-      - name: Collect Pad16 UF2
+          python3 scripts/patch_behavior_names.py dependencies
+          python3 scripts/patch_nano_settings_ram.py dependencies/zmk-feature-custom-settings
+          python3 scripts/patch_studio_binding_actions.py dependencies/zmk/app/src/keymap.c
+          python3 scripts/patch_nano_scanner_advertising.py dependencies/prospector-zmk-module/src/status_advertisement.c
+          python3 scripts/patch_dongle_status_fields.py dependencies/prospector-zmk-module/src/status_advertisement.c
+          python3 pad/dual/prepare_nano_build.py
+      - name: Build only shared Nano receiver
+        run: west zmk-build -d ./build -q
+      - name: Verify receiver capacity and collect
         run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          cfg=Path('build/velvet_nano_dongle/zephyr/.config').read_text()
+          for required in ['CONFIG_ZMK_SPLIT_BLE_CENTRAL_PERIPHERALS=3','CONFIG_BT_MAX_CONN=4','CONFIG_BT_MAX_PAIRED=8']:
+              assert required+'\n' in cfg,required
+          PY
           mkdir -p firmware
-          cp pad/build/pad52840/zephyr/zmk.uf2 firmware/pad52840_standalone.uf2
-          cp pad/build/pad52840/zephyr/.config firmware/pad52840_app_config.txt
-          cp pad/build/pad52840/zephyr/zephyr.dts firmware/pad52840_app.dts
+          cp build/velvet_nano_dongle/zephyr/zmk.uf2 firmware/velvet_nano_dongle.uf2
+          cp build/velvet_nano_dongle/zephyr/.config firmware/nano_config.txt
+          cp build/velvet_nano_dongle/zephyr/zmk.map firmware/nano_memory.map
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ inputs.reverse_matrix && 'pad52840-matrix-row2col-test' || 'pad52840-standalone' }}
+          name: pad-dual-shared-nano
           path: firmware/
-  pad-bootloader:
-    if: ${{ inputs.bootloader }}
-    uses: ./.github/workflows/build-pad-bootloader.yml
+          if-no-files-found: error

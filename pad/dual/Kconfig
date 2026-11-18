@@ -1,0 +1,12 @@
+config PAD_DUAL_IMAGE
+    bool "Pad reboot-selectable dual images"
+    default y if SHIELD_PAD52840
+config PAD_DUAL_IMAGE_SLOT
+    int "Pad image slot (0 standalone, 1 split peripheral)"
+    range 0 1
+    default 0
+    depends on PAD_DUAL_IMAGE
+config PAD_DUAL_RECEIVER_OFFSET
+    int "Pad position offset in shared Nano keymap"
+    default 61
+    depends on PAD_DUAL_IMAGE

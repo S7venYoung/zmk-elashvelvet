@@ -1,0 +1,4 @@
+name: pad-dual-image
+build:
+  cmake: .
+  kconfig: Kconfig
