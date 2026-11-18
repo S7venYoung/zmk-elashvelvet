@@ -1,5 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 #include <string.h>
+#include <errno.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/kscan.h>
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
 #include <zephyr/kernel.h>
@@ -10,7 +13,7 @@
 #include <zmk/studio/custom.h>
 #include <pb_encode.h>
 
-/* Snapshots only. Never reconfigure GPIOs, stop the scanner or inject keys. */
+/* Operation 1 is read-only. Test-only operation 2 is explicitly gated below. */
 static uint8_t snapshot[96];
 static struct zmk_rpc_custom_subsystem_meta meta = {
     ZMK_RPC_CUSTOM_SUBSYSTEM_UI_URLS(),
@@ -26,13 +29,89 @@ static bool encode_snapshot(pb_ostream_t *stream, const pb_field_t *field,
            pb_encode_string(stream, snapshot, sizeof(snapshot));
 }
 
+
+#if IS_ENABLED(CONFIG_PAD_MATRIX_SETTLED_PROBE)
+#define MATRIX_NODE DT_NODELABEL(pad_matrix)
+#if DT_ENUM_IDX(MATRIX_NODE, diode_direction) == 0
+#define OUTPUT_PROP row_gpios
+#define INPUT_PROP col_gpios
+#else
+#define OUTPUT_PROP col_gpios
+#define INPUT_PROP row_gpios
+#endif
+#define MATRIX_SPEC(node, prop, idx) GPIO_DT_SPEC_GET_BY_IDX(node, prop, idx),
+static const struct gpio_dt_spec probe_outputs[] = {
+    DT_FOREACH_PROP_ELEM(MATRIX_NODE, OUTPUT_PROP, MATRIX_SPEC)};
+static const struct gpio_dt_spec probe_inputs[] = {
+    DT_FOREACH_PROP_ELEM(MATRIX_NODE, INPUT_PROP, MATRIX_SPEC)};
+BUILD_ASSERT(ARRAY_SIZE(probe_outputs) == 4 && ARRAY_SIZE(probe_inputs) == 4);
+
+static int input_mask(void) {
+    int mask = 0;
+    for (unsigned i = 0; i < ARRAY_SIZE(probe_inputs); i++) {
+        int value = gpio_pin_get_dt(&probe_inputs[i]);
+        if (value < 0) return value;
+        if (value) mask |= BIT(i);
+    }
+    return mask;
+}
+
+static int settled_probe(uint8_t levels[5], int *resume_result) {
+    const struct device *dev = DEVICE_DT_GET(MATRIX_NODE);
+    *resume_result = 0;
+    if (!device_is_ready(dev)) return -ENODEV;
+    int ret = kscan_disable_callback(dev);
+    if (ret < 0) {
+        *resume_result = kscan_enable_callback(dev);
+        return ret;
+    }
+    for (unsigned i = 0; i < ARRAY_SIZE(probe_outputs); i++) {
+        ret = gpio_pin_set_dt(&probe_outputs[i], 0);
+        if (ret < 0) goto restore;
+    }
+    k_msleep(5);
+    ret = input_mask();
+    if (ret < 0) goto restore;
+    levels[0] = ret;
+    for (unsigned i = 0; i < ARRAY_SIZE(probe_outputs); i++) {
+        ret = gpio_pin_set_dt(&probe_outputs[i], 1);
+        if (ret < 0) goto restore;
+        k_msleep(5);
+        ret = input_mask();
+        if (ret < 0) goto restore;
+        levels[i + 1] = ret;
+        ret = gpio_pin_set_dt(&probe_outputs[i], 0);
+        if (ret < 0) goto restore;
+        k_msleep(5);
+    }
+    ret = 0;
+restore:
+    for (unsigned i = 0; i < ARRAY_SIZE(probe_outputs); i++) {
+        int err = gpio_pin_set_dt(&probe_outputs[i], 0);
+        if (!ret && err < 0) ret = err;
+    }
+    *resume_result = kscan_enable_callback(dev);
+    return ret;
+}
+#endif
+
 static bool read_snapshot(const zmk_custom_CallRequest *req, pb_callback_t *res) {
     if (req->payload.size != 2 || req->payload.bytes[0] != 8 ||
-        req->payload.bytes[1] != 1) {
+        (req->payload.bytes[1] != 1 &&
+         !(IS_ENABLED(CONFIG_PAD_MATRIX_SETTLED_PROBE) && req->payload.bytes[1] == 2))) {
         return false;
     }
     memset(snapshot, 0, sizeof(snapshot));
     snapshot[0] = 1;
+#if IS_ENABLED(CONFIG_PAD_MATRIX_SETTLED_PROBE)
+    if (req->payload.bytes[1] == 2) {
+        int resumed;
+        int result = settled_probe(snapshot + 78, &resumed);
+        snapshot[76] = 2;
+        sys_put_le32((uint32_t)result, snapshot + 84);
+        sys_put_le32((uint32_t)resumed, snapshot + 88);
+    }
+#endif
     snapshot[1] = device_is_ready(DEVICE_DT_GET(DT_NODELABEL(pad_matrix)));
     snapshot[2] = (uint8_t)zmk_physical_layouts_get_selected();
     snapshot[3] = zmk_keymap_layer_default();

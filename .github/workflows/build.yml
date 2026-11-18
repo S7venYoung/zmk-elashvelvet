@@ -24,6 +24,7 @@ jobs:
           extra=()
           if [ "${{ inputs.reverse_matrix }}" = "true" ]; then
             extra+=("-DEXTRA_DTC_OVERLAY_FILE=$GITHUB_WORKSPACE/pad/row2col-test.overlay")
+            extra+=("-DEXTRA_CONF_FILE=$GITHUB_WORKSPACE/pad/row2col-test.conf")
           fi
           cd pad
           west build -s zmk/app -d build/pad52840 -b nice_nano//zmk -S studio-rpc-usb-uart -- -DZMK_CONFIG="$GITHUB_WORKSPACE/pad/config" -DSHIELD=pad52840 -DZMK_EXTRA_MODULES="$GITHUB_WORKSPACE/pad/diagnostics" "${extra[@]}"

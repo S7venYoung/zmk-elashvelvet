@@ -1,3 +1,12 @@
 config PAD_MATRIX_DIAGNOSTICS
     bool "Read-only Pad matrix GPIO diagnostics"
     default y if SHIELD_PAD52840 && ZMK_STUDIO
+
+config PAD_MATRIX_SETTLED_PROBE
+    bool "Allow explicit settled matrix probe"
+    depends on PAD_MATRIX_DIAGNOSTICS
+    default n
+    help
+      Test-only RPC operation: pause scanning, drive only the existing matrix
+      output pins, read settled inputs, then resume. Never changes pin modes
+      or stored settings. Disabled in normal application builds.

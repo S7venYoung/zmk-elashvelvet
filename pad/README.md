@@ -144,3 +144,16 @@ separate `pad/row2col-test.overlay` tests row2col with exactly the same row
 and column GPIO lists, changing only their input/output/pull roles. The
 artifact is named `pad52840-matrix-row2col-test`; it retains GPIO diagnostics
 and is an experiment, not a verified fix. Standard builds retain col2row.
+
+The row2col test produced input/events, but holding only the top-left key
+activated positions 2, 6, 10, 14 simultaneously (9/6/3/dot). All released
+on key-up. This proves signal activity in that direction but is not a
+successful keymap fix. Both configured settling delays had been zero.
+The opt-in test now waits 30 us before sampling and 50 us between outputs.
+It additionally enables operation `08 02`: pause normal scanning, wait 5 ms
+with all existing outputs inactive, then drive each existing output in turn
+with 5-ms settle/discharge intervals, and restore scanning on exit. It never
+changes GPIO modes or persistent settings. Operation 1 remains read-only.
+Operation 2 is disabled in normal builds. Snapshot byte 76=2 marks a probe;
+bytes 78..82 are idle and four driven input masks, and signed little-endian
+words at 84/88 report probe/scan-resume errors. Hardware verification pending.
