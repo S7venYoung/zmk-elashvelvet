@@ -24,7 +24,7 @@ assert coords(new_map)[:61]==coords(old_map) and len(coords(new_map))==77
 # Exercise the actual patch against the selected ZMK checkout when supplied.
 if len(sys.argv)>1:
     spec=importlib.util.spec_from_file_location('patch',root/'pad/dual/patch_zmk.py');patch=importlib.util.module_from_spec(spec);spec.loader.exec_module(patch)
-    paths=['CMakeLists.txt','src/studio/rpc.c','src/physical_layouts.c','src/split/peripheral.c','src/split/bluetooth/service.c','src/split/bluetooth/peripheral.c','src/studio/CMakeLists.txt']
+    paths=['src/rgb_underglow.c','CMakeLists.txt','src/studio/rpc.c','src/physical_layouts.c','src/split/peripheral.c','src/split/bluetooth/service.c','src/split/bluetooth/peripheral.c','src/studio/CMakeLists.txt']
     import shutil
     with tempfile.TemporaryDirectory() as tmp:
         app=Path(tmp)

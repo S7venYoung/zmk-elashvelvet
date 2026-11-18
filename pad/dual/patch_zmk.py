@@ -75,4 +75,12 @@ static uint8_t num_of_positions = ZMK_KEYMAP_LEN;
     hid = 'target_sources_ifdef(CONFIG_ZMK_USB app PRIVATE src/usb_hid.c)'
     replace(app / 'CMakeLists.txt', hid, 'if(NOT CONFIG_PAD_DUAL_IMAGE_SLOT)\n' + hid +
             '\nendif() # PAD_HOST_HID', 'PAD_HOST_HID')
+    import shutil
+    shutil.copytree(Path(__file__).parent / 'rgb', app / 'src/pad_matrix', dirs_exist_ok=True)
+    rgb = app / 'src/rgb_underglow.c'
+    replace(rgb, 'enum rgb_underglow_effect {', '#include "pad_matrix/count.h"\nenum rgb_underglow_effect {', 'pad_matrix/count.h')
+    replace(rgb, '    UNDERGLOW_EFFECT_NUMBER //', '    UNDERGLOW_EFFECT_NUMBER = 4 + PAD_MATRIX_EFFECTS //', '4 + PAD_MATRIX_EFFECTS')
+    anchor = 'static void zmk_rgb_underglow_tick(struct k_work *work) {'
+    replace(rgb, anchor, '#include "pad_matrix/matrix.h"\n' + anchor, 'pad_matrix/matrix.h')
+    replace(rgb, '    switch (state.current_effect) {', '    switch (state.current_effect) {\n    default: pad_matrix_tick(state.current_effect - 4); break;', 'pad_matrix_tick(')
 if __name__ == '__main__': patch(sys.argv[1])
