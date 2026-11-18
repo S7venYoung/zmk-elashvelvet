@@ -1,12 +1,12 @@
-/* Controlled diode-direction probe. The author's GPIO numbers stay unchanged. */
+/* Controlled diode-direction probe, using the latest author-provided pins. */
 &pad_matrix {
     diode-direction = "row2col";
-    row-gpios = <&gpio1 13 GPIO_ACTIVE_HIGH>,
-                <&gpio1 15 GPIO_ACTIVE_HIGH>,
-                <&gpio0 2 GPIO_ACTIVE_HIGH>,
-                <&gpio0 29 GPIO_ACTIVE_HIGH>;
-    col-gpios = <&gpio0 20 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
-                <&gpio0 22 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
-                <&gpio0 24 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
-                <&gpio1 0 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+    row-gpios = <&gpio0 24 GPIO_ACTIVE_HIGH>,
+                <&gpio0 13 GPIO_ACTIVE_HIGH>,
+                <&gpio0 29 GPIO_ACTIVE_HIGH>,
+                <&gpio0 30 GPIO_ACTIVE_HIGH>;
+    col-gpios = <&gpio1 9 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
+                <&gpio0 2 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
+                <&gpio1 13 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
+                <&gpio0 28 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
 };

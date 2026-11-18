@@ -4,14 +4,16 @@ Experimental standalone USB/BLE configuration on the repository's nice_nano//zmk
 board, using the repository’s ZMK 0.4 / Zephyr 4.1 DYA fork. Build manually with the
 "Build standalone Pad16 nRF52840" Actions workflow on this branch.
 
-Hardware interpretation:
-- Rows 45, 47, 2, 29 use Nordic linear numbering: P1.13, P1.15, P0.02, P0.29.
-- Columns 20, 22, 24, 32 become P0.20, P0.22, P0.24, P1.00.
-- 16 WS2812-compatible RGB LEDs, assumed GRB order, data P0.11.
-- powerpin 109 is provisionally interpreted as P1.09, active high.
-- Matrix diodes are col2row, confirmed by the user.
-- The nice!nano-compatible UF2 bootloader and 0x27000 application base
-  matches the S140 size read from this device at 0x3008.
+Current hardware pins (updated by the user on 2026-11-18):
+- Rows `{24,13,29,30}`: P0.24, P0.13, P0.29, P0.30.
+- Columns `{41,2,45,28}`: P1.09, P0.02, P1.13, P0.28.
+- 16 WS2812-compatible RGB LEDs, assumed GRB order, data **P0.05**.
+- Default diode-direction remains col2row; previous measurements used a
+  superseded pin set and do not establish the direction of this new matrix.
+- The old provisional powerpin 109/P1.09 conflicts with new column 0, and
+  nice!nano's inherited EXT_POWER/P0.13 conflicts with new row 1. Both GPIO
+  power-control instances are removed/disabled; matrix scanning owns these pins.
+- Rasi S140 7.3.0 application start is 0x27000; keep RTC-fixed BL at 0xf4000.
 
 Default numeric layout:
 7 8 9 +
@@ -157,3 +159,13 @@ changes GPIO modes or persistent settings. Operation 1 remains read-only.
 Operation 2 is disabled in normal builds. Snapshot byte 76=2 marks a probe;
 bytes 78..82 are idle and four driven input masks, and signed little-endian
 words at 84/88 report probe/scan-resume errors. Hardware verification pending.
+
+### Latest pin correction supersedes earlier experiments
+
+The old `{45,47,2,29}` / `{20,22,24,32}` matrix and P0.11 RGB were replaced
+by the current pin list above. Old GPIO captures and row2col/settling test
+results must not be used to infer the new wiring. Diagnostic snapshots now
+use version 2 (112 bytes), deriving the eight pins from DTS and carrying
+(port,pin) pairs in bytes 96..111. Earlier field offsets are unchanged.
+Do not flash earlier artifacts with the superseded pin set to validate this
+configuration. No new build or hardware validation is claimed yet.

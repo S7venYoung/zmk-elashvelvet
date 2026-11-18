@@ -14,7 +14,8 @@
 #include <pb_encode.h>
 
 /* Operation 1 is read-only. Test-only operation 2 is explicitly gated below. */
-static uint8_t snapshot[96];
+static uint8_t snapshot[112];
+#define MATRIX_NODE DT_NODELABEL(pad_matrix)
 static struct zmk_rpc_custom_subsystem_meta meta = {
     ZMK_RPC_CUSTOM_SUBSYSTEM_UI_URLS(),
     .security = ZMK_STUDIO_RPC_HANDLER_UNSECURED,
@@ -31,7 +32,6 @@ static bool encode_snapshot(pb_ostream_t *stream, const pb_field_t *field,
 
 
 #if IS_ENABLED(CONFIG_PAD_MATRIX_SETTLED_PROBE)
-#define MATRIX_NODE DT_NODELABEL(pad_matrix)
 #if DT_ENUM_IDX(MATRIX_NODE, diode_direction) == 0
 #define OUTPUT_PROP row_gpios
 #define INPUT_PROP col_gpios
@@ -102,7 +102,7 @@ static bool read_snapshot(const zmk_custom_CallRequest *req, pb_callback_t *res)
         return false;
     }
     memset(snapshot, 0, sizeof(snapshot));
-    snapshot[0] = 1;
+    snapshot[0] = 2;
 #if IS_ENABLED(CONFIG_PAD_MATRIX_SETTLED_PROBE)
     if (req->payload.bytes[1] == 2) {
         int resumed;
@@ -123,13 +123,25 @@ static bool read_snapshot(const zmk_custom_CallRequest *req, pb_callback_t *res)
     sys_put_le32(NRF_P1->IN, snapshot + 24);
     sys_put_le32(NRF_P1->OUT, snapshot + 28);
     sys_put_le32(NRF_P1->DIR, snapshot + 32);
-    /* Author-provided rows followed by columns; actual PIN_CNF includes SENSE. */
-    NRF_GPIO_Type *const ports[8] = {NRF_P1, NRF_P1, NRF_P0, NRF_P0,
-                                     NRF_P0, NRF_P0, NRF_P0, NRF_P1};
-    const uint8_t pins[8] = {13, 15, 2, 29, 20, 22, 24, 0};
+    /* Report IDs with levels so clients cannot mistake an old pin list for a new one. */
+    const struct gpio_dt_spec pins[8] = {
+        GPIO_DT_SPEC_GET_BY_IDX(MATRIX_NODE, row_gpios, 0),
+        GPIO_DT_SPEC_GET_BY_IDX(MATRIX_NODE, row_gpios, 1),
+        GPIO_DT_SPEC_GET_BY_IDX(MATRIX_NODE, row_gpios, 2),
+        GPIO_DT_SPEC_GET_BY_IDX(MATRIX_NODE, row_gpios, 3),
+        GPIO_DT_SPEC_GET_BY_IDX(MATRIX_NODE, col_gpios, 0),
+        GPIO_DT_SPEC_GET_BY_IDX(MATRIX_NODE, col_gpios, 1),
+        GPIO_DT_SPEC_GET_BY_IDX(MATRIX_NODE, col_gpios, 2),
+        GPIO_DT_SPEC_GET_BY_IDX(MATRIX_NODE, col_gpios, 3),
+    };
     for (unsigned int i = 0; i < 8; i++) {
-        sys_put_le32(ports[i]->PIN_CNF[pins[i]], snapshot + 36 + i * 4);
-        snapshot[68 + i] = (ports[i]->IN >> pins[i]) & 1;
+        bool port1 = pins[i].port == DEVICE_DT_GET(DT_NODELABEL(gpio1));
+        NRF_GPIO_Type *port = port1 ? NRF_P1 : NRF_P0;
+        uint8_t pin = pins[i].pin;
+        sys_put_le32(port->PIN_CNF[pin], snapshot + 36 + i * 4);
+        snapshot[68 + i] = (port->IN >> pin) & 1;
+        snapshot[96 + i * 2] = port1;
+        snapshot[97 + i * 2] = pin;
     }
     res->funcs.encode = encode_snapshot;
     res->arg = NULL;
