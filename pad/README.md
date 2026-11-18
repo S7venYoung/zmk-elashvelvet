@@ -12,7 +12,10 @@ Current hardware pins (updated by the user on 2026-11-18):
   superseded pin set and do not establish the direction of this new matrix.
 - The old provisional powerpin 109/P1.09 conflicts with new column 0, and
   nice!nano's inherited EXT_POWER/P0.13 conflicts with new row 1. Both GPIO
-  power-control instances are removed/disabled; matrix scanning owns these pins.
+  power-control instances are removed; matrix scanning owns these pins.
+- The user subsequently confirmed POWER_PIN=GPIO(0,1). The replacement
+  external-power control uses **P0.01**, provisionally active high (polarity
+  has not been separately confirmed), with a 50-ms startup delay.
 - Rasi S140 7.3.0 application start is 0x27000; keep RTC-fixed BL at 0xf4000.
 
 Default numeric layout:
@@ -169,3 +172,9 @@ use version 2 (112 bytes), deriving the eight pins from DTS and carrying
 (port,pin) pairs in bytes 96..111. Earlier field offsets are unchanged.
 Do not flash earlier artifacts with the superseded pin set to validate this
 configuration. No new build or hardware validation is claimed yet.
+
+The final supplied hardware tuple is rows `{24,13,29,30}`, columns
+`{41,2,45,28}`, RGB data P0.05 and POWER_PIN=GPIO(0,1). The Pad's only
+external-power node now uses P0.01; the inherited P0.13 instance remains
+deleted, and P1.09 remains exclusively a matrix column. Previous powerpin
+109/P1.09 assumptions are superseded. No build or hardware validation yet.
