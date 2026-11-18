@@ -60,4 +60,19 @@ static uint8_t num_of_positions = ZMK_KEYMAP_LEN;
             'if(NOT CONFIG_PAD_DUAL_IMAGE OR NOT CONFIG_ZMK_SPLIT OR CONFIG_ZMK_SPLIT_ROLE_CENTRAL)\n'
             '  target_sources(app PRIVATE keymap_subsystem.c)\n'
             'endif() # PAD_DUAL_PERIPHERAL_RPC\n', 'PAD_DUAL_PERIPHERAL_RPC')
+    # A split peripheral has no host HID endpoints. Keep Studio on USB CDC.
+    only_host = '!IS_ENABLED(CONFIG_PAD_DUAL_IMAGE_SLOT)'
+    rpc = app / 'src/studio/rpc.c'
+    selected = '    enum zmk_transport transport = zmk_endpoint_get_selected().transport;'
+    replace(rpc, selected, '#if ' + only_host + '\n' + selected +
+            '\n#else\n    enum zmk_transport transport = ZMK_TRANSPORT_USB;\n#endif', 'enum zmk_transport transport = ZMK_TRANSPORT_USB;')
+    begin = '    struct zmk_endpoint_changed *ep_changed = as_zmk_endpoint_changed(eh);'
+    end = '    struct zmk_studio_rpc_notification *rpc_notify ='
+    replace(rpc, begin, '#if ' + only_host + ' /* PAD_HOST_LISTENER */\n' + begin, 'PAD_HOST_LISTENER')
+    replace(rpc, end, '#endif /* PAD_HOST_LISTENER_END */\n' + end, 'PAD_HOST_LISTENER_END')
+    sub = 'ZMK_SUBSCRIPTION(studio_rpc, zmk_endpoint_changed);'
+    replace(rpc, sub, '#if ' + only_host + '\n' + sub + '\n#endif /* PAD_HOST_SUB */', 'PAD_HOST_SUB')
+    hid = 'target_sources_ifdef(CONFIG_ZMK_USB app PRIVATE src/usb_hid.c)'
+    replace(app / 'CMakeLists.txt', hid, 'if(NOT CONFIG_PAD_DUAL_IMAGE_SLOT)\n' + hid +
+            '\nendif() # PAD_HOST_HID', 'PAD_HOST_HID')
 if __name__ == '__main__': patch(sys.argv[1])
