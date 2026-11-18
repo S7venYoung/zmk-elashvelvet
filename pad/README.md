@@ -131,3 +131,16 @@ It reports scanner device readiness, selected physical layout, layer mask,
 GPIO0/1 IN/OUT/DIR and the eight matrix pins' PIN_CNF/current levels. It does
 not configure GPIOs, pause scanning, write settings or inject keys. Native
 Devtool log capture is also enabled to expose initialization errors.
+
+The first GPIO snapshot reported ready scanner/layout 0, row inputs with
+pull-down and high-level SENSE, all column output latches high, and P1.09
+power control high. Holding the top-left physical key for 5 seconds caused
+no observed changes. This establishes no signal with the current col2row
+configuration; it does not prove which of wiring/pin numbering/direction
+is responsible.
+
+The manual application build has `reverse_matrix` (default false). Its
+separate `pad/row2col-test.overlay` tests row2col with exactly the same row
+and column GPIO lists, changing only their input/output/pull roles. The
+artifact is named `pad52840-matrix-row2col-test`; it retains GPIO diagnostics
+and is an experiment, not a verified fix. Standard builds retain col2row.

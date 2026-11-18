@@ -6,6 +6,10 @@ on:
         description: Build Pad Rasi bootloader instead of application
         type: boolean
         default: false
+      reverse_matrix:
+        description: Diagnostic only - test row2col with the same GPIOs
+        type: boolean
+        default: false
 jobs:
   pad:
     if: ${{ !inputs.bootloader }}
@@ -15,7 +19,14 @@ jobs:
       - uses: actions/checkout@v4
       - run: west init -l pad/config && cd pad && west update --narrow && west zephyr-export
       - name: Build Pad16
-        run: cd pad && west build -s zmk/app -d build/pad52840 -b nice_nano//zmk -S studio-rpc-usb-uart -- -DZMK_CONFIG="$GITHUB_WORKSPACE/pad/config" -DSHIELD=pad52840 -DZMK_EXTRA_MODULES="$GITHUB_WORKSPACE/pad/diagnostics"
+        shell: bash
+        run: |
+          extra=()
+          if [ "${{ inputs.reverse_matrix }}" = "true" ]; then
+            extra+=("-DEXTRA_DTC_OVERLAY_FILE=$GITHUB_WORKSPACE/pad/row2col-test.overlay")
+          fi
+          cd pad
+          west build -s zmk/app -d build/pad52840 -b nice_nano//zmk -S studio-rpc-usb-uart -- -DZMK_CONFIG="$GITHUB_WORKSPACE/pad/config" -DSHIELD=pad52840 -DZMK_EXTRA_MODULES="$GITHUB_WORKSPACE/pad/diagnostics" "${extra[@]}"
       - name: Collect Pad16 UF2
         run: |
           mkdir -p firmware
@@ -24,7 +35,7 @@ jobs:
           cp pad/build/pad52840/zephyr/zephyr.dts firmware/pad52840_app.dts
       - uses: actions/upload-artifact@v4
         with:
-          name: pad52840-standalone
+          name: ${{ inputs.reverse_matrix && 'pad52840-matrix-row2col-test' || 'pad52840-standalone' }}
           path: firmware/
   pad-bootloader:
     if: ${{ inputs.bootloader }}
