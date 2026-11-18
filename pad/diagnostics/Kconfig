@@ -1,0 +1,3 @@
+config PAD_MATRIX_DIAGNOSTICS
+    bool "Read-only Pad matrix GPIO diagnostics"
+    default y if SHIELD_PAD52840 && ZMK_STUDIO

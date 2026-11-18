@@ -1,0 +1,4 @@
+name: pad-matrix-diagnostics
+build:
+  cmake: .
+  kconfig: Kconfig

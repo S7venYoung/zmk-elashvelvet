@@ -121,3 +121,13 @@ active layers and position transitions; no key injection is enabled. During
 matrix tests subscribe only to position/layer events, then unsubscribe after
 the test. Do not reset stored keymaps or change pin order based only on typed
 characters: Fn actions can be non-printing and may change the host output.
+
+Position-event capture on both the top and bottom physical rows produced no
+events while the default layer remained active. The merged config enables
+kscan and its GPIO matrix driver. The author-provided pin numbers are retained.
+`pad/diagnostics` adds a read-only Studio custom subsystem `pad_matrix_diag`:
+request protobuf `08 01` returns field 1 bytes (96-byte versioned snapshot).
+It reports scanner device readiness, selected physical layout, layer mask,
+GPIO0/1 IN/OUT/DIR and the eight matrix pins' PIN_CNF/current levels. It does
+not configure GPIOs, pause scanning, write settings or inject keys. Native
+Devtool log capture is also enabled to expose initialization errors.
