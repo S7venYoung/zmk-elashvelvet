@@ -1,8 +1,6 @@
-# Standalone nRF52840 Pad16
+# 16Pad 硬件与独立模式配置
 
-Experimental standalone USB/BLE configuration on the repository's nice_nano//zmk
-board, using the repository’s ZMK 0.4 / Zephyr 4.1 DYA fork. Build manually with the
-"Build standalone Pad16 nRF52840" Actions workflow on this branch.
+当前分支使用双镜像工作流。[刷机文件、模式切换、DYA 和灯效操作](dual/README.md)。以下记录独立模式的硬件配置与开发细节。
 
 Current hardware pins (updated by the user on 2026-11-18):
 - Rows `{24,13,29,30}`: P0.24, P0.13, P0.29, P0.30.

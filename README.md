@@ -1,4 +1,14 @@
-# Velvet46 · Nano Dongle
+# 16Pad 双模数字键盘
+
+本分支适用于 nRF52840 的 4×4 Pad。独立模式由 Pad 通过 USB 或 BLE 连接电脑；Dongle 模式由 Pad 无线连接 Nano，可与 Velvet 左右手共用接收器。
+
+**切换模式**时，先按住左下角，再按住第三排第三键至少 2 秒。松开两键后 Pad 会重启，并记住所选模式。
+
+首次安装需要 Pad 双镜像和支持三个外设的 Nano 固件。已用共用 Nano 连上 Pad 的用户，更新灯效只需刷 Pad。[固件下载与刷机指南](pad/dual/README.md) · [27 种灯效及切换方法](pad/dual/README.md#矩阵灯效)
+
+## 原 Velvet46 接收器资料
+
+以下内容对应原 Nano 分支，供维护左右手和接收器时查阅。
 
 ZMK 0.4 / Zephyr 4.1，面向无屏 nRF52833 Nano K 接收器和左右 nice!nano nRF52840 键盘，两手各有 nice!view 屏幕。接收器通过 USB 连接电脑，通过 BLE split 连接左右键盘；不包含编码器、轨迹球或鼠标配置。
 
